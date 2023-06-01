@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33723.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "braidlang", "braidlang.csproj", "{7F38ADA8-7318-408C-A539-3B6B5D2BF84D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7F38ADA8-7318-408C-A539-3B6B5D2BF84D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F38ADA8-7318-408C-A539-3B6B5D2BF84D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F38ADA8-7318-408C-A539-3B6B5D2BF84D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F38ADA8-7318-408C-A539-3B6B5D2BF84D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {055AEF03-0942-4434-9035-6E3B5B714E0C}
+	EndGlobalSection
+EndGlobal
