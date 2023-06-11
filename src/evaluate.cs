@@ -2,6 +2,9 @@
 //
 // The Braid Programming Language - the core runtime evaluation routines.
 //
+//
+// Copyright (c) 2023 Bruce Payette (see LICENCE file) 
+//
 ////////////////////////////////////////////////////////////////////////////
 
 using System;

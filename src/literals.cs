@@ -2,6 +2,9 @@
 //
 // The Braid Programming Language - classes implementing literals
 //
+//
+// Copyright (c) 2023 Bruce Payette (see LICENCE file) 
+//
 ////////////////////////////////////////////////////////////////////////////
 
 using System;

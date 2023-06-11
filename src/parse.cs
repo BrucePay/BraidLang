@@ -2,6 +2,9 @@
 //
 // The Braid Programming Language - Parsing and Tokenizer
 //
+//
+// Copyright (c) 2023 Bruce Payette (see LICENCE file) 
+//
 ////////////////////////////////////////////////////////////////////////////
 
 using System;

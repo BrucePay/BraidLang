@@ -2,6 +2,9 @@
 //
 // The Braid Programming Language - the Symbol type
 //
+//
+// Copyright (c) 2023 Bruce Payette (see LICENCE file) 
+//
 ////////////////////////////////////////////////////////////////////////////
 
 using System;

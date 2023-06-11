@@ -2,6 +2,9 @@
 //
 // The Braid Programming Language - the variable and stack frame classes
 //
+//
+// Copyright (c) 2023 Bruce Payette (see LICENCE file) 
+//
 ////////////////////////////////////////////////////////////////////////////
 
 using System;

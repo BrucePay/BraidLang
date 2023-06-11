@@ -2,6 +2,9 @@
 //
 // The Braid Programming Language - Utility functions for the interpreter
 //
+//
+// Copyright (c) 2023 Bruce Payette (see LICENCE file) 
+//
 ////////////////////////////////////////////////////////////////////////////
 
 using System;

@@ -4,6 +4,11 @@
 #
 #######################################################
 
+param (
+    [switch] $Optimize,
+    $cmd
+)
+
 if ($cmd)
 {
     # Just run the command
@@ -17,7 +22,7 @@ elseif ($IsCoreClr)
 else
 {
     # Build and start braid.
-    & "$PSScriptRoot/build.ps1"
+    & "$PSScriptRoot/build.ps1" -optimize:$Optimize
     powershell "$PSScriptRoot/stage/BraidRepl.ps1"
 }
 

@@ -7,6 +7,9 @@
 // Modifications/bugfixes for PowerShell 3.0 and CLR4 on Windows:
 //   Oisin Grehan (oising@gmail.com)
 //
+// Modifications to support BraidLang
+//   Bruce Payette (bgpayette@gmail.com)
+//
 // Copyright 2008 Novell, Inc.
 //
 // Dual-licensed under the terms of the MIT X11 license or the

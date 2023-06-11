@@ -1,6 +1,10 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// The Braid Programming Language - classes implementing Patterns and Pattern Elements
+// The Braid Programming Language - classes implementing Patterns and
+// Pattern Elements
+//
+//
+// Copyright (c) 2023 Bruce Payette (see LICENCE file) 
 //
 ////////////////////////////////////////////////////////////////////////////
 

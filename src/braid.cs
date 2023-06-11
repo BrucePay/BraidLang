@@ -2,6 +2,8 @@
 //
 // The Braid Programming Language
 //
+// Copyright (c) 2023 Bruce Payette (see LICENCE file) 
+//
 ////////////////////////////////////////////////////////////////////////////
 
 using System;

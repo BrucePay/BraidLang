@@ -3,6 +3,8 @@
 // The Braid Programming Language - Init routine that defines built-ins and
 //                                  sets up other interpreter state.
 //
+// Copyright (c) 2023 Bruce Payette (see LICENCE file) 
+//
 ////////////////////////////////////////////////////////////////////////////
 
 using System;
