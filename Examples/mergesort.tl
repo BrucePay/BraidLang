@@ -22,12 +22,18 @@ lambda
 ; Tail-recursive merge-sort function.
 ;
 (defn merge-sort
-    | x:     null -> x                                      ; if it's a 1 element list and r is empty we're done
-    | x:     r    -> (recur (cons x r) null)                ; if it's a 1 element list and r not empty, join x to r and recurse
-    | x:y:   r    -> (recur (cons (merge-list x y) r) null) ; merge the last pair, then recurse with all the sublists
-    | x:y:zs r    -> (recur zs (cons (merge-list x y) r))   ; merge each pair of sublists into r
-    | xs          -> (recur (map xs list) null)             ; split list into a list of 1 element lists
-    | nil    _    -> nil                                    ; if the argument is nil, return nil
+    ; if it's a 1 element list and r is empty we're done
+    | x:     null -> x
+    ; if it's a 1 element list and r not empty, join x to r and recurse
+    | x:     r    -> (recur (cons x r) null)
+    ; merge the last pair, then recurse with all the sublists
+    | x:y:   r    -> (recur (cons (merge-list x y) r) null)
+    ; merge each pair of sublists into r
+    | x:y:zs r    -> (recur zs (cons (merge-list x y) r))
+    ; split list into a list of 1 element lists
+    | xs          -> (recur (map xs list) null)
+    ; if the argument is nil, return nil
+    | nil    _    -> nil
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

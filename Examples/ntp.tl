@@ -66,7 +66,8 @@
 (let milliseconds (= intpart*1000 + fractPart*1000 / 0x1_0000_0000))
 
 ; Compute the UTC time then add the milliseconds.
-(let networkDateTime (new ^DateTime 1900 1 1 0 0 0 .DateTimeKind/Utc | .AddMilliseconds milliseconds))
+(let networkDateTime (new ^DateTime 1900 1 1 0 0 0 .DateTimeKind/Utc
+    | .AddMilliseconds milliseconds))
 
 ; Finally convert it to local time and return it.
 (.ToLocalTime networkDateTime)
