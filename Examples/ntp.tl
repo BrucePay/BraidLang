@@ -62,7 +62,7 @@
 (let intPart   (SwapEndianness intPart))
 (let fractPart (SwapEndianness fractPart))
 
-; convert to milliseconds using infix notation.
+; convert to milliseconds using the "=" infix macro.
 (let milliseconds (= intpart*1000 + fractPart*1000 / 0x1_0000_0000))
 
 ; Compute the UTC time then add the milliseconds.
