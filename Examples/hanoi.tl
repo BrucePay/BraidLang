@@ -102,8 +102,7 @@ lambda [(numDisks 4) :auto :fast :width: :height:]
                     (.DoDragDrop this this .DragDropEffects/Move)
                 )
             )
-         )
-        
+        )
     )
 
     :defm Reset     (fn this -> (.left this (towerOffset | - (.width this | / 2) | ^int?)))
@@ -260,9 +259,7 @@ lambda [(numDisks 4) :auto :fast :width: :height:]
     :defm Run (fn this ->
         (.ResetDisks this)
         (.update this)
-        ;(.System.Windows.Forms.Cursor/Current .System.Windows.Forms.Cursors/WaitCursor)
         (.dohanoi this numDisks 3 1 2)
-        ;(.System.Windows.Forms.Cursor/Current .System.Windows.Forms.Cursors/Default)
         (.update this)
     )
 
