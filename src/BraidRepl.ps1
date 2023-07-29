@@ -539,8 +539,8 @@ function BraidRepl
                             $expr = $expr.Cdr
                             if ($expr -eq $null)
                             {
-                                Write-Host -fore green ("Time: {0} ms, Memory Delta: {1} Mb. Collections: {2}" -f
-                                    @($stopwatch.Elapsed.TotalMilliseconds, ($memory -shr 10), ([gc]::CollectionCount(0) - $ccb - 1)))
+                                Write-Host -fore green ("Time: {0} ms, Memory Delta: {1} Mb. Collections: {2} PWD: {3}" -f
+                                    @($stopwatch.Elapsed.TotalMilliseconds, ($memory -shr 10), ([gc]::CollectionCount(0) - $ccb - 1), $PWD))
                                 break;
                             }
                         }

@@ -3153,12 +3153,8 @@ namespace BraidLang
                 obj = pso.BaseObject;
             }
 
-            // Don't treat strings as enumerable in this context.
             switch (obj)
             {
-                case string str:
-                    return new Vector { str };
-
                 case Symbol sym:
                     return new Vector { sym };
 
@@ -4378,6 +4374,11 @@ namespace BraidLang
         /// <returns></returns>
         public static object GetFunc(PSStackFrame callStack, object funcToGet, out FunctionType ftype, out string funcName, bool noExternals = false, bool lookup = true)
         {
+            if (funcToGet is PSObject pso)
+            {
+                funcToGet = pso.BaseObject;
+            }
+
             // First check to see if the argument is directly executable (no symbol lookup required.)
             // If so, then just return that value.
             if (funcToGet is Callable f2c)

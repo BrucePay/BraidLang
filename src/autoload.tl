@@ -93,14 +93,14 @@ macro to comment out a list of forms (but that list must be well-formed).
 ;
 (defmacro fn
 "
-Macro for creating function literals of the form (fn <args> -> <body>).
+Macro for creating function literals of the form (\ <args> -> <body>).
 
 Examples:
-    (fn a b c -> (+ a b c))                         ; define a function literal that adds 3 values
-    (range 10 | map (fn x -> (* x x)) | sum)        ; use a function literal for squaring numbers
-    (range 10 | map (fn x -> (println x) (* x x)))  ; Multiple expressions are allowed
-    (def sqr (fn x -> (* x x))) (sqr 4)             ; define a 'sqr' function then call it - returns 16
-    (fn (^int a) (^int b 1) -> (+ a b)              ; arguments can have type constraints and initializers
+    (\ a b c -> (+ a b c))                         ; define a function literal that adds 3 values
+    (range 10 | map (\ x -> (* x x)) | sum)        ; use a function literal for squaring numbers
+    (range 10 | map (\ x -> (println x) (* x x)))  ; Multiple expressions are allowed
+    (def sqr (\ x -> (* x x))) (sqr 4)             ; define a 'sqr' function then call it - returns 16
+    (\ (^int a) (^int b 1) -> (+ a b)              ; arguments can have type constraints and initializers
 "
     [&args]
 
@@ -108,7 +108,7 @@ Examples:
         (return (list (get-symbol "fn")))
     )
 
-    ; compile a pattern function: (fn | x -> y | ...)
+    ; compile a pattern function: (\ | x -> y | ...)
     (if (car args | == .BraidLang.symbol/sym_pipe)
         (do
             (let lam (.BraidLang.Braid/parsepattern "*fn-macro*" (to-vector args) 0 false))
@@ -120,7 +120,7 @@ Examples:
     ; Seperate the arguments from the lambda body.
     (let fargs:fbody: (list/split args '->))
 
-    ; see if this is a typed function: (fn ^int a b -> (+ a b))
+    ; see if this is a typed function: (\ ^int a b -> (+ a b))
     (let a (car fargs))
     (let returnType null)
     (if (is? a ^TypeLiteral)
@@ -567,7 +567,7 @@ Macro shortcut to 'let -success ...'
         (do
             ; only show the syntax line from each entry
             (functions
-            | filter (fn n -> (.key n | re/match pattern)) ; filter on the name
+            | filter (\ n -> (.key n | re/match pattern)) ; filter on the name
             | map .value
             | map doc
             | re/split-all #"\n"
@@ -578,7 +578,7 @@ Macro shortcut to 'let -success ...'
         (do
             ; show all the text
             (functions
-            | filter (fn n -> (.key n | re/match pattern))
+            | filter (\ n -> (.key n | re/match pattern))
             | map .value
             | map doc
             | join "\n\n"
@@ -587,35 +587,12 @@ Macro shortcut to 'let -success ...'
     )
 )
 
-(defn rprg
-"
-This function is used to run an executable directly on the console.
-In Braid, while an executable can be run simply by putting it's name
-in the function position, the output of these executables is always
-redirected. Consequently, 'rprg' should be used to run any program
-that do direct console manipulation such as interactive programs (e.g. editors)
-or use console control sequences in output e.g. git.
-
-Examples:
-    (rprg :vi \"foo.txt\")    ; run an interactive VI session
-    (rprg :git :diff)         ; run git diff with console coloring
-
-See also: Start-Process
-"
-    [(^string program) &args]
-
-    (if (some? args)
-        (Start-Process -NoNewWindow -Wait -FilePath: program -ArgumentList: (join args))
-        (Start-Process -NoNewWindow -Wait -FilePath: program)
-    )
-)
-
 ;--------------------------------------------------------------------------
 ;
 ; Computed variable returning the most recent 100 entries in command history
 ; BUGBUGBUG - disabled because its annoying - should be able to use single letters as variables.
 ;(undef h)
-;(let h null -getter: (fn _ -> (.CommandHistory *line-editor* | .Dump | last 100 | tostring-all | join "\n")))
+;(let h null -getter: (\ _ -> (.CommandHistory *line-editor* | .Dump | last 100 | tostring-all | join "\n")))
 
 ;--------------------------------------------------------------------------
 ;
@@ -657,7 +634,7 @@ See also: parse-text file/parse eval
 Walks a parsed tree applying an action to each subtree.
 
 Examples:
-    (walk-tree '(do (+ 1 2) (* 3 4) (% (- c a) b)) (fn n -> (info n)))
+    (walk-tree '(do (+ 1 2) (* 3 4) (% (- c a) b)) (\ n -> (info n)))
 
 See also: file/parse parse-text tokenize-file tokenize-text
 "
@@ -671,7 +648,7 @@ See also: file/parse parse-text tokenize-file tokenize-text
             )
        )
 
-    | (^iseq t) -> (recur t (fn n -> (println n)))
+    | (^iseq t) -> (recur t (\ n -> (println n)))
     | ->
 )
 
@@ -679,13 +656,13 @@ See also: file/parse parse-text tokenize-file tokenize-text
 ;
 ; Gets the current (active) stack frame object.
 (undef *CallStack*)
-(let *CallStack* null -getter: (fn _ ->  (upDo (.Braid/CallStack | .parent))))
+(let *CallStack* null -getter: (fn _ -> (upDo (.Braid/CallStack | .parent))))
 
 ;--------------------------------------------------------------------------
 ;
 ; Gets the current (active) stack frame object.
 (undef *now*)
-(let *now* null -getter: (fn _ ->  (.datetime/now)) )
+(let *now* null -getter: (fn _ -> (.datetime/now)) )
 
 ;--------------------------------------------------------------------------
 ;
@@ -731,7 +708,7 @@ See also: loaded-files loaded-types
         | map .value
         | filter ^Callable
         | map .Name
-        | filter (fn f -> (re/match f pattern))
+        | filter (\ f -> (re/match f pattern))
      )
 )
 
@@ -793,7 +770,7 @@ See also: loaded-files loaded-functions
     | .values
     ; BUGBUGBUG - now that braid can extend existing types, this is not sufficient  
     | filter ^BraidLang.BraidTypeBase
-    | map (fn ty -> (str "type: " (. ty 'name) " file: "  (get-assoc ty :FileInfo )))
+    | map (\ ty -> (str "type: " (. ty 'name) " file: "  (get-assoc ty :FileInfo )))
     )
 )
 
@@ -807,7 +784,7 @@ then the entire table is returned.
     [(^regex? namePattern #".")]
 
     (functions namePattern
-    | where (fn f -> (.value f | .?ftype | == .BraidLang.FunctionType/macro))
+    | where (\ f -> (.value f | .?ftype | == .BraidLang.FunctionType/macro))
     | map .key
     )
 )
@@ -845,7 +822,7 @@ Examples:
         (let expr (list expr))
     )
 
-    (let t (async (fn -> (try (eval expr) -catch: ""))))
+    (let t (async (\ -> (try (eval expr) -catch: ""))))
     "Started task ${(.Id t)}"
 )
 
@@ -1175,11 +1152,12 @@ regular expression can be specified to filter the results.
 "
     [(^regex? varname #"")]
 
-    ((.BraidLang.Braid/callstackstack)
+    (.BraidLang.Braid/callstackstack
+    | .GetEnumerator
     | flatmap .vars
-    | map .key
+    | flatmap .keys
     | distinct
-    | where -not (fn vname -> (getfunc -noexternals vname))
+    | where -not (\ vname -> (getfunc -noexternals vname))
     | filter varname)
 )
 
@@ -1188,7 +1166,7 @@ regular expression can be specified to filter the results.
 ; Define a computed variable for 'pwd' instead of a function.
 ;
 (undef pwd)
-;(let pwd -getter: (fn _ -> (.environment/CurrentDirectory)) nil)
+;(let pwd -getter: (\ _ -> (.environment/CurrentDirectory)) nil)
 (defn pwd [] (.environment/CurrentDirectory))
 
 ;--------------------------------------------------------------------------
@@ -1342,7 +1320,7 @@ Examples:
 )
 
 (if (not (bound? '*path*))
-    (const *path* -getter: (fn _ -> (.environment/GetEnvironmentVariable "PATH")) nil)
+    (const *path* -getter: (\ _ -> (.environment/GetEnvironmentVariable "PATH")) nil)
 )
 
 ;--------------------------------------------------------------------------
@@ -1447,7 +1425,7 @@ Examples:
     (iterator ++ 1 | take 100)        ; get integers from 1-100.
     (iterator (+ 2) 2 10)             ; even numbers from 2-10 inclusive.
     ; the following computes (fib 10)
-    (iterator (fn x:y: -> [y (+ x y)]) [1 1] | take 10 | last | last)
+    (iterator (\ x:y: -> [y (+ x y)]) [1 1] | take 10 | last | last)
 
 See also: reduce foldl roldr unfold
 "
@@ -1651,7 +1629,7 @@ See also: re/replace
 "
     [lst (^regex? regexToReplace) (^string? replaceStr "")]
 
-    (lst | map (fn it -> (.replace regexToReplace (^string? it) replaceStr)))
+    (lst | map (\ it -> (.replace regexToReplace (^string? it) replaceStr)))
 )
 
 ;--------------------------------------------------------------------------
@@ -1669,16 +1647,16 @@ Examples:
 See also: re/split-all
 "
     | stringToSplit (^symbol by) ->
-        (.regex/split  (tostring stringToSplit) (.value by) (.RegexOptions/IgnoreCase) | to-vector)
+        (.split (tostring stringToSplit) (.value by) | to-vector)
 
-    | stringToSplit (^regex? by) ->
+    | stringToSplit (^regex by) ->
         (.split by (tostring stringToSplit) | to-vector)
 
-    | stringToSplit (^char? by) ->
-        (.regex/split (tostring stringToSplit) (tostring by) (.RegexOptions/IgnoreCase) | to-vector)
+    | stringToSplit (^char by) ->
+        (.split (tostring stringToSplit) by | to-vector)
 
-    | stringToSplit (^string? by) ->
-        (.regex/split (tostring stringToSplit) by (.RegexOptions/IgnoreCase) | to-vector)
+    | stringToSplit (^string by) ->
+        (.split (tostring stringToSplit) by | to-vector)
 
     | stringToSplit ->
         (.split #" +" (tostring stringToSplit) | to-vector)
@@ -1693,11 +1671,15 @@ returns the new vector containing all of the individual strings. An
 optional regular expression can be provided to use during the splits.
 The default split pattern is 1 or more whitespaces.
 "
-    [lst (^regex? by " +") :dontFlatten]
+    [lst (^regex? by #" +") :dontFlatten]
+
+    (if (is? lst ^string)
+        (return (re/split lst by))
+    )
 
     (if dontFlatten
-        (map lst (fn (^string? string) -> (re/split string by)))
-        (flatmap lst (fn (^string? string) -> (re/split string by)))
+        (map lst (\ (^string? string) -> (re/split string by)))
+        (flatmap lst (\ (^string? string) -> (re/split string by)))
     )
 )
 
@@ -1723,7 +1705,7 @@ The default split pattern is 1 or more whitespaces.
     "Make all the characters in a string uppercase."
     [(^string? stringToProcess)]
 
-    (.tochararray stringToProcess | map (fn c -> (.char/ToUpper c)) | join "")
+    (.tochararray stringToProcess | map (\ c -> (.char/ToUpper c)) | join "")
 )
 
 ;--------------------------------------------------------------------------
@@ -1741,7 +1723,7 @@ The default split pattern is 1 or more whitespaces.
     "Make all the characters in a string uppercase."
     [(^string? stringToProcess)]
 
-    (.tochararray stringToProcess | map (fn c -> (.char/ToLower c)) | join "")
+    (.tochararray stringToProcess | map (\ c -> (.char/ToLower c)) | join "")
 )
 
 ;--------------------------------------------------------------------------
@@ -1767,8 +1749,8 @@ into a vector.
     [:noprefix &args]
 
     (if noprefix
-        (args | map (fn num -> (fmt "{0:x4}" num)) | scalarize)
-        (args | map (fn num -> (fmt "0x{0:x4}" num)) | scalarize)
+        (args | map (\ num -> (fmt "{0:x4}" num)) | scalarize)
+        (args | map (\ num -> (fmt "0x{0:x4}" num)) | scalarize)
     )
 )
 
@@ -1842,7 +1824,7 @@ See also: + join str
     [ &args ]
 
     (let unquotesym (get-symbol 'unquote))
-    (map args (fn e ->
+    (map args (\ e ->
             (if (and (pair? e) (== unquotesym (car e)))
                 (eval (cdr e))
                 e
@@ -2220,7 +2202,7 @@ See also: choose combinations
 "
     | x:   -> [x]
     | x:xs ->
-        (permute xs | filter some? | flatmap (fn lst ->
+        (permute xs | filter some? | flatmap (\ lst ->
             (forall i (range 0 (length lst))
                 (concat (take lst i) x (skip lst i))
             )
@@ -2305,44 +2287,17 @@ See also: prod + reduce
 ;
 (defn fib
     "Compute the fibonocci number for the argument using the naive recursive algorithm and bigints."
-    | 0      -> 1
-    | 1      -> 1
+    | 0      -> 1i
+    | 1      -> 1i
     | number -> (+ (fib (- number 1)) (fib (- number 2)))
 )
 
 ;--------------------------------------------------------------------------
 ;
-(defn rfib
-"Implementation of 'fib' that uses recur to implement a tail-recursive 'fib' function"
-    [number (prev 0i) (current 1i)]
-
-    (if number
-        (recur (-- number) current (+ prev current))
-        current
-    )
-)
-
-;--------------------------------------------------------------------------
-
-(defn rpfib
-"A pattern function implementation of 'fib' that uses 'recur' and patterns."
+(defn fastfib
+    "A fast tail-recursive implementation of the 'fib' function"
     | 0 _ (current 0i) -> current
     | number (prev 0i) (current 1i) -> (recur (-- number) current (+ current prev))
-)
-
-;--------------------------------------------------------------------------
-;
-(defn ifib
-    "Compute the Fibonacci number for the argument using iteration."
-    [(^int number)]
-
-    (let [prev  0 current 1i]
-        (repeat number
-            ; use multiple assignment to compute the next values
-            (let prev:current: [current (+ prev current)])
-        )
-        current
-    )
 )
 
 ;--------------------------------------------------------------------------
@@ -2352,14 +2307,14 @@ See also: prod + reduce
 Compute the nth element in the Fibonacci sequence.
 This is computed lazily using the 'unfold' function.
 
-axamples:
+Examples:
     (iterfib 10)    ; returns 89
 
 See also: fib rpfib
 "
     [n]
 
-    (unfold (fn p:c: -> [c (+ p c)]) [1i 1i]
+    (unfold (\ p:c: -> [c (+ p c)]) [1i 1i]
         | take n
         | last
         | last)
@@ -2483,7 +2438,7 @@ See also: min max min-list smaller bigger
     | scalar            -> scalar
     | %none? func       -> nil
     | [x] func          -> x
-    | (^ISeq lst) func  -> (reduce lst (fn x y  -> (max x y func)))
+    | (^ISeq lst) func  -> (reduce lst (\ x y  -> (max x y func)))
     | scalar func       -> scalar
 )
 
@@ -2530,7 +2485,7 @@ See also: min max max-list smaller bigger
 "
     | x:     (func nil) -> x
     | (^ISeq lst)       -> (reduce lst smaller)
-    | (^ISeq lst) func  -> (reduce lst (fn x y  -> (min x y func)))
+    | (^ISeq lst) func  -> (reduce lst (\ x y  -> (min x y func)))
     | scalar (func nil) -> scalar
 )
 
@@ -2553,9 +2508,9 @@ Find the first index of the minimum element in a list.
 "
 Extract (remove and return) the n smallest items from a vector.
 "
-    | nil           _        -> []
-    | _ 0           r        -> r
-    | (^vector lst) n (r []) ->
+    | %none? _     -> []
+    | _ 0 (r nil)  -> r
+    | (^vector lst) (^int? n) (r []) ->
         (let s:i: (min-list-index lst))
         (.removeat lst i)
         (recur lst (-- n) (nconc s r))
@@ -2589,7 +2544,7 @@ See also: sort
 "
     | %none? -> nil
     | pivot:xs ->
-        (list/split xs (<= pivot) | (fn smaller:larger: ->
+        (list/split xs (<= pivot) | (\ smaller:larger: ->
             [ @(qsort smaller) pivot @(qsort larger) ]))
 )
 
@@ -2955,22 +2910,6 @@ Examples:
 
 ;--------------------------------------------------------------------------
 ;
-(defn rflatten
-"
-Flattens a sequence using patterns, destructuring and naive recursion.
-
-Examples:
-    (rflatten [[1 2] 4 4]       ; returns [1 2 3 4]
-    (rflatten [[[1]] [2]]       ; returns [1 2]
-
-See also: flatten
-"
-    | x:xs -> (concat (rflatten x) (rflatten xs))
-    | x    -> x
-)
-
-;--------------------------------------------------------------------------
-;
 (defn last-node
 "
 Returns the last node in a list. Not to be confused with the 'last'
@@ -2989,42 +2928,6 @@ See also: flatmap flatten
         (let lst (cdr lst))
     )
     lst
-)
-
-;--------------------------------------------------------------------------
-;
-(defn list/partition
-"
-Partition a list or vector into argument-sized pieces.
-
-Examples:
-    (list/partition [1 2 3 4] 2)    ; returns [[1 2] [3 4]]
-    (list/partition [1 2 3 4] 1)    ; returns [[1] [2] [3] [4]]
-
-See also: list/split
-"
-    [(^ISeq lst) (^int partitionSize)]
-
-    (let result [])
-    (let segment [])
-    (foreach e lst
-        (if (== (count segment) partitionSize)
-            (do
-                (.add result segment)
-                (let segment [e])
-            )
-            (do
-                (.add segment e)
-            )
-        )
-    )
-
-    ; add dangling segments
-    (when segment
-        (.add result segment)
-    )
-
-    result
 )
 
 ;--------------------------------------------------------------------------
@@ -3063,66 +2966,14 @@ Examples:
     (if (some? printFn)
 
         ; if a print function was specified, iuse it to print 1 row at a time
-        (list/partition slist cols | each (fn row ->
-            (map row (fn e -> (.padright (^string? e) width)) | join | printFn)))
+        (list/partition slist cols | each (\ row ->
+            (map row (\ e -> (.padright (^string? e) width)) | join | printFn)))
 
         ; otherwise return a single string
         (list/partition slist cols
-        | map (fn lst -> (map lst (fn e -> (.padright (^string? e) width)) | join))
+        | map (\ lst -> (map lst (\ e -> (.padright (^string? e) width)) | join))
         | join "\n")
     )
-)
-
-;--------------------------------------------------------------------------
-;
-(defn i-rev
-"
-Reverse a sequence using iteration. A new list is constructed and returned.
-The original list is not modified.
-"
-    [lst]
-
-    (let result ())
-    (foreach e lst
-        (let result (cons e result))
-    )
-
-    result
-)
-
-;--------------------------------------------------------------------------
-;
-(defn i-revswap
-"
-Iteratively reverse a vector in place using the 'swap' function.
-The updated list is returned.
-"
-    [(^Vector? lst)]
-
-    (let hd 0)
-    (let tl (-- (length lst)))
-
-    ; iterate through the list swapping elements until hd >= tl
-    (while (< hd tl)
-        (swap lst (pincr hd) lst (pdecr tl))
-    )
-    lst
-)
-
-;--------------------------------------------------------------------------
-;
-(defn r-rev
-    "Reverse a sequence recursively using pattern matching and naive recursion."
-    | x:xs -> (append (r-rev xs) x)
-    | x -> x
-)
-
-;--------------------------------------------------------------------------
-;
-(defn t-rev
-    "Reverse a sequence using pattermatching and tail-recursively"
-    | x:xs (r nil) -> (recur xs (cons x r))
-    | nil (r nil)  -> r
 )
 
 ;--------------------------------------------------------------------------
@@ -3134,13 +2985,13 @@ function evaluates to true for all elements, then this function returns
 true.
 
 Examples:
-    (all [1 2 3 4] (fn x  -> x (> x 0))) ; returns true
+    (all [1 2 3 4] (\ x  -> x (> x 0))) ; returns true
 
 See also: any
 "
     [lst func]
     (foreach n lst
-        (if (not (func n)) (return false))
+        (if-not (func n) (return false))
     )
     true
 )
@@ -3154,7 +3005,7 @@ function evaluates to true for any of the elements, then this
 function returns true.
 
 Examples:
-    (all [0 9 1 0] (fn x  -> x (> x 0))) ; returns true
+    (all [0 9 1 0] (\ x  -> x (> x 0))) ; returns true
 
 See also: any
 "
@@ -3611,7 +3462,7 @@ Make an ^EventHandler delegate out of a Braid lambda. The lambda must take
 two parameters: the object invoking the event and the eventArgs object.
 
 Examples:
-    (.Add_Shown MainForm (asEventHandler (fn o e -> (.Activate MainForm))))
+    (.Add_Shown MainForm (asEventHandler (\ o e -> (.Activate MainForm))))
 
 See also: CreateDelegate
 "
@@ -3670,7 +3521,7 @@ See also: type-of base-of
             "Public,Static,Instance"))
 
     (let type (if (is? obj ^type) obj (.GetType obj)))
-    (let members (. type 'GetMembers attrString))
+    (let members (. type :GetMembers attrString))
 
     ; build a dictionary from name to memberinfo for checking static properties
     ; PropertyInfo objects don't have .IsStatic so we have to check the associated
@@ -3760,7 +3611,7 @@ See also: completer
     | filter some?
     | map type-of
     | distinct
-    | flatmap (fn type ->
+    | flatmap (\ type ->
         (.GetMembers type (bor
             .system.reflection.bindingflags/Public
             .system.reflection.bindingflags/Static
@@ -3774,7 +3625,7 @@ See also: completer
     | filter pattern
     | distinct
     | sort
-    | map (fn n -> (str "." n))
+    | map (\ n -> (str "." n))
     )
 )
 
@@ -3811,7 +3662,7 @@ Exmples:
 ; for the core built-inss but there might be an issue for external binary
 ; modules.
 
-(try -catch: (fn e ->  (throw "Error processing help: ${(.message e)}" e))
+(try -catch: (\ e ->  (throw "Error processing help: ${(.message e)}" e))
     ((file/join-path braidhome "helpsource.tl"))
 )
 
@@ -3833,7 +3684,7 @@ Exmples:
 
     (.AppDomain/CurrentDomain | .GetAssemblies | flatmap .?GetTypes
         ; enable for debugging
-        ; | map (fn t -> (println t) t)
+        ; | map (\ t -> (println t) t)
         | filter -not "\<Private"
         | filter .?isPublic | filter -not #"__anonymous"
             | filter pattern)
@@ -3859,11 +3710,11 @@ Examples:
 
     ; completions for specific commands
     | prefix #"^.*[|(] *(map|filter|where|map|each|lazy-map|lazy-filter) +([^ ]*)$" after ->
-        ["(fn x -> x)"]
+        ["(\ x -> x)"]
 
     ; completions for reduce,foldl and foldr
     | prefix #"^.*[|(] *(reduce|foldl|foldr) +([^ ]*)$" after ->
-        ["(fn x y -> (+ x y))"]
+        ["(\ x y -> (+ x y))"]
 
     ; git command completions
     | prefix #"^.*[|(] *(git) +([^ ]*)$" after ->
@@ -3879,7 +3730,7 @@ Examples:
 
     ; completions for 'cd' only completes directories.
     | prefix #"^.*[|(] *(cd) +([^ ]*)$" after ->
-        (Get-Childitem -ea: :ignore -Directory "${prefix}*" | map .Name | map (fn f ->  (str "'" f)))
+        (Get-Childitem -ea: :ignore -Directory "${prefix}*" | map .Name | map (\ f ->  (str "'" f)))
 
     ; handle named command parameters e.g. get-childitem -rec<tab>
     | prefix #"^.*[(|] *([a-z][^ ]*).* +(-[a-z]*)$" after ->
@@ -3890,11 +3741,11 @@ Examples:
             (matchp func
                 | ^lambda ->
                     (.keywords func
-                    | map (fn obj ->
+                    | map (\ obj ->
                         (let k (.key obj))
                         (let trailing (if (.value obj | .RequiresArgument) ": " " "))
                         (str "-" k trailing))
-                    | filter (fn w -> (str/startswith w sw))
+                    | filter (\ w -> (str/startswith w sw))
                     )
 
                 | ^System.Management.Automation.AliasInfo | ^System.Management.Automation.CmdletInfo ->
@@ -3906,7 +3757,7 @@ Examples:
                     ; if the alias resolved to a cmdlet, return the parameter completions.
                     (forall pair (.?parameters func)
                         (str "-" (.key pair) (if (.SwitchParameter (.value pair)) "" ":"))
-                            | filter (fn w -> (str/startswith w sw)))
+                            | filter (\ w -> (str/startswith w sw)))
 
                 | -> []
             )
@@ -3924,10 +3775,10 @@ Examples:
                 (If var
                     (do
                         (.getmembers (type-of var)
-                        | map (fn x -> (str "." (.name x) " "))
+                        | map (\ x -> (str "." (.name x) " "))
                         | sort
                         | distinct
-                        | filter (fn y -> (str/startswith y member))
+                        | filter (\ y -> (str/startswith y member))
                         )
                    )
                )
@@ -3961,13 +3812,13 @@ Examples:
                 @__system_types
                 @((.GetTypes *callstack*) | .keys)
                 @(.BraidLang.Braid/callstack | .vars | .values | map .value
-                    | filter some? | map (fn e -> (. (.gettype e) :name)))
+                    | filter some? | map (\ e -> (. (.gettype e) :name)))
              ]
          )
 
          (distinct candidates
-            | filter (fn candidate -> (str/startswith candidate startStr))
-                | map (fn s -> (str (.value (!! matches 1)) "^" s)))
+            | filter (\ candidate -> (str/startswith candidate startStr))
+                | map (\ s -> (str (.value (!! matches 1)) "^" s)))
 
          ; BUGBUGBUG currently unused - returning all of the types is too much
          ;(.AppDomain/CurrentDomain | .GetAssemblies | flatmap .gettypes | filter -not #"__anonymous" | map tostring)
@@ -3976,7 +3827,7 @@ Examples:
     | #"^(\(?)\.([a-z0-9]+$)" before after ->
         ; search all of the types used in bound variables
         (all-members (^regex? (str "^" (.value (!! matches 2))))
-            | map (fn n -> (str (!! matches 1) n)))
+            | map (\ n -> (str (!! matches 1) n)))
 
     ; match quoted words against the file system
     | #"^\(?'([^ \t]+$)" before after ->
@@ -4011,7 +3862,7 @@ Examples:
             (Get-Childitem -File -ea: :ignore script-pattern | map .Name)
             (try (get-command -ea: :ignore cmdlet-pattern | map .name) -catch: [])
         | distinct
-        | map (fn s -> (str "(" s))
+        | map (\ s -> (str "(" s))
         )
 
     ; match unquoted words against functions and the current file system directory
@@ -4020,7 +3871,7 @@ Examples:
             ; try matching functions...
             (get-symbols | where bound? | map .Value | re/match-all "^${prefix}")
             ; try matching files...
-            (Get-Childitem -File -ea: :ignore "${prefix}*" | map .Name | map (fn f ->  (str "'" f)))
+            (Get-Childitem -File -ea: :ignore "${prefix}*" | map .Name | map (\ f ->  (str "'" f)))
         | distinct
         | sort -descending
         )
@@ -4122,12 +3973,12 @@ only '*.tl' files are scanned.
     | pattern ->
         (get-childitem -recurse: (^bool? rec) -file -filter: "*.tl"
         | map .fullname
-        | filter (fn f -> (read-file f (^regex? pattern)))
+        | filter (\ f -> (read-file f (^regex? pattern)))
         )
     | pattern filePath ->
         (get-childitem -recurse: (^bool? rec) -file -filter: filePath
         | map .fullname
-        | filter (fn f -> (read-file f (^regex? pattern)))
+        | filter (\ f -> (read-file f (^regex? pattern)))
         )
     )
 )
@@ -4211,7 +4062,7 @@ Examples:
 "
     []
 
-    (git.exe :status | filter #"deleted:|modified:" | map (fn n -> (re/split n | second)))
+    (git.exe :status | filter #"deleted:|modified:" | map (\ n -> (re/split n | second)))
 )
 
 ;--------------------------------------------------------------------------

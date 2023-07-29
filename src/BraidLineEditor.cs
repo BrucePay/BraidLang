@@ -965,7 +965,7 @@ namespace BraidLang
             string tempFile = System.IO.Path.GetTempFileName() + ".tl";
             System.IO.File.WriteAllText(tempFile, this._text.ToString());
             var process = new System.Diagnostics.Process();
-            process.StartInfo.FileName = "vim.exe";
+            process.StartInfo.FileName = "vim";
             process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
             process.StartInfo.Arguments = " -n " + tempFile;
             // process.StartInfo.CreateNoWindow = true;

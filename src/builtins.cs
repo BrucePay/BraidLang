@@ -2144,6 +2144,28 @@ namespace BraidLang
 
             /////////////////////////////////////////////////////////////////////
             ///
+            /// Append together the arguments into a vector instead of a list.
+            ///
+            FunctionTable[Symbol.FromString("add")] = (Vector args) =>
+            {
+                if (args.Count != 2)
+                {
+                    BraidRuntimeException($"add: requires two arguments: a vector (^IList) and a value to add to that vector, not {args}");
+                }
+
+                IList input = args[0] as IList;
+                if (input == null)
+                {
+                    BraidRuntimeException($"add: the vector argument to this function must be a non-null vector, not {args}");
+                }
+
+                input.Add(args[1]);
+
+                return input;
+            };
+
+            /////////////////////////////////////////////////////////////////////
+            ///
             /// Get the first element from a list or vector.
             ///
             FunctionTable[Symbol.FromString("head")] =
@@ -2151,7 +2173,7 @@ namespace BraidLang
             {
                 if (args.Count != 1)
                 {
-                    BraidRuntimeException($"car: exactly takes one argument not {args}");
+                    BraidRuntimeException($"car: requires exactly takes one argument, not {args}");
                 }
 
                 switch (args[0])
@@ -6436,9 +6458,18 @@ namespace BraidLang
                     data.Car = item;
                     try
                     {
-                        foreach (var nesteditem in GetNonGenericEnumerableFrom(Braid.Eval(cond, true, true)))
+                        // don't flatten strings or dictionaries.
+                        object obj = Braid.Eval(cond, true, true);
+                        if (obj is string || obj is IDictionary)
                         {
-                            result.Add(nesteditem);
+                            result.Add(obj);
+                        }
+                        else
+                        {
+                            foreach (var nesteditem in GetNonGenericEnumerableFrom(Braid.Eval(cond, true, true)))
+                            {
+                                result.Add(nesteditem);
+                            }
                         }
                     }
                     catch (InvalidCastException)
@@ -6503,10 +6534,19 @@ namespace BraidLang
                             break;
                         }
 
-                        data.Car = item;
-                        foreach (var nesteditem in GetNonGenericEnumerableFrom(Braid.Eval(condExpr, true, true)))
+                        if (item is string || item is IDictionary)
                         {
-                            yield return nesteditem;
+                            data.Car = item;
+                            object obj = Braid.Eval(condExpr, true, true);
+                            yield return obj;
+                        }
+                        else
+                        {
+                            data.Car = item;
+                            foreach (var nesteditem in GetNonGenericEnumerableFrom(Braid.Eval(condExpr, true, true)))
+                            {
+                                yield return nesteditem;
+                            }
                         }
                     }
                 }
@@ -6550,7 +6590,7 @@ namespace BraidLang
                                     break;
                                 }
 
-                                if (element is string || element is IDictionary)
+                                if (element is null || element is string || element is IDictionary)
                                 {
                                     result.Add(element);
                                 }
@@ -6611,7 +6651,7 @@ namespace BraidLang
                                     break;
                                 }
 
-                                if (element is string || element is IDictionary)
+                                if (element == null || element is string || element is IDictionary)
                                 {
                                     yield return element;
                                 }
@@ -6629,9 +6669,11 @@ namespace BraidLang
                             }
                             continue;
                         }
-
-                        // Otherwise, just add it as a scalar
-                        yield return val;
+                        else
+                        {
+                            // Otherwise, just add it as a scalar
+                            yield return val;
+                        }
                     }
                 }
 
@@ -9587,6 +9629,53 @@ namespace BraidLang
                 return new Vector { res1, res2 };
             };
 
+            /////////////////////////////////////////////////////////////////////
+            ///
+            /// Partition an enumerable based into segments of the specified size
+            ///
+            FunctionTable[Symbol.FromString("list/partition")] = (Vector args) =>
+            {
+                if (args.Count != 2)
+                {
+                    BraidRuntimeException($"The 'list/partition' function requires 2 arguments: (list/split <list> <segmentSize>).");
+                }
+
+                var res = new Vector();
+                var seg = new Vector();
+
+                var list = GetNonGenericEnumerableFrom(args[0]);
+                if (list == null)
+                {
+                    return res;
+                }
+
+                int segSize = 0;
+                if (args[1] is int)
+                {
+                    segSize = (int)args[1];
+                }
+                else
+                {
+                    BraidRuntimeException($"The second argument to the 'list/partition' function must be an integer: (list/split <list> <segmentSize>).");
+                }
+
+                foreach (object item in list)
+                {
+                    seg.Add(item);
+                    if (seg.Count == segSize)
+                    {
+                        res.Add(seg);
+                        seg = new Vector();
+                    }
+                };
+
+                if (seg.Count > 0)
+                {
+                    res.Add(seg);
+                }
+
+                return res;
+            };
 
             /////////////////////////////////////////////////////////////////////
             ///

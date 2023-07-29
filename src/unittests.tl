@@ -231,6 +231,50 @@ lambda [
 )
 
 ;-------------------------------------------------------
+(test/exec :str/startswith1
+    (fn ->
+        (str/startsWith "abcde" "ab")
+    )
+    true
+)
+(test/exec :str/startswith1a
+    (fn ->
+        (str/startsWith "abcde" "xyz")
+    )
+    false
+)
+(test/exec :str/startswith2
+    (fn ->
+        (str/startsWith "abcde" "a")
+    )
+    true
+)
+(test/exec :str/startswith2a
+    (fn ->
+        (str/startsWith "abcde" "x")
+    )
+    false
+)
+(test/exec :str/startswith3
+    (fn ->
+        (str/startsWith "abcde" "")
+    )
+    true
+)
+(test/exec :str/startswith3a
+    (fn ->
+        (str/startsWith "abcde" nil)
+    )
+    true
+)
+(test/exec :str/startswith4
+    (fn ->
+        (str/startsWith "abcde" \a)
+    )
+    true
+)
+
+;-------------------------------------------------------
 ; the "fmt" function
 (test/exec :fmt1
     (fn ->
@@ -1680,6 +1724,27 @@ lambda [
 )
 
 ;-------------------------------------------------------
+; test getvar function
+(test/exec :getvar1
+    (fn ->
+        (getvar 'getvar | .value | == getvar)
+    )
+    true
+)
+(test/exec :getvar2
+    (fn ->
+        (getvar 'getvar | .name | == 'getvar)
+    )
+    true
+)
+(test/exec :getvar3
+    (fn ->
+        (getvar "no such var")
+    )
+    null
+)
+
+;-------------------------------------------------------
 ; test undef function
 (test/exec :undef1
     (fn ->
@@ -2970,104 +3035,6 @@ lambda [
 )
 
 ;-------------------------------------------------------
-; Test the various junk functions in 'autoload.tl'
-(test/exec :t-rev1
-    (fn ->
-        (t-rev [1 2 3 4] | is? ^List)
-    )
-    true
-)
-(test/exec :t-rev2
-    (fn ->
-        (t-rev [1 2 3 4])
-    )
-    '(4 3 2 1)
-)
-(test/exec :t-rev3
-    (fn ->
-        (let data '(1 2 3 4))
-        (t-rev data)
-        data
-    )
-    '(1 2 3 4)
-)
-
-(test/exec :r-rev1
-    (fn ->
-        (r-rev [1 2 3 4] | is? ^List)
-    )
-    true
-)
-(test/exec :r-rev2
-    (fn ->
-        (r-rev [1 2 3 4])
-    )
-    '(4 3 2 1)
-)
-(test/exec :r-rev3
-    (fn ->
-        (let data '(1 2 3 4))
-        (r-rev data)
-        data
-    )
-    '(1 2 3 4)
-)
-
-(test/exec :i-rev1
-    (fn ->
-        (i-rev [1 2 3 4] | is? ^List)
-    )
-    true
-)
-(test/exec :i-rev2
-    (fn ->
-        (i-rev [1 2 3 4])
-    )
-    '(4 3 2 1)
-)
-(test/exec :i-rev3
-    (fn ->
-        (let data '(1 2 3 4))
-        (i-rev data)
-        data
-    )
-    '(1 2 3 4)
-)
-
-(test/exec :i-revswap1
-    (fn ->
-        (i-revswap [1 2 3 4] | is? ^Vector)
-    )
-    true
-)
-(test/exec :i-revswap2
-    (fn ->
-        (i-revswap [1 2 3 4])
-    )
-    '(4 3 2 1)
-)
-(test/exec :i-revswap3
-    (fn ->
-        ; in-place 'reverse' that mutates the original Vector
-        (let data [1 2 3 4])
-        (i-revswap data)
-        data
-    )
-    '(4 3 2 1)
-)
-(test/exec :i-revswap4
-    (fn ->
-        ; in this case, the argument list is cast to a new Vector
-        ; by the type constraint on the function. This copy is mutated and
-        ; returned. The list remains unchanged.
-        (let data '(1 2 3 4))
-        (i-revswap data)
-        data
-    )
-    '(1 2 3 4)
-)
-
-;-------------------------------------------------------
 ; Test the 'if' function
 (test/exec :if1
     #(do
@@ -3167,6 +3134,9 @@ lambda [
 (test/exec :re/split1 #(re/split "a b c") ["a" "b" "c"])
 (test/exec :re/split2 #(re/split "a,b,c,d" ",") ["a" "b" "c" "d"])
 (test/exec :re/split3 #(re/split "a,,,b::c,d" #"[,:]+") ["a" "b" "c" "d"])
+(test/exec :re/split4 #(re/split "a+b+c" '+) ["a" "b" "c"])  ; test with symbol
+(test/exec :re/split5 #(re/split "a+b+c" "+") ["a" "b" "c"]) ; test with string
+(test/exec :re/split6 #(re/split "a+b+c" \+) ["a" "b" "c"])  ; test with char literal
 
 ;-------------------------------------------------------
 ; The 're/split-all' function
@@ -3174,9 +3144,17 @@ lambda [
     #(re/split-all ["a b c" "d e f"])
     ["a" "b" "c" "d" "e" "f"]
 )
+(test/exec :re/split-all1a
+    #(re/split-all -dontflatten ["a b c" "d e f"])
+    [["a" "b" "c"] ["d" "e" "f"]]
+)
 (test/exec :re/split-all2
-    #(re/split-all ["a a,b,c" "d,e,,,f"] #",+")
+    #(re/split-all ["a a,b,c" "d,e,,,f"] #",+") ; split with specified pattern
     ["a a" "b" "c" "d" "e" "f"]
+)
+(test/exec :re/split-all2a
+    #(re/split-all -dontflatten ["a a,b,c" "d,e,,,f"] #",+") ; split with specified pattern
+    [["a a" "b" "c"] ["d" "e" "f"]]
 )
 (test/exec :re/split-all3
     #(re/split-all "a b c")
@@ -3672,6 +3650,48 @@ lambda [
 )
 
 ;-------------------------------------------------------
+; test the add function
+(test/exec :add1
+    (fn ->
+        (add [2 3] 1)
+    )
+    [2 3 1]
+)
+(test/exec :add2
+    (fn ->
+        (add [] 1)
+    )
+    [1]
+)
+(test/exec :add3
+    (fn ->
+        (try (add null 1) -catch: "exception")
+    )
+    "exception"
+)
+(test/exec :add4
+    (fn ->
+        ; verify that add mutates the collection
+        (let res [])
+        (add res 1 | add 2)
+        res
+    )
+    [1 2]
+)
+(test/exec :add5
+    (fn ->
+        (try (add '(2 3 4) 1) -catch: "exception")
+    )
+    "exception"
+)
+(test/exec :add6
+    (fn ->
+        (add [1 2 3] [4 5])
+    )
+    [1 2 3 [4 5]]
+)
+
+;-------------------------------------------------------
 ; Test vector indexing
 (test/exec :vector-indexing1
     (fn ->
@@ -3758,46 +3778,6 @@ lambda [
     (fn ->
         ; dictionaries don't get flattened.
         (lazy-flatten [1 {:a 2} 3])
-    )
-    [1 {:a 2} 3]
-)
-
-;-------------------------------------------------------
-; The 'rflatten' function
-(test/exec :rflatten1
-    (fn ->
-        (rflatten 3.14)
-    )
-    3.14
-)
-(test/exec :rflatten2
-    (fn ->
-        (rflatten [1 2 3])
-    )
-    [1 2 3]
-)
-(test/exec :rflatten3
-    (fn ->
-        (rflatten [1 [2 3] 4 [5 6]])
-    )
-    [1 2 3 4 5 6]
-)
-(test/exec :rflatten4
-    (fn ->
-        (rflatten (list 1 2 3))
-    )
-    [1 2 3]
-)
-(test/exec :rflatten5
-    (fn ->
-        (rflatten [1 '(2 3) 4 '(5 6)])
-    )
-    [1 2 3 4 5 6]
-)
-(test/exec :rflatten6
-    (fn ->
-        ; dictionaries don't get fattened.
-        (rflatten [1 {:a 2} 3])
     )
     [1 {:a 2} 3]
 )
@@ -7125,25 +7105,6 @@ lambda [
     10946
 )
 
-(test/exec :rfib1
-    #(rfib 10)
-    89
-)
-(test/exec :rfib2
-    #(rfib 20)
-    10946
-)
-
-; tail-recursive, pattern-matching
-(test/exec :rpfib1
-    #(rpfib 10)
-    89
-)
-(test/exec :rpfib2
-    #(rpfib 50)
-    20365011074
-)
-
 ; uses the iterator function
 (test/exec :iterfib1
     #(iterfib 10)
@@ -7155,17 +7116,17 @@ lambda [
 )
 
 ; test the iterative/imperative implementation
-(test/exec :ifib1
-    #(ifib 10)
+(test/exec :fastfib1
+    #(fastfib 10)
     89
 )
-(test/exec :ifib2
-    #(ifib 20)
+(test/exec :fastfib2
+    #(fastfib 20)
     10946
 )
-(test/exec :ifib3
+(test/exec :fastfib3
     (fn ->
-        (ifib 200)
+        (fastfib 200)
     )
     453973694165307953197296969697410619233826
 )
@@ -15363,7 +15324,7 @@ lambda [
     (fn ->
         (completer "" "| map " "")
     )
-    [ "(fn x -> x)" ]
+    [ "(\ x -> x)" ]
 )
 
 ;-----------------------------------------------------------
@@ -16860,6 +16821,77 @@ lambda [
         (list {:a 1 :b 2} {:a 2 :b 3} | filter {:a 2})
     )
     [{:a 2 :b 3}]
+)
+
+;--------------------------------------------------------------------
+; Test select-type (this is slow)
+(test/exec :select-type1
+    (fn ->
+        (select-type #"^BraidLang.Vector$" | !! 0)
+    )
+    ^BraidLang.Vector
+)
+;--------------------------------------------------------------------
+; Test extract-min
+(test/exec :extract-min1
+    (fn ->
+        (extract-min [4 2 1 6 5] 1)
+    )
+    [ 1 ]
+)
+(test/exec :extract-min2
+    (fn ->
+        (extract-min [4 2 1 6 5] 2)
+    )
+    [ 1 2 ]
+)
+(test/exec :extract-min3
+    (fn ->
+        (extract-min [4 2 1 6 5] 0)
+    )
+    nil
+)
+(test/exec :extract-min4
+    (fn ->
+        (extract-min ["one" "two" "three"] 1)
+    )
+    ["one"]
+)
+(test/exec :extract-min5
+    (fn ->
+        (extract-min ["one" "two" "three"] 2)
+    )
+    ["one" "three"]
+)
+(test/exec :extract-min6
+    (fn ->
+        (extract-min [] 2)
+    )
+    []
+)
+(test/exec :extract-min7
+    (fn ->
+        (try (extract-min [4 2 1 6 5] -1) | is? ^exception)
+    )
+    true
+)
+(test/exec :extract-min8
+    (fn ->
+        (try (extract-min [4 2 1 6 5] -2) | is? ^exception)
+    )
+    true
+)
+(test/exec :extract-min9
+    (fn ->
+        (extract-min [4 2 1 6 5] "2")
+    )
+    [1 2]
+)
+(test/exec :extract-min10
+    (fn ->
+        (try (extract-min [4 2 1 6 5] "one") | is? ^exception)
+    )
+    true
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

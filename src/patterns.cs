@@ -178,6 +178,8 @@ namespace BraidLang
 
                         if (Braid.MultipleAssignment(callstack, Variable, thingToMatch, ScopeType.Local, quiet: true))
                         {
+                            // we've consumed one element from the args vector
+                            consumed++; //BUGBUGBUGBUGBUGBUG
                             return MatchElementResult.Matched;
                         }
                         else
@@ -187,6 +189,8 @@ namespace BraidLang
                     }
                 }
 
+                // Quick test for indexible items. If the number of names to bind exceeds the
+                // number of bindable objects then the match fails.
                 if (argvect is IList argvectilist && argvectilist.Count < Names.Count - 1)
                 {
                     return MatchElementResult.NoMatch;
