@@ -10800,11 +10800,7 @@ lambda [
     )
     [
         "I am npoint1: {\"x\" : 21, \"y\" : 31} !!"
-        (if IsCoreClr
-            ; order is different between Core and Desktop
-            "I am npoint2: {\"x\" : 15, \"y\" : 30, \"z\" : 4} !!"
-            "I am npoint2: {\"z\" : 4, \"x\" : 15, \"y\" : 30} !!"
-        )
+        "I am npoint2: {\"z\" : 4, \"x\" : 15, \"y\" : 30} !!"
     ]
 )
 (test/exec :deftype7
