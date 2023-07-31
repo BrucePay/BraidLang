@@ -318,7 +318,14 @@ namespace BraidLang
                         if (k.Length > prefix.Length)
                         // && string.Equals(prefix, k.Substring(0, prefix.Length), StringComparison.OrdinalIgnoreCase))
                         {
-                            matches.Add(k.Substring(prefix.Length));
+                            if (k[0] == '\'' && prefix[0] != '\'')
+                            {
+                                matches.Add(k.Substring(prefix.Length+1));
+                            }
+                            else
+                            {
+                                matches.Add(k.Substring(prefix.Length));
+                            }
                         }
                     }
                     results = matches.ToArray();
