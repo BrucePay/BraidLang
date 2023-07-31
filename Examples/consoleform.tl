@@ -142,12 +142,15 @@
         (let keypress "")
         (let oldfg (.console/foregroundcolor))
         (let oldbg (.console/backgroundcolor))
-        (let oldCursor (.console/cursorvisible))
+        ; this call is not supported on all platforms so swallow the error
+        (let oldCursor true)
+        (try (let oldCursor (.console/cursorvisible)))
 
         (try 
             (.console/foregroundcolor oldBg)
             (.console/backgroundcolor oldFg)
-            (.console/cursorSize 25)
+            ; this call is not supported on all platforms so swallow the error 
+            (try (.console/cursorSize 25))
             (.console/cursorvisible true)
 
             (.console/SetCursorPosition (.x this) (.y this))
@@ -240,7 +243,7 @@
             (do 
                 (.console/foregroundcolor oldFg)
                 (.console/backgroundcolor oldBg)
-                (.console/cursorvisible oldCUrsor)
+                (.console/cursorvisible oldCursor)
                 (.render this)
             )
         ) ; try
