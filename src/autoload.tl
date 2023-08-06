@@ -1177,6 +1177,16 @@ regular expression can be specified to filter the results.
     (global "DIRLIST" {(pwd) true})
 )
 
+; load the previously stored list of directories
+(global "DIRS_PATH"  (join-path (resolve-path "~/.config") "braid.dirs"))
+(if (test-path DIRS_PATH)
+    (read-lines DIRS_PATH | map (\ p -> (!! DIRLIST p true)))
+)
+
+;--------------------------------------------------------------------------
+;
+; Initialize the OLDPATH variable used for "cd -"
+;
 (if (not (bound? 'OLDPATH) | or (not OLDPATH))
     (global "OLDPATH" .environment/CurrentDirectory)
 )
@@ -1245,6 +1255,8 @@ regular expression can be specified to filter the results.
             (.environment/CurrentDirectory (^string? (get-location)))
             (global "OLDPATH" temp)
             (!! DIRLIST .environment/CurrentDirectory true)
+            ; save the current dir list
+            (.keys DIRLIST | sort | write-lines DIRS_PATH)
             .environment/CurrentDirectory
     )
 )
