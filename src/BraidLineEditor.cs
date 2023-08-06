@@ -92,6 +92,14 @@ namespace BraidLang
         public History CommandHistory { get { return _history; }}
         private readonly History _history;
 
+        public string HistoryDir
+        {
+            get
+            {
+	            return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            }
+        }
+
         // The contents of the kill buffer (cut/paste in Emacs parlance)
         private string _killBuffer = "";
 

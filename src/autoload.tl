@@ -1178,7 +1178,8 @@ regular expression can be specified to filter the results.
 )
 
 ; load the previously stored list of directories
-(global "DIRS_PATH"  (join-path (resolve-path "~/.config") "braid.dirs"))
+;(global "DIRS_PATH"  (join-path (resolve-path "~/.config") "braid.dirs"))
+(global "DIRS_PATH" (join-path (.historydir *line-editor*) "braid.dirs"))
 (if (test-path DIRS_PATH)
     (read-lines DIRS_PATH | map (\ p -> (!! DIRLIST p true)))
 )
