@@ -119,6 +119,7 @@ namespace BraidLang
             StringBuilder token = new StringBuilder();
             StringBuilder strBldr = new StringBuilder();
             int inString = 0;
+            bool tripleString = false;
             bool inComment = false;
             int commentStart = 0;
             Stack<QuoteType> quoteStack = new Stack<QuoteType>();
@@ -142,6 +143,16 @@ namespace BraidLang
                 }
 
                 return text[offset + 1];
+            }
+
+            char nextchar2()
+            {
+                if (offset + 2 >= text.Length)
+                {
+                    return '\0';
+                }
+
+                return text[offset + 2];
             }
 
             char prevchar()
@@ -204,8 +215,14 @@ namespace BraidLang
                         strBldr.Append(c);
                         gotStringQuote = false;
                     }
-                    else if (c == '"')
+                    else if (c == '"' && (! tripleString  || (nextchar() == '"' && nextchar2() == '"')))
                     {
+                        if (tripleString)
+                        {
+                            offset += 2;
+                            tripleString = false;
+                        }
+
                         string str = strBldr.ToString();
 
                         object obj = null;
@@ -1026,6 +1043,12 @@ namespace BraidLang
                 else if (c == '"')
                 {
                     inString = lineno;
+                    // Handle triple-quoted strings
+                    if (nextchar() == '"' && nextchar2() == '"')
+                    {
+                        tripleString = true;
+                        offset += 2;
+                    }
                 }
                 else if (';' == c)
                 {
@@ -1125,8 +1148,16 @@ namespace BraidLang
 
             if (inString > 0)
             {
-                throw new IncompleteParseException(BraidCompilerException.Annotate(text, offset, Braid._current_file, lineno,
-                    $"Unterminated string constant starting on line {inString}"));
+                if (tripleString)
+                {
+                    throw new IncompleteParseException(BraidCompilerException.Annotate(text, offset, Braid._current_file, lineno,
+                        $"Unterminated triple-quoted string constant starting on line {inString}"));
+                }
+                else
+                {
+                    throw new IncompleteParseException(BraidCompilerException.Annotate(text, offset, Braid._current_file, lineno,
+                        $"Unterminated string constant starting on line {inString}"));
+                }
             }
 
             // Handle dangling tokens...

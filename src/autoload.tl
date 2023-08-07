@@ -43,15 +43,15 @@ See also: load using-module
 ;--------------------------------------------------------------------------
 ;
 (defmacro for
-"
-Macro implementing the for \"statement\" built on top of the while function.
+"""
+Macro implementing the for "statement" built on top of the while function.
 
 Examples:
     (for (def i 0) (<= i 10) (incr i)
-        (println \"Hi there\")
-        (println \"i is\" i)
+        (println "Hi there")
+        (println "i is" i)
     )
-"
+"""
     [init-expr test-expr incr-expr &args]
 
     `(do ~init-expr (while ~test-expr ~@args ~incr-expr))
@@ -163,21 +163,21 @@ Examples:
 ;--------------------------------------------------------------------------
 ;
 (defmacro case
-"
+"""
 A macro for the 'case' expression. A case expression looks like:
-  (case (+ 2 3) 1 \"One\" 2 \"Two\" 3 \"three\")
+  (case (+ 2 3) 1 "One" 2 "Two" 3 "three")
 which will generate a cond statement that looks like:
   (do
     (def sym_140875202 (+ 2 3))
     (cond (== sym_140875202 1)
-        \"One\" (== sym_140875202 2)
-        \"Two\" (== sym_140875202 3)
-        \"three\"
+        "One" (== sym_140875202 2)
+        "Two" (== sym_140875202 3)
+        "three"
     )
   )
 
 See also: if cond matchp
-"
+"""
     [&args]
 
     ; the variable used to hold the value being tested
@@ -597,18 +597,18 @@ Macro shortcut to 'let -success ...'
 ;--------------------------------------------------------------------------
 ;
 (defn parse-text
-"
+"""
 Parses a string into s-Expressions. This can be useful to see what a macro
 expands to.
 
 Examples:
-    (.BraidLang.Braid/parse \"(for (let i 0) (< i 10) (incr i))\")
+    (.BraidLang.Braid/parse "(for (let i 0) (< i 10) (incr i))")
     ; after macro expansion, resolves to:
     ((do (local i 0) (while (< i 10) (incr i))))
     ; with the macro fully expanded.
 
 See also: file/parse eval
-"
+"""
     [text]
 
     (.BraidLang.Braid/parse text)
@@ -1048,16 +1048,16 @@ Examples: (let fib (memoize fib))
 ; Implement a trampoline function for Braid
 ;
 (defn trampoline
-"
+"""
 A 'trampoline' function for Braid. This takes a function of one argument
 that will either return a new function of no arguments or a value. If a function
 is returned, it's called it with no arguments. This is repeated until a non-function
 value is returned.
 
 Examples:
-    (defn foo [x] (if x (do (info :x x) #(foo (-- x))) \"All Done\"))  ; function to trampoline
+    (defn foo [x] (if x (do (info :x x) #(foo (-- x))) "All Done"))  ; function to trampoline
     (trampoline foo 10)                                                ; trampoline it.
-"
+"""
     [func arg]
 
     (let res (func arg))
@@ -1381,18 +1381,18 @@ See also: get-env env
 ;--------------------------------------------------------------------------
 ;
 (defn env
-"
+"""
 Gets all of the defined environment variables. An optional pattern (regex) can
 be specified to filter the list. An option '-scope:' can be specified to
 choose whether to dump the process, user or machine environment variables.
 
 Examples:
-    (env)                           ; get all process-scoped environment variables
-    (env #\"pro\")                  ; get all process-scoped variables whose name matches 'pro'
-    (env #\"pro\" -scope: 'machine) ; get all machine-scoped variables matching 'pro'
+    (env)                         ; get all process-scoped environment variables
+    (env #"pro")                  ; get all process-scoped variables whose name matches 'pro'
+    (env #"pro" -scope: 'machine) ; get all machine-scoped variables matching 'pro'
 
 See also: get-env set-env
-"
+"""
     [(^regex? pattern #".") :scope]
 
     (let result
@@ -1474,15 +1474,15 @@ Turn all of the elements in a list into individual strings.
 ;--------------------------------------------------------------------------
 ;
 (defn toSourceString
-"
+"""
 Convert an object to a source-formatted string (i.e. escapes are included
 in the strings, etc.)
 
 Examples:
-    (toSourceString \"abc\")      ; returns '\"abc\"' not 'abc'
+    (toSourceString "abc")      ; returns '"abc"' not 'abc'
     (toSourceString 3.0)        ; returns '3.0' not '3'
-    (toSourceString #\"[a-z]\")   ; returns '#\"[a-z]\"' not '[a-z]'
-"
+    (toSourceString #"[a-z]")   ; returns '#"[a-z]"' not '[a-z]'
+"""
     [data]
 
     (.BraidLang.Utils/toSourceString data)
@@ -1503,18 +1503,18 @@ string that will fit on one line on the console.
 ;--------------------------------------------------------------------------
 ;
 (defn str/startsWith
-"
+"""
 The 'str/startswith' function returns true if that argument
 string starts with the string fragment in the second argument.
 The comparison is done case-insensitively by default. Use -case
 to specify case-sensitive comparisons.
 
 Examples:
-    (str/startswith \"abcd\" \"ab\")        ; returns true
-    (str/startswith \"ABCD\" \"ab\")        ; returns true
-    (str/startswith -case \"ABCD\" \"ab\")  ; returns false
-    (str/startswith \"123abcd\" \"ab\")     ; returns false
-"
+    (str/startswith "abcd" "ab")        ; returns true
+    (str/startswith "ABCD" "ab")        ; returns true
+    (str/startswith -case "ABCD" "ab")  ; returns false
+    (str/startswith "123abcd" "ab")     ; returns false
+"""
     [(^string? str ) (^string? frag) :case]
 
     (if case
@@ -1574,7 +1574,7 @@ Return all of the elements from a list that don't match the argument regex.
 ;--------------------------------------------------------------------------
 ;
 (defspecial ifmap
-"
+"""
 The 'ifmap' special form can be used when processing data in a pipeline.
 The first argument must be a list to process. The second argument is the
 conditional expression. The third and optional fourth arguments are the 'if part'
@@ -1583,10 +1583,10 @@ expression. To provide accesss to the current pipeline object, 'ifmap'
 binds that value to the variable 'it' in the current scope.
 
 Examples:
-   (range 10 | ifmap (% it 2) \"odd\" \"even\")
+   (range 10 | ifmap (% it 2) "odd" "even")
 
 See also: if map
-"
+"""
     [lst (cond-expr) (if-part) (else-part null)]
 
     (upvar 'it 'it)
@@ -1607,17 +1607,17 @@ See also: if map
 ;--------------------------------------------------------------------------
 ;
 (defn re/replace
-"
+"""
 Replace all occurances of a substring in a string with an optional
 replacement string. If the replacement string is not provided
 then the empty string will be used.
 
 Examples:
-    (re/replace \"abcd\" #\"[bd]+\")            ; returns \"ab\"
-    (re/replace \"abcd\" #\"[bd]+\" \"---\")    ; returns \"a---d\"
+    (re/replace "abcd" #"[bd]+")          ; returns "ab"
+    (re/replace "abcd" #"[bd]+" "---")    ; returns "a---d"
 
 See also: re/replace-all
-"
+"""
     | (^string? string) (^regex? regex) (^string? replaceStr) ->
         (.replace (^regex? regex) (^string? string) (^string? replaceStr))
     | (^string? string) (^regex regex) ->
@@ -1629,17 +1629,17 @@ See also: re/replace-all
 ;--------------------------------------------------------------------------
 ;
 (defn re/replace-all
-"
+"""
 Process a list of strings, replacing all occurances of the target string
 in each list item with the provided replacement string. If no replacement
 string has been provided, the empty string will be used.
 
 Examples:
-    (ls | .name | re/replace-add #\"\.tl\")     ; remove the .tl extension
-    (ls | .name | re/replace-add #\"\.tl\" \".br\") ; replace the .tl extension with .br
+    (ls | .name | re/replace-add #"\.tl")       ; remove the .tl extension
+    (ls | .name | re/replace-add #"\.tl" ".br") ; replace the .tl extension with .br
 
 See also: re/replace
-"
+"""
     [lst (^regex? regexToReplace) (^string? replaceStr "")]
 
     (lst | map (\ it -> (.replace regexToReplace (^string? it) replaceStr)))
@@ -1648,17 +1648,17 @@ See also: re/replace
 ;--------------------------------------------------------------------------
 ;
 (defn re/split
-"
+"""
 The 'split' function will split a string into a number of pieces based on a provided
-regular expression or using the default expression which is #\" +\". If the pattern is
-empty i.e. #\"\", the string will be split into individual 1-character strings.
+regular expression or using the default expression which is #" +". If the pattern is
+empty i.e. #"", the string will be split into individual 1-character strings.
 
 Examples:
-    (re/split \"a,b,c\" #\",\")    ; returns [\"a\", \"b\", \"c\"]
-    (re/split \"a,b,c\" , #\"\")   ; An empty pattern will split the string into individual characters.
+    (re/split "a,b,c" #",")    ; returns ["a", "b", "c"]
+    (re/split "a,b,c" , #"")   ; An empty pattern will split the string into individual characters.
 
 See also: re/split-all
-"
+"""
     | stringToSplit (^symbol by) ->
         (.split (tostring stringToSplit) (.value by) | to-vector)
 
@@ -1822,7 +1822,7 @@ See also: + join qstr
 ;--------------------------------------------------------------------------
 ;
 (defspecial qstr
-"
+"""
 Concatenates all unevaluated arguments into a string. Unquoted
 elements are evaluated.
 
@@ -1830,10 +1830,10 @@ Examples:
      (let 1) (let y 2)
      (qstr this is a test x is ~x y is ~y)
 returns the string
-    \"this is a test x is 1 y is 2\"
+    "this is a test x is 1 y is 2"
 
 See also: + join str
-"
+"""
     [ &args ]
 
     (let unquotesym (get-symbol 'unquote))
@@ -1850,17 +1850,17 @@ See also: + join str
 ;--------------------------------------------------------------------------
 ;
 (defn insert-string
-"
+"""
 Inserts a substring into a string at the specified location. If the specified
 location is negative, it will be treated as the offset from the end of the
 string instead of from the beginning.
 
 Examples:
-    (insert-string \"\abcdef\" 3 \"123\") ; returns 'abc123def'
-    (insert-string \"abcdef\" -4 \"123\") ; returns 'ad123cdef'
+    (insert-string "\abcdef" 3 "123") ; returns 'abc123def'
+    (insert-string "abcdef" -4 "123") ; returns 'ad123cdef'
 
 See also: str join
-"
+"""
     [(^string source) (^int index) (^string newStr)]
 
     (cond
@@ -2722,15 +2722,15 @@ includes the item at the 'end' position.
 ;--------------------------------------------------------------------------
 ;
 (defn debug/pwatch
-"
+"""
 The 'debug/pwatch' (pipeline watch) function is a debugging utility that can be
 inserted into a pipeline to see what's passing through the pipeline. The
 output display will prefixed with the user specified tag to help correlate
 the output. An optional filter may be specified to reduce the ammount of output.
 
 Examples:
-    (ls | pwatch \"files\" #\".cs$\" | map .length)
-"
+    (ls | pwatch "files" #".cs$" | map .length)
+"""
     [input (^string tag) (outputFilter null)]
 
     (if outputFilter
@@ -3098,16 +3098,16 @@ See also: read-file write-text write-data write-lines
 ;--------------------------------------------------------------------------
 ;
 (defn write-text
-"
+"""
 Write an object to a text file. If the object is a string, just write
 it as is.
 
 Examples:
-    (write-file \"Hello.\" 'file.txt)           ; write 'Hello.' to file.txt
+    (write-file "Hello." 'file.txt)           ; write 'Hello.' to file.txt
     (read-text 'foo.txt | write-text 'bar.txt)  ; copies the contents from foo.txt to bar.txt.
 
 See also: read-text read-data write-data read-file write-lines write-source
-"
+"""
     [text (^string? path)]
 
     (if (not (is? text ^string))
@@ -3312,9 +3312,9 @@ See also: new-vector to-vector
 ;--------------------------------------------------------------------------
 ;
 (defn slice
-"
+"""
 The 'slice' function returns a ^Slice of an indexable collection (e.g a ^Vector or ^Array).
-A ^Slice object is essentially a \"window\" into the underlying collection. Slice takes two
+A ^Slice object is essentially a "window" into the underlying collection. Slice takes two
 arguments - the offset into the collection to index from and the length of the collection.
 Note that slices are immutable which means that you can't change the underlying collection
 using the slice object. On the other hand, changes to the underlying collection will be
@@ -3324,7 +3324,7 @@ Examples:
     (range 10 | slice 2 3)          ; returns [3 4 5]
 
 See also: to-vector vector asarray
-"
+"""
     
     [(^IEnumerable vec) (^int Start 0) (^int Length (length vec | - start))]
 
@@ -3340,8 +3340,8 @@ See also: to-vector vector asarray
 )
 
 (defn project
-"
-This function \"projects\" a subset of the properties on an object (or elements of a dictionary)
+"""
+This function "projects" a subset of the properties on an object (or elements of a dictionary)
 onto a new anonymously-typed object. The anonymous types are generated on an on-demand basis.
 
 If the first object is a Dictionary, rather than enumerating the object,
@@ -3359,7 +3359,7 @@ Examples:
     ([{:a 1 :b 2} {:a 2 :b 4 :c 5}] | project)       ; return different kinds of objects with all props
 
 See also: deftype defobject
-"
+"""
     [data &args]
 
     (if (not args)
@@ -3487,7 +3487,7 @@ See also: CreateDelegate
 ;--------------------------------------------------------------------------
 ;
 (defn members-of
-"
+"""
 By default, the 'members-of' function displays all of the public members on a type.
 This function has one optional positional parameter: you can specify a regular
 expression used to filter the members. If 'members-of' is applied to an instance
@@ -3510,13 +3510,13 @@ if -all is specified, no filtering is done.
 
 Examples:
     (members-of ^string)             ; get all of the members on ^string
-    (members-of ^string #\"sub\")    ; get the members matching the pattern argument
-    (members-of \"hi\")              ; gets the type of the argument and returns that type's members
+    (members-of ^string #"sub")    ; get the members matching the pattern argument
+    (members-of "hi")              ; gets the type of the argument and returns that type's members
     (members ^string -all -private)  ; gets all members, public & private, will be returned,
     (members ^int -raw)              ; returns MemberInfo objects instead of strings.
 
 See also: type-of base-of
-"
+"""
     [
         obj (^string? pattern ".")
         :raw
@@ -3603,17 +3603,17 @@ See also: members-of type-of
 )
 
 (defn all-members
-"
+"""
 The 'all-members' function is used by the 'completer' function to do method completion.
 It returns a Vector of all of the members defined on the types that are currently 'in use'
 i.e. there is an instance of that type stored in a Braid variable. These members are considered
 to be the 'interesting' ones for the interactive user.
 
 Examples:
-    (all-members #\"sub\")
+    (all-members #"sub")
 
 See also: completer
-"
+"""
     [(^regex? pattern ".")]
 
     (.BraidLang.Braid/callstack
@@ -3651,16 +3651,16 @@ See also: completer
 ; and therefore syntax-checked at parse-time.
 ;
 (defmacro create-scriptblock
-"
+"""
 Create a PowerShell ScriptBlock object. This object can be used as a braid
 function simply by assigning it to a variable then invoking it like any other
 function.
 
 Exmples:
-    (let sb (create-scriptblock \"param ($x) $x*2\")) ; create the scriptblock and assign it to 'sb'
+    (let sb (create-scriptblock "param ($x) $x*2")) ; create the scriptblock and assign it to 'sb'
     (sb 10)                                           ; returns 20
 
-"
+"""
     [(^string bodyText)]
 
     (.System.Management.Automation.Scriptblock/Create bodyText)
@@ -3711,15 +3711,15 @@ Exmples:
 ; The completer pattern function.
 ;
 (defn completer
-"
+"""
 The tab-completion implementation for Braid. This
 function needs to be bound to the completer callback to
 work (see the function definition for how this is done.)
 
 Examples:
     (completer <prefixString> <beforeString> <suffixString>)
-    (completer \"\" \"(list/\" \":foo\")
-"
+    (completer "" "(list/" ":foo")
+"""
 
     ; completions for specific commands
     | prefix #"^.*[|(] *(map|filter|where|map|each|lazy-map|lazy-filter) +([^ ]*)$" after ->
