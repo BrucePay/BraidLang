@@ -85,6 +85,7 @@ syn region braidString start=/#"/ skip=/\\"/ end=/"/
 
 " Strings
 syn region braidString start=/"/ skip=/\\"/ end=/"/ contains=@Spell
+syn region braidString start=/"""/ end=/"""/ contains=@Spell
 
 
 " Interpolation in strings

@@ -56,7 +56,7 @@
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp !!  "
+(bindhelp !!  """
 Syntax: (!! indexible index [valueToSet])
 
 This function is used for accessing or setting elements in indexable
@@ -71,8 +71,8 @@ Examples:
     (!! [0 1 2 3] 2)         ; result is 2
     (!! [0 1 2 3] 2 20)      ; sets the third element to 20.
     (!! {:a 1 :b 2 :c 3} :b) ; returns 2
-    (!! \"hello\" 3)           ; returns 'l'.
-")
+    (!! "hello" 3)           ; returns 'l'.
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp ==  "
@@ -119,7 +119,7 @@ See also: + - * / -- ++ incr decr
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp *  "
+(bindhelp *  """
 Syntax: (* arg1 arg2 arg3 ... argn)
 
 The '*' multiplication function computes the product of
@@ -132,16 +132,17 @@ You can compute factorials using multiply, splatting and the range function as
 
 Examples:
     (* 1 2 3)       ; Compute the product of the argument values
-    (* \"hi\" 10)     ; Repeat the string argument 10 times
+    (* "hi" 10)     ; Repeat the string argument 10 times
     (* [1 2 3] 10)  : Repeat the sequence argument 10 times
+
 If only one argument is passed, then a curried function is returned
     (range 10 | map (* 2)) ; return the numbers from 1-10 multiplied by 2
 
 See also: + - / % -- ++ incr decr
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp .  "
+(bindhelp .  """
 Syntax: (. object 'member [args...])
 
 The '.' function is the member accessor operation allowing you to get
@@ -151,10 +152,10 @@ or field, if only the member name is specified, the operation will be a get.
 If an additional argument is provided, the operation will be a set.
 
 Examples:
-    (. \"hello\" :length)       ; gets the 'length' property from the string
+    (. "hello" :length)       ; gets the 'length' property from the string
     (. ^math :pi)               ; gets the value of the static member 'pi
-    (. \"hello\" :substring 1 2) ; Applies the method 'substring with 2 arguments
-")
+    (. "hello" :substring 1 2) ; Applies the method 'substring with 2 arguments
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp /  "
@@ -171,7 +172,7 @@ See also: + - * % -- ++ incr decr
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp +  "
+(bindhelp +  """
 Syntax: (+ arg1 arg2 arg3 ... argn)
 
 The addition function (+)  sums all of its arguments together. It
@@ -181,10 +182,10 @@ overall operation.
 
 Examples:
     (+ 1 2 3)       ; Compute the sum of the argument values
-    (+ \"ab\" \"cd\")    ; Add 'ab' and 'cd' to get 'abcd'
+    (+ "ab" "cd")    ; Add 'ab' and 'cd' to get 'abcd'
 
 See also: - * / % -- ++ incr decr
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp -  "
@@ -231,7 +232,7 @@ See also: ++ + - incr pincr decr
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp <  "
+(bindhelp <  """
 Syntax: (< arg1 arg2)
 
 This is the polymorphic less than function (<) which works on any types
@@ -239,10 +240,10 @@ that support ordered comparisons.
 
 Examples:
     (< 1 5)               ; returns true
-    (< \"abc\" \"ab\")    ; returns false
+    (< "abc" "ab")    ; returns false
 
 See also: <= > >= == != === !==
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp <=  "
@@ -258,7 +259,7 @@ See also: < > >= == != === !==
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp ===  "
+(bindhelp ===  """
 Syntax: (=== arg1 arg2 ...)
 
 This is the reference equals function (===). If the arguments provided refer to the
@@ -270,14 +271,14 @@ Examples:
     (=== 5 6)                   ; returns false
     (=== 1 2 3 4)               ; returns false
     (=== 3 3.0)                 ; returns false
-    (=== \"foo\" \"foo\")           ; returns false (different references)
-    (let x \"foo\") (=== x x)     ; returns true (same reference)
+    (=== "foo" "foo")           ; returns false (different references)
+    (let x "foo") (=== x x)     ; returns true (same reference)
 
 See also: !== == !=
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp !==  "
+(bindhelp !==  """
 Syntax: (!== arg1 arg2 ...)
 
 This is the negative reference equals function (!==). If the arguments provided refer to the
@@ -289,11 +290,11 @@ Examples:
     (!== 5 6)                   ; returns true
     (!== 1 2 3 4)               ; returns true
     (!== 3 3.0)                 ; returns true
-    (!== \"foo\" \"foo\")           ; returns true (different references)
-    (let x \"foo\") (=== x x)     ; returns false (same reference)
+    (!== "foo" "foo")           ; returns true (different references)
+    (let x "foo") (=== x x)     ; returns false (same reference)
 
 See also: === == !=
-")
+""")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -329,21 +330,21 @@ Examples:
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp alert  "
+(bindhelp alert  """
 Syntax: (alert arg1 arg2 arg3 ... argn)
 
 This function prints a string to the console with emphasis.
 
 Examples:
-    (alert \"This is an alert\")
+    (alert "This is an alert")
     (alert 'this 'is 'an 'alert 'in 'pieces.)
-    (alert \"The value of 2+2 is\" (+ 2 2))
+    (alert "The value of 2+2 is" (+ 2 2))
 
 See also: info warn error println
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp and  "
+(bindhelp and  """
 Syntax: (and arg1 arg2 arg3 ... argn)
 The 'and' function returns the last argument if all of its other arguments
 evaluate to true. Lazy evaluation is used so the first argument that doesn't
@@ -356,17 +357,17 @@ Examples:
     (and 0 2)               ; returns false
 
 See also: or not
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp append  "
+(bindhelp append  """
 Syntax: (append arg1 arg2 arg3 ... argn)
 
 The 'append' function appends it's arguments together to produce a new list.
 If an argument is a list, it is stiched into the result list rather than
 being added as a single member.
     (append 1 '(2 3) 4)     ; results in a new list '(1 2 3 4)
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp concat "
@@ -405,7 +406,7 @@ See also: vcons concat
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp apply  "
+(bindhelp apply  """
 Syntax: (apply functionToApply collection)
 
 The apply takes a function and a collection and applies the function using the
@@ -418,19 +419,19 @@ Examples:
     (apply (fn &args -> (length args)) [1 2 3]) ; returns 3
 
 See also: call
-")
+""")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp as  "
+(bindhelp as  """
 Syntax: (as objectToConvert targetType)
 
 As converts it's first argument into the type specified by the second
 argument either returning an object of that type or null if the conversion
 was not successful.
-    (as \"123\" ^int)   ; returns the integer value 123
-    (as \"abc\" ^int)   ; returns null
-")
+    (as "123" ^int)   ; returns the integer value 123
+    (as "abc" ^int)   ; returns null
+""")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -466,7 +467,7 @@ See also: asarray
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp atom?  "
+(bindhelp atom?  """
 Syntax: (atom? object)
 
 The 'atom?' function returns true if its argument is not an
@@ -474,9 +475,9 @@ enumerable type.
 
 Examples:
     (atom? 123)         ; returns true
-    (atom? \"abc\")       ; returns true
+    (atom? "abc")       ; returns true
     (atom? [1 2 3])     ; false
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp band  "
@@ -558,7 +559,7 @@ See also: symbol?
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp break  "
+(bindhelp break  """
 Syntax: (break [<value>])
 
 The 'break' function allows you to break out of a loop as shown in the
@@ -570,7 +571,7 @@ like 'map', 'filter' and 'zip'.
 Examples:
     ; executes the println function once then stops
     (while true
-        (println \"I'm done.\")
+        (println "I'm done.")
         (break)
     )
     ; break can be called from zip function lambda to stop iterating early.
@@ -580,11 +581,11 @@ Examples:
         (if (> r 6) (break))
         r)
     )
-    ; break out of the 'map' pipeline returning \"hello\"
-    (range 10 | map (fn x -> (if (== x 5) (break \"hello\") x))
+    ; break out of the 'map' pipeline returning "hello"
+    (range 10 | map (fn x -> (if (== x 5) (break "hello") x))
 
 See also: foreach forall for while continue recur return map filter zip 
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp continue  "
@@ -617,7 +618,7 @@ See also: shiftl shiftr band bor
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [car head]  "
+(bindhelp [car head]  """
 Syntax: (@fn@ listOfObjects)
 
 The '@fn@' function returns the first item from a sequence, or the
@@ -626,16 +627,16 @@ is a string, the first 'word' is returned i.e. all of the text up to
 the first whitespace character.
 
 Examples:
-    (@fn@ '(1 2 3))         ; returns 1
-    (@fn@ [4 5 6])          ; returns 4
-    (@fn@ \"abc\")          ; returns \"abc\"
-    (@fn@ \"abc def ghi\")  ; returns the first word \"abc\"
+    (@fn@ '(1 2 3))       ; returns 1
+    (@fn@ [4 5 6])        ; returns 4
+    (@fn@ "abc")          ; returns "abc"
+    (@fn@ "abc def ghi")  ; returns the first word "abc"
 
 See also: cdr tail first last
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp first  "
+(bindhelp first  """
 Syntax: (first <collection> [<num>])
 
 The 'first' function returns the first <num> items from the argument
@@ -646,14 +647,14 @@ is not a collection, then it is simply returned.
 Examples:
     (first '(1 2 3))  ; returns 1
     (first [4 5 6])   ; returns 4
-    (first \"abc\")     ; returns \"a\"
+    (first "abc")     ; returns "a"
     (first 1)         ; returbs 1
 
 See also: car cdr tail last
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [cdr tail rest]  "
+(bindhelp [cdr tail rest]  """
 Syntax: (@fn@ listOfObjects)
 
 The '@fn@' function skips the first item in a sequence and returns the rest,
@@ -665,33 +666,33 @@ cdr of an s_Expr, is very fast. (Commands tail and rest are aliases for cdr.)
 Examples:
     (car '(1 2 3))  ; returns '(2 3)
     (car [4 5 6])   ; returns [5 6[
-    (car \"abc\")     ; returns \"abc\"
+    (car "abc")     ; returns "abc"
 
 See also: car head first tail rest
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp char  "
+(bindhelp char  """
 Syntax: (char stringValue)
 
 Returns the ^char of the first character in a 1-element string.
 
 Examples:
-    (char \"a\")    ; returns the char value 'a'.
-")
+    (char "a")    ; returns the char value 'a'.
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp chars  "
+(bindhelp chars  """
 Syntax: (chars stringValue)
 
 The 'chars' function converts is string argument to an array
 of characters.
 
 Examples:
-    (chars \"hello\")   ; returns [ \h \e \l \l \o]
+    (chars "hello")   ; returns [ \h \e \l \l \o]
 
 See also: char str join
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp cls  "
@@ -701,7 +702,7 @@ Clears the console screen.
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp collection?  "
+(bindhelp collection?  """
 Syntax: (collection? obj)
 
 Returns true if its argument is any of the sequence types
@@ -710,9 +711,9 @@ Returns true if its argument is any of the sequence types
 Examples:
     (collection? [1 2 3]        ; returns true
     (collection? 5)             ; returns false
-    (collection? \"hi\")        ; returns false
+    (collection? "hi")        ; returns false
     (collection? {:a 1})        ; returns true
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp cond  "
@@ -829,28 +830,28 @@ See also:
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp console/forecolor  "
+(bindhelp console/forecolor  """
 Syntax: (console/forecolor color)
 
 Sets the console foreground color.
 
 Examples:
-    (console/forecolor \"green\") ; sets foreground color to green.
+    (console/forecolor "green") ; sets foreground color to green.
     ; using the ^ConsoleColor enum
     (console/forecolor .ConsoleColor/Yellow)
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp console/writeat  "
-Syntax: (console/writeat [-foreground: color] [-background: color] xPos yPos \"Message\")
+(bindhelp console/writeat  """
+Syntax: (console/writeat [-foreground: color] [-background: color] xPos yPos "Message")
 
 The console/writeat function writes a message at a specified location on
 the console. You can optionally specify the fore- and background colors to
 use when writing the text.
 
 Examples:
-    (console/writeat -foreground: \"red\" -background: \"green\" 40 40 \"This is a message\")
-")
+    (console/writeat -foreground: "red" -background: "green" 40 40 "This is a message")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp console/writeline  "
@@ -876,7 +877,7 @@ See also: let def undef
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [count length]  "
+(bindhelp [count length]  """
 Syntax: (count object)
 
 Returns the @fn@ of a collection. If the argument is a scalar, then
@@ -884,11 +885,11 @@ it returns 1. If it's null, then the function returns 0.
 
 Examples:
     (@fn@ '(1 2 3 4))      ; returns 4
-    (@fn@ \"hello\")          ; returns 5
+    (@fn@ "hello")         ; returns 5
     (@fn@ [1 2 3 4 5 6])   ; returns 6
     (@fn@ {:a 1 :b 2})     ; returns 2
     (@fn@ (range 10))      ; returns 10
-")
+""")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -991,8 +992,8 @@ replace the original structure.
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp defn  "
-Syntax: (defn funcName [ \"doc string\" ] [ ^returnType ] ( [args] functionBody | patternBody)
+(bindhelp defn  """
+Syntax: (defn funcName [ "doc string" ] [ ^returnType ] ( [args] functionBody | patternBody)
 
 The 'defn' function allows you to define custom functions. The body of the function
 being defined can either be a 'conventional' function or a pattern function. A literal
@@ -1011,21 +1012,21 @@ formal argument corresponding to the name then the initializer value is used.
 BUGBUGBUG -add stuff about named parameters.
 
 Examples:
-    (defn sqr \"compute the square root.\" [x] (* x x))
-    (defn fact \"compute factorial\" [n] (if (n < 1) 1 (* n (fact (- n 1)))))
+    (defn sqr "compute the square root." [x] (* x x))
+    (defn fact "compute factorial" [n] (if (n < 1) 1 (* n (fact (- n 1)))))
     (defn fact ^int [(^int n)]
         (if (n < 1)
             1 (* n (fact (- n 1)))
         )
     )
-    (defn fib \"compute fib number\"
+    (defn fib "compute fib number"
         | 0 -> 1
         | 1 -> 1
         | (+ (fib (- n 1)) (fib (- n 2)))
     )
 
 See also: defmacro defspecial deftype
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp defobject  "
@@ -1041,7 +1042,7 @@ See also: deftype definterface project
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp defspecial  "
+(bindhelp defspecial  """
 Syntax: (defspecial name [args] body
 
 Defines a 'special form'. Special forms are functions that will receive their
@@ -1053,7 +1054,7 @@ also use the 'upvar' and 'upDo' functions to implement these control structures.
 Examples:
     ; Define a 'forall' variant that uses two variables - item and count
     (defspecial forall-with-count
-        \"A forall loop with item and count variables.\"
+        "A forall loop with item and count variables."
         [(^symbol itemVar) (^symbol countVar) lst &args]
         ; bind the loop variables in the caller's context
         (upvar itemVar  'iv)
@@ -1075,7 +1076,7 @@ Examples:
 
 See also: defn defmacro deftype
 
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp dict?  "
@@ -1153,18 +1154,18 @@ See also: == !=
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp error  "
+(bindhelp error  """
 Syntax: (error arg1 arg2 arg3 ... argn)
 
 This function prints an error string to the console in red.
 
 Examples:
-    (error \"This is an information message.\")
+    (error "This is an information message.")
     (error 'this 'is 'a 'message 'in 'pieces.)
-    (error \"The value of 2+2 is\" (+ 2 2))
+    (error "The value of 2+2 is" (+ 2 2))
 
 See also: println info warn
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp eval  "
@@ -1179,16 +1180,16 @@ Examples:
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp eval-string  "
+(bindhelp eval-string  """
 Syntax: (eval-string <stringToEval>)
 
 Parses a string into an s-expression then evaluate it using 'eval'.
 
 Examples:
-    (eval \"(+ 2 3)\")   ; returns 5
+    (eval "(+ 2 3)")   ; returns 5
 
 See also: eval
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp except "
@@ -1204,19 +1205,19 @@ See also: union intercection distinct
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp edit-distance "
+(bindhelp edit-distance """
 Syntax: (edit-distance <string1> <string2>)
 
-The 'edit-distance' function computes the \"edit distance\" between the two
+The 'edit-distance' function computes the "edit distance" between the two
 argument strings using the Damerau-Levenshtein algorithm - a metric of similarity
 based on inserts, removes and replacements.
 
 Examples:
-    (edit-distance \"foo\" \"boo\")     ; returns an edit distance of 1 ('f' -> 'b')
-")
+    (edit-distance "foo" "boo")     ; returns an edit distance of 1 ('f' -> 'b')
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [lazy-filter filter where]  "
+(bindhelp [lazy-filter filter where]  """
 Syntax: (@fn@ [-not] <list> <predicate>)
 Filters the input collection based on the results of evaluating the predicate
 function on each item. The predicate can be a lambda literal, a named function,
@@ -1233,15 +1234,15 @@ Examples:
     (range 10 | @fn@ (fn n -> (== (% n 2) 0))) ; returns [2 4 6 8 10]
     (range 10 | @fn@ even?)                    ; returns [2 4 6 8 10]
     (range 10 | @fn@ -not even?)               ; returns [1 3 5 7 9]
-    (range 20 | @fn@ #\"2\")                     ; returns [2 12 20]
+    (range 20 | @fn@ #"2")                     ; returns [2 12 20]
     (get-process | @fn@ .cpu)                  ; returns all procs that have used CPU
-    ; use property patterns to find Error entries whose message matches the regex #\"timeout\"
-    (get-eventlog -log: \"system\" -newest: 1000 | @fn@ {entrytype \"error\" message #\"timeout\"})
+    ; use property patterns to find Error entries whose message matches the regex #"timeout"
+    (get-eventlog -log: "system" -newest: 1000 | @fn@ {entrytype "error" message #"timeout"})
     ; find element '99' in the input collection, stopping the search when it's found
     (range 100000 | @fn@ (fn n -> (if (== n 99) (break))))
 
 See also: filter lazy-filter map lazy-map each 
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp [flatmap lazy-flatmap] "
@@ -1347,15 +1348,15 @@ See also: forall map filter each
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp function?  "
+(bindhelp function?  """
 Syntax: (function? <expression>)
 
 Returns true if the argument expression resolves to a function.
 
 Examples:
     (function? sqr)     ; returns true
-    (function? \"sqr\")   ; returns false
-")
+    (function? "sqr")   ; returns false
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp functions  "
@@ -1385,7 +1386,7 @@ See also: global globalq
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp get-args "
+(bindhelp get-args """
 Syntax: (get-args)
 
 Retrieves a vector containing the arguments to the current function. This
@@ -1397,23 +1398,23 @@ Examples:
     ;    Expected one integer argument, not <<1 2 3>> 
     (matchp 1 2 3
     | (^int x) -> (+ x 2)
-    | -> (throw \"Expected one integer argument, not <<${(join (get-args))}>>\")
+    | -> (throw "Expected one integer argument, not <<${(join (get-args))}>>")
     )
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp get-assoc  "
+(bindhelp get-assoc  """
 Syntax: (get-assoc object [key])
 
 This function allows you to retrieve tagged data from an
 arbitrary object. For example, if you tagged the number 1 with
 a message as follows:
-    (set-assoc 1 :message \"Hi there\")
+    (set-assoc 1 :message "Hi there")
 you could then retrieve it with
     (get-assoc 1 :message)
 
 See also: set-assoc
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp if  "
@@ -1473,7 +1474,7 @@ See also: incr decr pdecr ++ --
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp info  "
+(bindhelp info  """
 Syntax: (info arg1 arg2 arg3 ... argn)
 
 This function prints an informational message to the console in yellow.
@@ -1481,12 +1482,12 @@ All of the arguments are turned into strings then joined with a single
 space between each string.
 
 Examples:
-    (info \"This is an information message.\")
+    (info "This is an information message.")
     (info 'this 'is 'a 'message 'in 'pieces.)
-    (info \"The value of 2+2 is\" (+ 2 2))
+    (info "The value of 2+2 is" (+ 2 2))
 
 See also: warn error println
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp intersect  "
@@ -1502,7 +1503,7 @@ See also: distinct union
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp is?  "
+(bindhelp is?  """
 Syntax: (is? <object> <type>)
 
 Checks to see if the argument object is of the specified type.
@@ -1510,10 +1511,10 @@ Checks to see if the argument object is of the specified type.
 Examples:
     (is? 123 ^int)          ; returns true
     (is? 123 ^string)       ; returns false
-    (is? \"abc\" ^string)   ; true
+    (is? "abc" ^string)   ; true
 
 See also: isnot?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp isnot?  "
@@ -1529,7 +1530,7 @@ See also: is?
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp lambda  "
+(bindhelp lambda  """
 Syntax: (lambda [args...] body...) or (lambda | pattern -> action | ...)
 
 Returns a new lambda function (closure). Can be specified with conventional\
@@ -1537,8 +1538,8 @@ syntax or with patterns.
 
 Examples:
     (range 10 | map (lambda [x] (* x x)))   ; squares the number from 1 to 10
-    (range 3  | map (lambda | 1 -> \"one\" | -> \"not one\")
-")
+    (range 3  | map (lambda | 1 -> "one" | -> "not one")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp lambda?  "
@@ -1576,7 +1577,7 @@ See also: first take
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp str  "
+(bindhelp str  """
 Syntax: (str args...)
 
 The 'str' function converts its arguments to strings the concatenates the
@@ -1584,13 +1585,13 @@ individual strings with no intervening spaces. This function is similar to
 join but is varargs and doesn't allow a seperator.
 
 Examples:
-    (str 1 2 3)         ; returns \"123\"
+    (str 1 2 3)         ; returns "123"
 
 See also: join
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [length count]"
+(bindhelp [length count] """
 Syntax: (@fn@ object)
 
 Returns the @fn@ of a collection. If the argument is a scalar, then
@@ -1598,14 +1599,14 @@ it returns 1. If it's null, then the function returns 0. This is an alias
 for the 'count' function.
 
 Examples:
-    (@fn@ \"abcdef\")     ; returns 5
+    (@fn@ "abcdef")     ; returns 5
     (@fn@ [1 2 3])        ; returns 3
     (@fn@ '(2 4 6 8)      ; returns 4
     (@fn@ 13              ; returns 1
     (@fn@ null)           ; returns 0
 
 See also: count
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp let  "
@@ -1679,7 +1680,7 @@ Examples:
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp load  "
+(bindhelp load  """
 Syntax: (load <fileName>)
 
 Loads a braid file into the current scope (like PowerShell's
@@ -1687,12 +1688,12 @@ Loads a braid file into the current scope (like PowerShell's
 
 Examples:
     (load 'foo.tl)      ; load the file 'foo.tl'
-    (load \"foo.tl\")   ; load the file 'foo.tl'
-    (let fileToLoad \"foo.tl\")
+    (load "foo.tl")     ; load the file 'foo.tl'
+    (let fileToLoad "foo.tl")
     (load fileToLoad)   ; load the file 'foo.tl'
 
 See also: using-module using-assembly
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp local  "
@@ -1730,7 +1731,7 @@ See also: map-parallel lazy-map each filter where lazy-filter
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp lazy-map  "
+(bindhelp lazy-map  """
 Syntax: (lazy-map list function)
 
 The 'lazy-map' function is usually used in pipelines to lazily process items in the
@@ -1749,7 +1750,7 @@ Examples:
     (range 10 | lazy-map (fn x -> (* x x)))  ; same thing but using function literal notation.
 
 See also: map map-parallel each filter where lazy-filter
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp each  "
@@ -1815,7 +1816,7 @@ See also: defmethod definterface
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp new-dict  "
+(bindhelp new-dict  """
 Syntax: (new-dict <keytype> <valueType> key1 value1 key2 value2 ... keyN valueN)
 
 Create a new generic dictionary with the keys and values constrained to
@@ -1823,10 +1824,10 @@ the specified types. The type can be followed by an optional list of keys and
 values that will be used to populate the dictionary.
 
 Examples:
-    (new-dict ^string ^int \"one\" 1 \"two\" 2) ; creates Dictionary<string,int> with 2 pairs.
+    (new-dict ^string ^int "one" 1 "two" 2) ; creates Dictionary<string,int> with 2 pairs.
 
 See also: dict?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp symbol  "
@@ -1879,7 +1880,7 @@ this function can be applied to anything.
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp number? "
+(bindhelp number? """
 Syntax: (number? <object>)
 
 Returns true if the argument object is any of the numeric types.
@@ -1887,9 +1888,9 @@ Returns true if the argument object is any of the numeric types.
 Examples:
     (number? 1)     ; returns true
     (number? 1.0)   ; returns true
-    (number? \"1\")   ; returns false
+    (number? "1")   ; returns false
     (number? :abc)  ; returns false
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp or "
@@ -1969,7 +1970,7 @@ See also: get-watch remove-watch
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp get-watch "
+(bindhelp get-watch """
 Syntax: (get-watch)
 
 Returns a list of all of the watched scripts that were set up with 'add-watch'.
@@ -1978,7 +1979,7 @@ Examples:
     (get-watch)
 
 See also: add-watch remove-watch
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp remove-watch "
@@ -2038,15 +2039,15 @@ See also: println alert info error
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp printat  "
+(bindhelp printat  """
 Syntax: (printat [-foreground: color] [-background: color] x y msg)
 
 Print a string at the specified location, optionally specifying the
 foreground and background colors.
 
 Examples:
-    (printat 40 40 \"Amessage\")
-")
+    (printat 40 40 "A message")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp println  "
@@ -2059,7 +2060,7 @@ See also: print alert info error
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp println-color  "
+(bindhelp println-color  """
 Syntax: (println-color <foreground> <background> arg3 arg4 ... argn)
 
 The first two arguments are treated as the colors to uese and the remaining
@@ -2069,8 +2070,8 @@ is used so they can be specified as strings rather than ^System.ConsoleColor
 values.
 
 Examples:
-    (println-color \"red\" \"black\" \"2+2 = \"  (+ 2 2) 'so there!)
-")
+    (println-color "red" "black" "2+2 = "  (+ 2 2) 'so there!)
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp quit  "
@@ -2118,7 +2119,7 @@ Examples:
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [read-file read-lines]  "
+(bindhelp [read-file read-lines]  """
 Syntax: (read-file <fileNames> [<regex> [lambda]])
 
 This function reads files line by line, returning a vector of lines. If a regular expression is
@@ -2135,14 +2136,14 @@ from match to not match.
 
 Examples:
     (@fn@ 'foo.txt)                 ; returns a vector of the lines in the file
-    (@fn@ 'foo.txt #\"bar\")        ; only returns the lines matching the regex
+    (@fn@ 'foo.txt #"bar")        ; only returns the lines matching the regex
     ; Return the names of braid functions defined in a file i.e. ' ... defn <name> ...'
-    (@fn@ 'autoload.tl  #\"defn +([^ ]+)\" (fn l m -> (!! m 1)))a
-    ; Read all of the *.tl files and return strings of the form \"fileName:lineno functionName\".
-    (@fn@ '*.tl #\"defn +([^ ]+)\" (fn l m n f -> (str f ': n \" \" (m 1))))
+    (@fn@ 'autoload.tl  #"defn +([^ ]+)" (fn l m -> (!! m 1)))a
+    ; Read all of the *.tl files and return strings of the form "fileName:lineno functionName".
+    (@fn@ '*.tl #"defn +([^ ]+)" (fn l m n f -> (str f ': n " " (m 1))))
 
 See also: read-text read-data
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp [reduce foldl]  "
@@ -2181,7 +2182,7 @@ See also: reduce foldl foldr unfold
 
 (;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [iterator unfold]  "
+(bindhelp [iterator unfold]  """
 Syntax: (@fn@ <function> <initialValue> [<max>]
 
 The @fn@ function is a way to produce a (possibly) infinite sequence
@@ -2200,7 +2201,7 @@ Examples:
     (unfold (fn x:y: -> [y (+ x y)]) [1 1] | take 10 | last | last)
 
 See also: reduce foldl roldr
-")
+""")
 ;)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2259,20 +2260,20 @@ See also: async task map-parallel
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp return  "
+(bindhelp return  """
 Syntax: (return [value])
 
 Returns from a function returning a value.
 Null is returned if the value is not specified.
 
 Examples:
-    (defn foo [] (return \"foo\")
+    (defn foo [] (return "foo")
 
 See also: break continue
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp reverse  "
+(bindhelp reverse  """
 Syntax: (reverse list)
 
 Reverses a list or vector, returning a new reversed list.
@@ -2280,8 +2281,8 @@ Reverses a list or vector, returning a new reversed list.
 Examples:
     (reverse [1 2 3])   ; returns [3 2 1]
     (reverse '(1 2 3))  ; returns [3 2 1]
-    (chars \"hello\" | reverse | join \"\") ; returns 'olleh'
-")
+    (chars "hello" | reverse | join "") ; returns 'olleh'
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindHelp [get-dynamic gdv] "
@@ -2321,18 +2322,18 @@ See also: setq def let get
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp set-assoc  "
+(bindhelp set-assoc  """
 Syntax: (set-assoc object key value)
 
 This function allows you to associate tagged data with an
 arbitrary object. For example, you could tag the number 1 with
 a message as follows:
-    (set-assoc 1 :message \"Hi there\")
+    (set-assoc 1 :message "Hi there")
 and then retrieve it with
     (get-assoc 1 :message)
 
 See also: get-assoc
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp show-callstack  "
@@ -2427,15 +2428,15 @@ Examples:
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp string?  "
+(bindhelp string?  """
 Syntax: (string? <obj>)
 
 The 'string?' function returns true if it's argument is a string.
 
 Examples:
-    (string? \"hi\")    ; returns true
+    (string? "hi")    ; returns true
     (string? 123)       ; returns false
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp swap  "
@@ -2531,16 +2532,16 @@ See also: resolve map-parallel await
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp throw  "
+(bindhelp throw  """
 Syntax: (throw <messageString>)
 
 Throws a generic exception with a custom message.
 
 Examples:
-    (throw \"An error notification\")
+    (throw "An error notification")
 
 See also: try error
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp time  "
@@ -2557,17 +2558,17 @@ Examples:
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp tostring  "
+(bindhelp tostring  """
 Syntax: (tostring <object>)
 
-Converts it's argument into a string.
+Converts its argument into a string.
 
 Examples:
-    (tostring 3.14)     ; returns \"3.14\"
-    (toostring \"hi\")    ; just returns the string
+    (tostring 3.14)     ; returns "3.14"
+    (toostring "hi")    ; just returns the string
 
 ee also: str
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp trace  "
@@ -2585,7 +2586,7 @@ Examples:
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp try  "
+(bindhelp try  """
 Syntax: (try [-catch: <catchExpr>] [-finally: <finallyExpr>] <bodyExpressions...>)
 
 This function implements try/catch semantics. It executes all of the body
@@ -2595,22 +2596,22 @@ as %0. Finally, before leaving the control of the function, if there
 was a -catch: expressions specified, it will be executed.
 
 Examples:
-    (try -catch: (echo \"caught it\")  (nosuchcommand))  ; returns \"caught it\"
+    (try -catch: (echo "caught it")  (nosuchcommand))  ; returns "caught it"
 
 See also: throw
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp tuple  "
+(bindhelp tuple  """
 Syntax: (tuple <arg1> <arg2> ... <arg5>)
 
 Create and return an immutable tuple using the values of the arguments.
 A maximum of 5 arguments is supported.
 
 Examples:
-    (let tup (tuple 1 2 \"Hello\" (.datetime/now))  ; returns a tuple (1 2 \"hello\" <datetime>)
+    (let tup (tuple 1 2 "Hello" (.datetime/now))  ; returns a tuple (1 2 "hello" <datetime>)
     (.item1 tup)                                    ; returns 1
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp type-alias  "
@@ -2706,7 +2707,7 @@ See also: vector to-vector
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp vector  "
+(bindhelp vector  """
 Syntax: (vector [<args>...])
 
 The 'vector' function constructs new vector objects. If no arguments are
@@ -2715,15 +2716,15 @@ provided, they will be added to the new vector.
 
 Examples:
     (vector)                      ; construct a new empty vector
-    (vector 1 \"two\")            ; construct a 2 elenent vector
+    (vector 1 "two")            ; construct a 2 elenent vector
     (apply vector (list 1 2 3 4)) ; applies the vector to a list
                                   ; returning a new vector
 
 See also: to-vector vector?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp new-vector  "
+(bindhelp new-vector  """
 Syntax: (new-vector [<args>...])
 
 The 'new-vector' function constructs new vector objects. If no arguments are
@@ -2732,11 +2733,11 @@ provided, they will be added to the new vector.
 
 Examples:
     (new-vector)            ; construct a new empty vector
-    (new-vector 1 \"two\")  ; construct a 2 element vector
+    (new-vector 1 "two")  ; construct a 2 element vector
     (apply new-vector (list 1 2 3 4))
 
 See also: to-vector vector? vector
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp to-vector  "
@@ -2785,7 +2786,7 @@ See also: void lazy-map lazy-filter
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp warn  "
+(bindhelp warn  """
 Syntax: (warn arg1 arg2 arg3 ... argn)
 
 This function prints a warning string to the console in magenta. All of the
@@ -2793,12 +2794,12 @@ arguments are converted to strings then joined to a single string seperated
 by spaces then printed.
 
 Examples:
-    (warn \"This is an warning message.\")
+    (warn "This is an warning message.")
     (warn 'this 'is 'a 'message 'in 'pieces.)
-    (warn \"The value of 2+2 is\" (+ 2 2))
+    (warn "The value of 2+2 is" (+ 2 2))
 
 See also: alert info error println
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp when  "
@@ -2859,14 +2860,14 @@ See also: map filter break
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp defmethod "
+(bindhelp defmethod """
 Syntax: (defmethod <targetType> <methodName> <lambda>)
 
 Add a method to an existing type definition. Methods require
 at least one parameter: the this pointer. This must be
 specified even if it is not used in the method body. Note
 that the method name must be a raw symbol, not a keyword i.e. it
-must be \"foo\" not \":foo\".
+must be "foo" not ":foo".
 
 Examples:
     ; add a method to ^int
@@ -2874,7 +2875,7 @@ Examples:
     (.hi 123 'bob)
 
 See also: deftype definterface
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp random "
@@ -2916,7 +2917,7 @@ See also: gen-symbol show-symbols get-symbol
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp global "
+(bindhelp global """
 Syntax: (global <expression> <value>)
 
 Binds the variable identified by expression to the specified value in the global
@@ -2924,10 +2925,10 @@ scope. Because the function takes an expression to evaluate rather than a symbol
 to look up, it can be used to do indirect lookups in the global variable table.
 
 Examples:
-    (global (get-symbol \"foo\") 123) ; set the variable 'foo' to 13
+    (global (get-symbol "foo") 123) ; set the variable 'foo' to 13
 
 See also: let local def globalq
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp getfunc "
@@ -3041,18 +3042,18 @@ See also: !!
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp shell "
+(bindhelp shell """
 Syntax: (shell cmds...)
 
 The 'shell' function concatenates its arguments and then runs the resulting
 string as a PowerShell script.
 
 Examples:
-    (shell \"Get-ChildItem\" \"-File\")
-    (shell \"foreach ($i in 1..10) {$i}\")
+    (shell "Get-ChildItem" "-File")
+    (shell "foreach ($i in 1..10) {$i}")
 
 See also: psvar
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp quote? "
@@ -3106,53 +3107,53 @@ See also: none? some? number? number? even?
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp keyword? "
+(bindhelp keyword? """
 Syntax: (keyword? argument)
 
 The 'keyword?' function returns true if its argument is a keyword literal.
 
 Examples:
-    (keyword? :foo)                ; returns true
-    (keyword? \"hi\")              ; returns true
+    (keyword? :foo)              ; returns true
+    (keyword? "hi")              ; returns true
 
 See also: none? some? number? number? even?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp some? "
+(bindhelp some? """
 Syntax: (some? argument)
 
 The 'some?' function returns true if its argument has a value i.e. it
-is not null, \"\" or [].
+is not null, "" or [].
 
 Examples:
     (some? 1)                ; returns true
     (some? 0)                ; returns true
     (some? null)             ; returns false
-    (some? \"\")             ; returns false
+    (some? "")             ; returns false
     (some? [])               ; returns false
     (some? [ null ])         ; returns true
 
 See also: some? null?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp none? "
+(bindhelp none? """
 Syntax: (none? argument)
 
 The 'none?' function returns true if its argument has a value i.e. it
-is not null, \"\" or [].
+is not null, "" or [].
 
 Examples:
     (none? 1)                ; returns false
     (none? 0)                ; returns false
     (none? null)             ; returns true
-    (none? \"\")             ; returns true
+    (none? "")             ; returns true
     (none? [])               ; returns true
     (none? [ null ])         ; returns false
 
 See also: some? null?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp deftype "
@@ -3207,7 +3208,7 @@ See also: defmethod defobject definterface
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp join "
+(bindhelp join """
 Syntax: (join <seq> [<separator])
 
 The 'join' function stringizes the elements of the argument collection
@@ -3215,15 +3216,15 @@ then joins them into a single string separated by an optional separator
 string. If no separator string is provided, 'join' will use a single space.
 
 Examples:
-    (join [1 2 3])      ; results in \"1 2 3\"
-    (join [1 2 3] \"+\")  ; results in \"1+2+3\"
-    (join [1 2 3] \", \") ; results in \"1, 2, 3\"
+    (join [1 2 3])      ; results in "1 2 3"
+    (join [1 2 3] "+")  ; results in "1+2+3"
+    (join [1 2 3] ", ") ; results in "1, 2, 3"
 
 See also: str tostring
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp defenum @"
+(bindhelp defenum @"""
 Syntax: (defenum <typeToCreate> <names...>)
 
 A function for defining Braid enum types with a base type of integer. The enum
@@ -3236,11 +3237,11 @@ Examples:
     (defenum ^foo red blue green)               ; define an enum with 3 members with values 0, 1 and 2.
     (defenum ^foo {:red 10 :blue 20 :green 30}) ; define enum with values 10, 20 and 30.
     (defenum :foo a b c)                        ; use keyword for the typename instead of a type literal
-    (defenum \"foo\" a b c)                     ; use a string for the typename instead of a type literal.
-    (defenum \"${tn}\" a b c)                   ; use an expandable string for the typename instead of a type literal.
+    (defenum "foo" a b c)                       ; use a string for the typename instead of a type literal.
+    (defenum "${tn}" a b c)                     ; use an expandable string for the typename instead of a type literal.
 
 See also: deftype undeftype
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp list/split @"
