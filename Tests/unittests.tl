@@ -3294,6 +3294,12 @@ lambda [
 (test/exec :cons1  #(cons 1 '(2 3)) '(1 2 3))
 (test/exec :cons2  #(cons 1 (cons 2 (cons 3 null))) '(1 2 3))
 (test/exec :cons3  #(is? (cons 1 (cons 2 (cons 3 null))) ^List) true)
+(test/exec :cons4  #(cons 1 2 | == '(1 . 2)) true)
+(test/exec :cons5  #(car (cons 1 2) | == 1) true)
+(test/exec :cons6  #(cdr (cons 1 2) | == 2) true)
+(test/exec :cons7  #(cons 1 2) '(1 . 2))
+(test/exec :cons8  #(cons 1 [2 3] | cdr) [2 3])
+(test/exec :cons9  #(cons 1 [2 3] | cdr | type-of) ^BraidLang.Vector)
 ; test the ':' alias for 'cons'
 (test/exec ::4  #(: 1 '(2 3)) '(1 2 3))
 (test/exec ::5  #(: 1 (: 2 (: 3 null))) '(1 2 3))
@@ -5557,7 +5563,7 @@ lambda [
             "Reverse a vector with reduce"
             [lst]
 
-            (lst | reduce-with-seed (fn x y -> (cons y x)) [])
+            (lst | reduce-with-seed (fn x y -> (cons y x)) nil)
         )
         (reduce-rev (range 100))
     )
@@ -8626,8 +8632,8 @@ lambda [
 (test/exec :defn3
     (fn ->
         (defn foo
-        | x:xs y:ys -> (cons (+ x y) (foo xs xs))
-        | nil  nil   -> []
+        | x:xs y:ys -> (cons (+ x y) (foo xs ys))
+        | nil  nil   -> nil
         )
         (foo [1 2 3] [1 2 3])
     )

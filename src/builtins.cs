@@ -2264,29 +2264,8 @@ namespace BraidLang
                     BraidRuntimeException("cons: takes exactly 2 arguments.");
                 }
 
-                switch (args[1])
-                {
-                    case null:
-                        // (cons arg1 null)
-                        return new s_Expr(args[0]);
-
-                    case ISeq seq:
-                        // (cons arg1 '(2 3 4))
-                        return seq.Cons(args[0]);
-
-                    case string str:
-                        return args[0].ToString() + str;
-
-                    case IEnumerable ienum:
-                        // (cons arg1 [2 3 4]
-                        var nv = new Vector(ienum);
-                        nv.Insert(0, args[0]);
-                        return nv;
-
-                    default:
-                        // (cons 1 2)
-                        return new s_Expr(args[0], args[1]);
-                }
+                // (cons 1 2)
+                return new s_Expr(args[0], args[1]);
             };
 
             /////////////////////////////////////////////////////////////////////

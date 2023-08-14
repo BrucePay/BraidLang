@@ -880,7 +880,7 @@ namespace BraidLang
                 {
                     break;
                 }
-                else if (lst.Cdr is ISeq lstcdr)
+                else if (lst.Cdr is s_Expr lstcdr)
                 {
                     lst = lstcdr;
                 }
