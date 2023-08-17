@@ -893,6 +893,8 @@ namespace BraidLang
                                 return null;
                             }
 
+                            //BUGBUGBUG - figure out how to deal with null here.
+
                             otype = obj.GetType();
                         }
 

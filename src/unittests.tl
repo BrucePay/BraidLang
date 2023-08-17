@@ -9046,10 +9046,25 @@ lambda [
     )
     [true '(1 2 3 4)]
 )
+(test/exec :defn43a
+    (fn ->
+        (defn foo [:name1 &args] [name1 args])
+        ; test double dash handling
+        (foo 1 2 --name1 3 4)
+    )
+    [true '(1 2 3 4)]
+)
 (test/exec :defn44
     (fn ->
         (defn foo [:name1: &args] [name1 args])
         (foo 1 2 -name1: 3 4)
+    )
+    [3 '(1 2  4)]
+)
+(test/exec :defn44a
+    (fn ->
+        (defn foo [:name1: &args] [name1 args])
+        (foo 1 2 --name1: 3 4)
     )
     [3 '(1 2  4)]
 )
@@ -9060,10 +9075,24 @@ lambda [
     )
     [true '(1 2 3 4)]
 )
+(test/exec :defn45a
+    (fn ->
+        (defn foo [:name1 &args] [name1 args])
+        (foo 1 2 3 4 --name1)
+    )
+    [true '(1 2 3 4)]
+)
 (test/exec :defn46
     (fn ->
         (defn foo [x :name1 y &args] [x y name1 args])
         (foo 1 2 3 4 -name1)
+    )
+    [1 2 true '(3 4)]
+)
+(test/exec :defn46a
+    (fn ->
+        (defn foo [x :name1 y &args] [x y name1 args])
+        (foo 1 2 3 4 --name1)
     )
     [1 2 true '(3 4)]
 )
@@ -9073,6 +9102,48 @@ lambda [
         (foo 1 -name1: 2 3 4)
     )
     [1 3 2 '(4)]
+)
+(test/exec :defn47a
+    (fn ->
+        (defn foo [x :name1: y &args] [x y name1 args])
+        (foo 1 --name1: 2 3 4)
+    )
+    [1 3 2 '(4)]
+)
+(test/exec :defn47b
+    (\ ->
+        (defn foo [:name1: :name2 &args] [name1 name2 args])
+        (foo 1 2 3 -name1: "abc" -name2)
+    )
+    ["abc" True [1 2 3]]
+)
+(test/exec :defn47c
+    (\ ->
+        (defn foo [:name2 :name1: &args] [name1 name2 args])
+        (foo -name2 1 2 3 -name1: "abc")
+    )
+    ["abc" True [1 2 3]]
+)
+(test/exec :defn47d
+    (\ ->
+        (defn foo [:name2 :name1: &args] [name1 name2 args])
+        (foo -name1: "abc" 1 2 -name2 3 4)
+    )
+    ["abc" True [1 2 3 4]]
+)
+(test/exec :defn47e
+    (\ ->
+        (defn foo [:name2: :name1: &args] [name1 name2 args])
+        (foo -name1: "abc" 1 2 -name2: "def" 3 4)
+    )
+    ["abc" "def" [1 2 3 4]]
+)
+(test/exec :defn475
+    (\ ->
+        (defn foo [:name1: :name2: &args] [name1 name2 args])
+        (foo 1 2 -name2: "def" 3 4 -name1: "abc")
+    )
+    ["abc" "def" [1 2 3 4]]
 )
 
 ;------------------------------------------------------

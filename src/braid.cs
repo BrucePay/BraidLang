@@ -236,12 +236,14 @@ namespace BraidLang
         public string Name { get; set; }
         public object Expression { get; set; }
         public bool TakesArgument { get; set; }
+        public bool DoubleDash { get; set; }
 
-        public NamedParameter(string name, object expression, bool takesValue)
+        public NamedParameter(string name, object expression, bool takesValue, bool doubleDash)
         {
             Name = name;
             Expression = expression;
             TakesArgument = takesValue;
+            DoubleDash = doubleDash;
         }
 
         public object Value
@@ -261,7 +263,7 @@ namespace BraidLang
 
         public override string ToString()
         {
-            var toString = $"-{Name}";
+            var toString = DoubleDash ? $"--{Name}" : $"-{Name}";
             if (TakesArgument)
             {
                 toString += ":";

@@ -1550,13 +1550,14 @@ namespace BraidLang
             else if (firstc == '-' && tokenStr.Length > 1 && ((tokenStr[1] == '-' && tokenStr.Length > 2) || Char.IsLetter(tokenStr[1])))
             {
                 bool takesArgument = tokenStr[tokenStr.Length - 1] == ':';
-                string name = takesArgument ? tokenStr.Substring(1, tokenStr.Length - 2) : tokenStr.Substring(1);
+                int skip = tokenStr[1] == '-' ? 2 : 1;
+                string name = takesArgument ? tokenStr.Substring(skip, tokenStr.Length - 1 - skip) : tokenStr.Substring(skip);
                 if (tokenList != null)
                 {
                     tokenList.Add(new Token { Type = TokenType.NamedParameterLiteral, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = tokenStr });
                 }
 
-                return new NamedParameter(name, null, takesArgument);
+                return new NamedParameter(name, null, takesArgument, tokenStr[1] == '-');
             }
             else if (tokenStr.Equals("true", StringComparison.OrdinalIgnoreCase))
             {
