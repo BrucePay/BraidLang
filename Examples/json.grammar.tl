@@ -4,7 +4,9 @@
 ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(let json/lex_pattern #"true|false|null|\"(\\\\.|[^\"])*\"|[0-9.]+|[\\[\\]{},:]|\\b+")
+(using-module http)
+
+(const json/lex_pattern #"true|false|null|\"(\\\\.|[^\"])*\"|[0-9.]+|[\\[\\]{},:]|\\b+")
 
 (defn json/tokenize
 """
@@ -24,7 +26,7 @@ Function to break a string containing JSON syntax objects into tokens.
 ;
 
 (defn json/string
-    | (#"^\".*\"$" s) -> (.value (!! s 0))
+    | (#"^\"(.*)\"$" s) -> (.value (!! s 1))
     | ->
 )
 
@@ -131,3 +133,8 @@ Function to break a string containing JSON syntax objects into tokens.
     ]
 """))
 
+(alert "Test 5")
+(let data (json/parse (http/get "https://fakerapi.it/api/v1/addresses?_quantity=5")))
+(time 
+    (println "Faker API" data)
+)
