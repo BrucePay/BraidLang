@@ -4106,7 +4106,7 @@ namespace BraidLang
             ///
             /// Function to define a local variable
             ///
-            var function_local = new Function(Symbol.sym_local.Value, (Vector args) =>
+            var function_local = new Function(Symbol.sym_let.Value, (Vector args) =>
             {
                 if (args.Count < 2 || args.Count > 3)
                 {
@@ -4333,7 +4333,7 @@ namespace BraidLang
                 return result;
             });
             function_local.FType = FunctionType.SpecialForm;
-            CallStack.Const(Symbol.sym_local, function_local);
+            CallStack.Const(Symbol.sym_let, function_local);
 
             /////////////////////////////////////////////////////////////////////
             //
@@ -4723,9 +4723,9 @@ namespace BraidLang
             //
             // Set up a new binding context, either explicitly e.g. (let ((a 1) (b 2)) ...)
             // or by passing a dictionary
-            // (setq dict {a 1 b })  (let dict ... )
+            // (let dict {a 1 b 2})  (let dict ... )
             //
-            SpecialForms[Symbol.sym_let] = (Vector args) =>
+            SpecialForms[Symbol.sym_with] = (Vector args) =>
             {
                 if (args.Count < 1 || args[0] == null)
                 {
@@ -4748,13 +4748,13 @@ namespace BraidLang
                         {
                             if (pair.Count != 2)
                             {
-                                BraidRuntimeException($"let: binding pairs must be a 2 element list, not: {pair}");
+                                BraidRuntimeException($"with: binding pairs must be a 2 element list, not: {pair}");
                             }
 
                             var car = pair.Car;
                             if (car == null)
                             {
-                                BraidRuntimeException($"let: the first element of a binding pair cannot be null.");
+                                BraidRuntimeException($"with: the first element of a binding pair cannot be null.");
                             }
 
                             Symbol symToBind = car as Symbol;
@@ -4789,6 +4789,8 @@ namespace BraidLang
                             }
 
                             varsToBind.Add(new BraidVariable(symToBind, vvalue));
+                            val = (s_Expr)val.Cdr;
+
                         }
                         else
                         {
@@ -4806,7 +4808,7 @@ namespace BraidLang
                                 {
                                     if (current == null)
                                     {
-                                        BraidRuntimeException("A type constraint in a typed 'let' binding vust be followed by a variable name.");
+                                        BraidRuntimeException("A type constraint in a typed 'let' binding must be followed by a variable name.");
                                     }
                                 }
                                 else

@@ -763,7 +763,7 @@ namespace BraidLang
                             lambda.Function = _current_function;
                             current = new FunctionLiteral(lambda);
                         }
-                        else if (fnname == Symbol.sym_let && !(((s_Expr)listStart.Cdr).Car is VectorLiteral))
+                        else if (fnname == Symbol.sym_let)
                         {
                             // BUGBUGBUG - need to rethink doing this, maybe replace 'let [a 1 b 2] ...' with 'with [a 1 b 2] ...'
                             // Handle the syntax: (let [-success] [^type] <symbol> <expr>)
@@ -806,7 +806,7 @@ namespace BraidLang
 
                             object expr = next.Car;
 
-                            var func = callStack.GetValue(Symbol.sym_local);
+                            var func = callStack.GetValue(Symbol.sym_let);
                             ((s_Expr)current).Car = func;
                         }
                         // BUGBUGBUG - resolve symbols into functions. We can only resolve the built-ins at

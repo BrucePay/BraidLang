@@ -1201,7 +1201,6 @@ lambda [
 ;-------------------------------------------------------
 ; Test the let function
 (test/exec :let1   (fn -> (let x 1) x)       1)
-(test/exec :local1 (fn -> (local x 1) x)       1)
 (test/exec :setq1  (fn -> (setq x 1) x)       1)
 (test/exec :let2   (fn -> (let x "abc") x)   "abc")
 (test/exec :setq2  (fn -> (setq x "abc") x)   "abc")
@@ -1251,10 +1250,10 @@ lambda [
     )
     true
 )
-; test classic use of let to establish a new binding context
-(test/exec :let6
+; test using with to establish a new binding context
+(test/exec :with1
     (fn ->
-        (let
+        (with
             [ a 1 b 2 c 3]
             
             (+ a b c)
@@ -1262,41 +1261,41 @@ lambda [
     )
     6
 )
-(test/exec :let7
+(test/exec :with2
     (fn ->
         (let c 3)
-        (let [ a 1 b 2 ]
+        (with [ a 1 b 2 ]
             (+ a b c)
         )
     )
     6
 )
-(test/exec :let8
+(test/exec :with3
     (fn ->
         ; test clojure style let
         (let a 10)
         (let b 20)
         (let c 30)
-        (let [ a 1 b 2 c 3 ]
+        (with [ a 1 b 2 c 3 ]
             (+ a b c)
         )
     )
     6
 )
-(test/exec :let9
+(test/exec :with4
     (fn ->
         ; test multiple assignent with let
-        (let [a:b [1 2 3]  c:d [4 5 6]]
+        (with [a:b [1 2 3]  c:d [4 5 6]]
             [d c b a]
         )
     )
     ['(5 6) 4 '(2 3) 1]
 )
-(test/exec :let10
+(test/exec :with5
     (fn ->
         (defn lzip [xs ys (pairs [])]
             (if (and xs ys)
-                (let [x:xs xs y:ys ys]
+                (with [x:xs xs y:ys ys]
                     (.add pairs [x y])
                     (recur xs ys pairs)
                 )
@@ -1307,11 +1306,11 @@ lambda [
     )
     [[1 4] [2 5] [3 6]]
 )
-(test/exec :let11
+(test/exec :with6
     (fn ->
         ; nested lets + verify values are completed before binding
-        (let [a 1 b 2 c 3]
-            (let [a (+ a 1) b a c b]
+        (with [a 1 b 2 c 3]
+            (with [a (+ a 1) b a c b]
                 [a b c]
             )
        )
@@ -1368,20 +1367,20 @@ lambda [
     )
     [1 2 3]
 )
-(test/exec :let15
+(test/exec :with8
     (fn ->
         ; test clojure style 'let' with strict type constraints and correct arguments.
-        (let [^int a 1 ^int b 2 ^int c 3]
+        (with [^int a 1 ^int b 2 ^int c 3]
             (+ a b c)
         )
     )
     6
 )
-(test/exec :let15a
+(test/exec :with9
     (fn ->
         ; test clojure style 'let' with strict type constraints and incorrect arguments.
         (try
-            (let [^int a 1 ^int b "2" ^int c 3]
+            (with [^int a 1 ^int b "2" ^int c 3]
                 (+ a b c)
             )
         | is? ^exception
@@ -1389,10 +1388,10 @@ lambda [
     )
     true
 )
-(test/exec :let16
+(test/exec :with10
     (fn ->
         ; test clojure style 'let' with varying strict type constraints
-        (let [^int a 1 ^double b 2.0 ^string c "3"]
+        (with [^int a 1 ^double b 2.0 ^string c "3"]
             (and
                 (is? a ^int)
                 (is? b ^double)
@@ -1400,10 +1399,10 @@ lambda [
     )
     true
 )
-(test/exec :let16a
+(test/exec :with11
     (fn ->
         ; test clojure style 'let' with varying coersive type constraints
-        (let [^int? a "1" ^double? b 2 ^string? c 3]
+        (with [^int? a "1" ^double? b 2 ^string? c 3]
             (and
                 (is? a ^int)
                 (is? b ^double)
@@ -1561,7 +1560,7 @@ lambda [
     (fn ->
         (let zorkzorkzork 55)
         ; test with let
-        (let [zorkzorkzork 10]
+        (with [zorkzorkzork 10]
             ; sets variable in local scope since it already exists
             (def zorkzorkzork 123)
         )
@@ -1573,12 +1572,12 @@ lambda [
     (fn ->
         (let zorkzorkzork 55)
         ; test with let
-        (let []
+        (with []
             ; sets variable in local scope since it already exists
             (def zorkzorkzork 123)
         )
         ; test in child scope
-        (let []
+        (with []
             zorkzorkzork
         )
     )
@@ -1587,12 +1586,12 @@ lambda [
 (test/exec :def7
     (fn ->
         (undef 'zorkzorkzork)
-        (let []
+        (with []
             ; set variable in lexical parent
             (def zorkzorkzork 123)
         )
         ; test in child scope
-        (let []
+        (with []
             zorkzorkzork
         )
     )
@@ -1698,7 +1697,7 @@ lambda [
     (fn ->
         ; create a constant then try to override it in a child scope
         (const foo 13)
-        (let [foo 14]
+        (with [foo 14]
             (== foo 14)
         )
     )
@@ -1709,7 +1708,7 @@ lambda [
 ; The 'vars' function.
 (test/exec :vars1
     (Fn ->
-        (let [a-strange-variable 1]
+        (with [a-strange-variable 1]
             (vars | contains? "a-strange-variable")
         )
     )
@@ -2034,7 +2033,7 @@ lambda [
 (test/exec :upvar1
     (fn ->
         (let xyz 0)
-        (let []
+        (with []
             (upvar 'xyz 'lcl)
             (let lcl 123)
         )
@@ -2045,7 +2044,7 @@ lambda [
 (test/exec :upvar1a
     (fn ->
         ; upvar should create the variable in this context
-        (let []
+        (with []
             (upvar 'xyz 'lcl)
             (let lcl 123)
         )
@@ -2056,7 +2055,7 @@ lambda [
 (test/exec :upvar2
     (fn ->
         (let xyz 0)
-        (let []
+        (with []
             (upvar "xyz" "lcl")
             (let lcl 123)
         )
@@ -2068,7 +2067,7 @@ lambda [
     (fn ->
         (let xyz 0)
         (let name "xyz")
-        (let []
+        (with []
             (upvar name "lcl")
             (let lcl 123)
         )
@@ -2085,7 +2084,7 @@ lambda [
             )
         )
 
-        (let [xyz 0 f (f)]
+        (with [xyz 0 f (f)]
             (f)
             xyz
         )
@@ -2098,7 +2097,7 @@ lambda [
 (test/exec :upDo1
     (fn ->
         (let x 1)
-        (let []
+        (with []
             (let x 2)
             ; get 'x' in the parent scope and the current scope
             [ (upDo 'x) x ]
@@ -2109,7 +2108,7 @@ lambda [
 (test/exec :upDo2
     (fn ->
         (let x 1)
-        (let []
+        (with []
             ; change the value of 'x' in the parent scope.
             (upDo '(let x 123))
         )
@@ -2157,7 +2156,7 @@ lambda [
     (fn ->
         (undef x)
         (let x 123)
-        (let [x 456]
+        (with [x 456]
             ; returns the variable object
             [(get-dynamic x | .value) x]
         )
@@ -2167,7 +2166,7 @@ lambda [
 (test/exec :get-dynamic2
     (fn ->
         (undef x)
-        (let [x 456]
+        (with [x 456]
             ; returns the variable object
             [(get-dynamic x | .?value) x]
         )
@@ -5748,7 +5747,7 @@ lambda [
 ; Test the pincr function
 (test/exec :pincr1
     (fn ->
-        (let [x 0 s 0] (while (pincr x | <= 10) (incr s x)) s)
+        (with [x 0 s 0] (while (pincr x | <= 10) (incr s x)) s)
     )
     66
 )
@@ -10006,7 +10005,7 @@ lambda [
 )
 (test/exec :partial12
     (fn ->
-        (let f (let [] (defn t2 [x y] (* x y)) (partial t2 3)))
+        (let f (with [] (defn t2 [x y] (* x y)) (partial t2 3)))
         (range 5 | map f)
     )
     [3 6 9 12 15]
@@ -10373,7 +10372,7 @@ lambda [
     (fn ->
         ; test scoped function resolution
         (let f
-            (let []
+            (with []
                 (defn foo [x] (* x 3))
                 (compose ++ foo (+ 2))
             )
@@ -10387,7 +10386,7 @@ lambda [
         ; make sure the function returned by 'compose' is properly closed.
         (let v 4)
         (let f
-            (let []
+            (with []
                 (let v 3)
                 (defn foo [x] (* x v))
                 (compose ++ foo (+ 2))
@@ -10403,7 +10402,7 @@ lambda [
         ; test scoped function resolution using 'partial'
         (let v 4)
         (let f
-            (let []
+            (with []
                 (let v 3)
                 (defn foo [x y] (* x y))
                 (compose ++ (partial foo v) (+ 3))
@@ -11000,7 +10999,7 @@ lambda [
         ; test lexical scoping of types
         (and
             ; child scope has the defined type
-            (let [] (deftype ^ZZZZ a) (contains? *types* "ZZZZ"))
+            (with [] (deftype ^ZZZZ a) (contains? *types* "ZZZZ"))
             ; but the parent does not
             (not (contains? *types* "ZZZZ")))
     )
@@ -11292,7 +11291,7 @@ lambda [
 ; Test the 'undeftype' function
 (test/exec :undeftype1
     (fn ->
-        (let []
+        (with []
             (deftype ^undeftype1_type)
             (undeftype ^undeftype1_type)
             (try ^undeftype1_type "success" -catch: "nosuchtype")
@@ -11303,7 +11302,7 @@ lambda [
 (test/exec :undeftype2
     (fn ->
         (deftype ^undeftype2_type)
-        (let []
+        (with []
             (deftype ^undeftype2_type)
             (undeftype ^undeftype2_type)
         )
@@ -12628,58 +12627,58 @@ lambda [
 (test/exec :quasi-quote10
     (fn ->
         ; testing expansion in vector literals
-        (let [a 1 b 2 c 3] `[~a ~b ~c] | .valuelist)
+        (with [a 1 b 2 c 3] `[~a ~b ~c] | .valuelist)
     )
     '(1 2 3)
 )
 (test/exec :quasi-quote11
     (fn ->
         ; testing expansion in vector literals
-        (let [a 3 b 2 c 1] `[~a ~b ~c] | .valuelist)
+        (with [a 3 b 2 c 1] `[~a ~b ~c] | .valuelist)
     )
     '(3 2 1)
 )
 (test/exec :quasi-quote12
     (fn ->
-         (let [a 1 b 2 c 3] `[~a [~b ~c]] | eval)
+         (with [a 1 b 2 c 3] `[~a [~b ~c]] | eval)
     )
     [1 [2 3]]
 )
 (test/exec :quasi-quote13
     (fn ->
-         (let [a 1 b 2 c 3] `(list ~a [~b ~c]) | eval)
+         (with [a 1 b 2 c 3] `(list ~a [~b ~c]) | eval)
     )
     (list 1 [2 3])
 )
 (test/exec :quasi-quote14
     (fn ->
-         (let [a 1 b 2 c 3] `[~a '(~b ~c)] | eval)
+         (with [a 1 b 2 c 3] `[~a '(~b ~c)] | eval)
     )
     [1 '(2 3)]
 )
 (test/exec :quasi-quote15
     (fn ->
-         (let [a 1 b 2 c 3] `[[~a ~b] ~c] | eval)
+         (with [a 1 b 2 c 3] `[[~a ~b] ~c] | eval)
     )
     [[1 2] 3]
 )
 (test/exec :quasi-quote16
     (fn ->
         ; eval'ing ([2 3] 1) is an index operation
-         (let [a 2 b 3 c 1] `([~a ~b] ~c) | eval)
+         (with [a 2 b 3 c 1] `([~a ~b] ~c) | eval)
     )
     3
 )
 (test/exec :quasi-quote17
     (fn ->
-         (let [a 1 b 2 c 3] `['(~a ~b) ~c] | eval)
+         (with [a 1 b 2 c 3] `['(~a ~b) ~c] | eval)
     )
     ['(1 2) 3]
 )
 (test/exec :quasi-quote18
     (fn ->
         ; test expansion in hashes
-        (let [a 10 b 20 c 30] `{:a ~a :b ~b :c ~c} | eval)
+        (with [a 10 b 20 c 30] `{:a ~a :b ~b :c ~c} | eval)
     )
     {
         :a : 10,
@@ -12690,7 +12689,7 @@ lambda [
 (test/exec :quasi-quote19
     (fn ->
         ; test expansion in hashes
-        (let [a 10 b 20 c 30] `{:a ~a :b ~b :c ~c} | eval)
+        (with [a 10 b 20 c 30] `{:a ~a :b ~b :c ~c} | eval)
     )
     {
         :a : 10,
@@ -12701,7 +12700,7 @@ lambda [
 (test/exec :quasi-quote20
     (fn ->
         ; test expansion in hashes
-        (matchp @(let [sym "foo" a 1 b 2] `{~sym ~a :b ~b} | .ValueList)
+        (matchp @(with [sym "foo" a 1 b 2] `{~sym ~a :b ~b} | .ValueList)
         | "foo" 1 _ 2  -> "success"
         | &args -> (warn "Match failed") (foreach e (car args) (warn "    " e "  type:" (type-of e)))
         )
@@ -12711,7 +12710,7 @@ lambda [
 (test/exec :quasi-quote21
     (fn ->
         ; test expansion in hashes
-        (matchp @(let [sym "foo" a 1 b 2] `{~sym ~a :b [ ~b ]} | .ValueList)
+        (matchp @(with [sym "foo" a 1 b 2] `{~sym ~a :b [ ~b ]} | .ValueList)
         | "foo" 1 ^BraidLang.KeywordLiteral ^BraidLang.VectorLiteral :where (.valuelist %3 | == '(2)) ->
             "success"
         | &xs ->
@@ -12727,56 +12726,56 @@ lambda [
 (test/exec :quasi-quote22
     (fn ->
         ; test expansion in hashes
-        (let [sym "foo" a 1 b 2] `{~sym ~a "b" [ ~b ]} | eval)
+        (with [sym "foo" a 1 b 2] `{~sym ~a "b" [ ~b ]} | eval)
     )
     {"foo" 1 "b" [ 2 ]}
 )
 (test/exec :quasi-quote23
     (fn ->
         ; test expansion in nested hashes
-        (let [sym "foo" a 1 b 2 c 3] `{~sym ~a :b {:c  ~b}} | eval)
+        (with [sym "foo" a 1 b 2 c 3] `{~sym ~a :b {:c  ~b}} | eval)
     )
     {"foo" 1 :b {:c 2}}
 )
 (test/exec :quasi-quote24
     (fn ->
         ; test expansion in nested hashes and vectors.
-        (let [sym "foo" a 1 b 2 c 3] `{~sym ~a "b" {:c  [ ~b ]}} | eval)
+        (with [sym "foo" a 1 b 2 c 3] `{~sym ~a "b" {:c  [ ~b ]}} | eval)
     )
     {"foo" 1 "b" {:c [ 2 ]}}
 )
 (test/exec :quasi-quote25
     (fn ->
         ; test expansion in nested hashes and vectors.
-        (let [sym "foo" a 1 b 2 c 3] `{~sym ~a "b" {~sym  [ ~b ]}} | eval)
+        (with [sym "foo" a 1 b 2 c 3] `{~sym ~a "b" {~sym  [ ~b ]}} | eval)
     )
     {"foo" 1 "b" {"foo" [ 2 ]}}
 )
 (test/exec :quasi-quote26
     (fn ->
         ; test expansion in nested hashes and vectors.
-        (let [sym "foo" a 1 b 2 c 3] `[~a {~sym  [ ~b ]}] | eval)
+        (with [sym "foo" a 1 b 2 c 3] `[~a {~sym  [ ~b ]}] | eval)
     )
     [1 {"foo" [ 2 ]}]
 )
 (test/exec :quasi-quote27
     (fn ->
         ; test expansion in nested hashes and vectors.
-        (let [sym "foo" a 1 b 2 c 3] `[{"a" ~a} {~sym  [ ~b ]} [~c]] | eval)
+        (with [sym "foo" a 1 b 2 c 3] `[{"a" ~a} {~sym  [ ~b ]} [~c]] | eval)
     )
     [{"a" 1} {"foo" [ 2 ]} [3]]
 )
 (test/exec :quasi-quote28
     (fn ->
         ; test expansion in nested hashes and vectors.
-        (let [sym "foo" a 1 b 2 c 3] `[{"a" ~a} {~sym  [ ~b ]} [[[~c]]]] | eval)
+        (with [sym "foo" a 1 b 2 c 3] `[{"a" ~a} {~sym  [ ~b ]} [[[~c]]]] | eval)
     )
     [{"a" 1} {"foo" [ 2 ]} [[[3]]]]
 )
 (test/exec :quasi-quote29
     (fn ->
         ; test expansion in nested hashes and vectors.
-        (let [sym "foo" a 1 b 2 c 3] `[{"zork" [{"a" ~a} {~sym  [ ~b ]}]} [[[~c]]]] | eval)
+        (with [sym "foo" a 1 b 2 c 3] `[{"zork" [{"a" ~a} {~sym  [ ~b ]}]} [[[~c]]]] | eval)
     )
     [{"zork" [{"a" 1} {"foo" [ 2 ]}]} [[[3]]]]
 )
@@ -12784,7 +12783,7 @@ lambda [
     (fn ->
         ; BUGBUGBUG - this `#{ ~a ~b } should work but quote handling only allows for one quote
         ; test expansion with hashsets.
-        (let [a 1 b 2] `[#{ ~a ~b }] | eval)
+        (with [a 1 b 2] `[#{ ~a ~b }] | eval)
     )
     [  #{ 1 2 } ]
 )
@@ -13738,7 +13737,7 @@ lambda [
 (test/exec :=7
     (fn ->
         ; test with variables
-        (let [a 3 b 10] (= 10+a*(2-12) + b))
+        (with [a 3 b 10] (= 10+a*(2-12) + b))
     )
     -10
 )
@@ -13792,7 +13791,7 @@ lambda [
 (test/exec :let=7
     (fn ->
         ; test with variables
-        (let [a 3 b 10]
+        (with [a 3 b 10]
             (let= complex 10+a*(2-12) + b)
             complex
         )
@@ -14097,7 +14096,7 @@ lambda [
 (test/exec :closure10
     (fn ->
         ; return 2 functions sharing the same parent scope
-        (let c1:c2: (let [var 0]
+        (let c1:c2: (with [var 0]
             [  #(str "c1 " (incr var)) #(str "c2 " (incr var))]))
 
         ; each call will increment 'var'
@@ -15920,8 +15919,8 @@ lambda [
     (fn ->
         (let x 123)
         ; test assignment across 3 levels of scope
-        (let []
-            (let []
+        (with []
+            (with []
                 (aseventhandler (fn o e -> (def x 456)) | .Invoke null null)
             )
         )
@@ -15933,8 +15932,8 @@ lambda [
     (fn ->
         (let x 123)
         ; test assignment across 3 levels of scope
-        (let []
-            (let []
+        (with []
+            (with []
                 ; use pattern function
                 (aseventhandler (fn | o e -> (def x 456)) | .Invoke null null)
             )
@@ -15947,8 +15946,8 @@ lambda [
     (fn ->
         (let x 123)
         ; test assignment across 3 levels of scope
-        (let []
-            (let [x 0]
+        (with []
+            (with [x 0]
                 (aseventhandler (fn o e -> (def x 456)) | .Invoke null null)
             )
         )
@@ -15960,8 +15959,8 @@ lambda [
     (fn ->
         (let x 123)
         ; test assignment across 3 levels of scope
-        (let [x 0]
-            (let []
+        (with [x 0]
+            (with []
                 (aseventhandler (fn o e -> (def x 456)) | .Invoke null null)
             )
         )

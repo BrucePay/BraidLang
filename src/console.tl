@@ -49,7 +49,7 @@ Split a string into specified length segments.
 "
     [str (^int num 40)]
 
-    (let [ allResults [] result nil ]
+    (with [ allResults [] result nil ]
 
         (while true
             (def result (chomp str num))
@@ -116,7 +116,7 @@ content will be broken up to fit the size of the box.
 "
     [ (^string? msg) (^ConsoleColor? color (.console/ForeGroundColor)) (^int width 40)]
 
-    (let [
+    (with [
             oldFg      (.console/ForegroundColor)
             linewidth  0
             height     0

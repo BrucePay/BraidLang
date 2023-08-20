@@ -43,7 +43,7 @@ lambda
 
 ; use a nested scope to run the tests so the file can be loaded with minimal
 ; contamination of the caller's scope.
-(let []
+(with []
     ; First test the merge-list routine.
     (alert "Testing merge-list; result should be: (1 2 3 4 5 6 7)")
     (println (merge-list [1 2 5] [3 4 6 7]))

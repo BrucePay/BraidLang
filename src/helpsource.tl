@@ -1621,7 +1621,7 @@ Examples:
     (let foo 123)               ; returns 123
     (let x:y:z [1 2 3 4 5])     ; returns [1 2 3 4 5]
 
-See also: vlet def setq local
+See also: vlet def setq
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1639,7 +1639,7 @@ Examples:
     (let foo 123)
     (let x:y:z [1 2 3 4 5])
 
-See also: let def setq local
+See also: let def setq
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1651,7 +1651,7 @@ Returns true if a destructuring assignment was successful, false otherwise.
 Examples:
     (vlet xs [1 2 3]) (while (let? x:xs xs) (println x)) ; print a list
 
-See also: let vlet def setq local
+See also: let vlet def setq
 ")
 ;)
 
@@ -1696,17 +1696,17 @@ See also: using-module using-assembly
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp local  "
-Syntax: (local name value)
+(bindhelp let  "
+Syntax: (let name value)
 
 Sets the value of a variable in the current scope if a variable
 with that name exists or creates a new variable in the current scope
 if it doesn't. If the name takes the form of v1:v2:v3 then destructuring will
 be done and the parts assigned.
-    (local foo 123)
-    (local x:y:z [1 2 3 4 5])
+    (let foo 123)
+    (let x:y:z [1 2 3 4 5])
 
-See also: def setq let
+See also: def setq vlet
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2927,7 +2927,7 @@ to look up, it can be used to do indirect lookups in the global variable table.
 Examples:
     (global (get-symbol "foo") 123) ; set the variable 'foo' to 13
 
-See also: let local def globalq
+See also: let def globalq
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2953,7 +2953,7 @@ Syntax: (globalq <symbol> <value>)
 Binds the variable identified by the symbol to the specified value in the global
 scope.
 
-See also: let local def global
+See also: let def global
 ")
 
 (; is now a computed variable

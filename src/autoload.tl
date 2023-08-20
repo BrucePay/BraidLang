@@ -398,7 +398,7 @@ Examples:
     (defn Tokenize [(^string? string)]
 
         ; Split the string into tokens with the 'matches' operator
-        (let [
+        (with [
                 tokens (.matches expression_pattern string | map .value | filter -not #"\s+")
                 tindex 0
             ]
@@ -498,7 +498,7 @@ Examples:
     )
 
     ; gather the args, join them into a string, tokenize then parse them into s-expressions
-    `(local ~varToSet ~(args | join | tokenize | parseexpr))
+    `(let ~varToSet ~(args | join | tokenize | parseexpr))
 )
 
 ;--------------------------------------------------------------------------
@@ -523,10 +523,10 @@ Examples:
     (foreach [vn lst] (.valueList vars)
         (if (not result)
             (do
-                (let result `(let [~vn null] (forall ~vn ~lst ~@args)))
+                (let result `(with [~vn null] (forall ~vn ~lst ~@args)))
             )
             (do
-                (let result `(let [~vn null] (forall -flatten ~vn ~lst ~result)))
+                (let result `(with [~vn null] (forall -flatten ~vn ~lst ~result)))
             )
         )
     )
@@ -604,7 +604,7 @@ expands to.
 Examples:
     (.BraidLang.Braid/parse "(for (let i 0) (< i 10) (incr i))")
     ; after macro expansion, resolves to:
-    ((do (local i 0) (while (< i 10) (incr i))))
+    ((do (let i 0) (while (< i 10) (incr i))))
     ; with the macro fully expanded.
 
 See also: file/parse eval
@@ -676,9 +676,9 @@ See also: file/parse parse-text tokenize-file tokenize-text
 ;
 (defmacro vlet
     | (^TypeLiteral tlit) (^symbol symbol) value ->
-        `(local ~tlit ~symbol ~value | void)
+        `(let ~tlit ~symbol ~value | void)
     | (^symbol symbol) value ->
-        `(local ~symbol ~value | void)
+        `(let ~symbol ~value | void)
     | -> (throw "vlet: invalid syntax. (vlet [<type>] <symbol> <value>)") 
 )
 
@@ -1079,7 +1079,7 @@ Examples:
 "
     [expression varsym]
 
-    (upDo (list 'local varsym expression))
+    (upDo (list 'let varsym expression))
 )
 
 ;--------------------------------------------------------------------------
@@ -1100,15 +1100,15 @@ See also: let let?
     | (^symbol sym) expr ->
         (upvar sym 'lcl)
         (if (null? lcl)
-            (void (upDo (list 'local sym expr)))
+            (void (upDo (list 'let sym expr)))
         )
 
      | (^TypeLiteral t) (^symbol sym) expr ->
         (upvar sym 'lcl)
         
         (if (null? lcl)
-            (void (upDo (list 'local t sym expr)))
-            (void (upDo (list 'local t sym lcl)))
+            (void (upDo (list 'let t sym expr)))
+            (void (upDo (list 'let t sym lcl)))
         )
 
 
@@ -1127,11 +1127,11 @@ See also: let let?
         (upvar sym 'lcl)
         (cond
             (or (null? lcl) (isnot? lcl type))
-                (upDo (list 'local type sym low))
+                (upDo (list 'let type sym low))
             (< lcl low)
-                (upDo (list 'local type sym low))
+                (upDo (list 'let type sym low))
             (> lcl high)
-                (upDo (list 'local type sym high))
+                (upDo (list 'let type sym high))
         )
 
      | ->
@@ -3954,24 +3954,6 @@ Examples:
 ; Define the prompt string
 ;
 (def prompt "=> ")
-
-;--------------------------------------------------------------------------
-;
-(defn python
-"
-Start the python 3.7 interpreter. If there are args, exec the binary directly passing
-the arguments. if there are no arguments then use 'start' to launch an interactive session.
-"
-    [&args]
-
-    (let _pythonbin "C:\Users\bpayette\AppData\Local\Programs\Python\Python37\python.exe")
-    (if args
-        ; exec python with args
-        (_pythonbin @args)
-        ; start an interactive session
-        (start _pythonbin -nonewwindow -wait)
-    )
-)
 
 ;--------------------------------------------------------------------------
 ;

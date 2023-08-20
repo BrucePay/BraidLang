@@ -217,7 +217,7 @@ namespace BraidLang
         public static Symbol sym_matches = Symbol.FromString("Matches");
         public static Symbol sym_matchp = Symbol.FromString("matchp");
         public static Symbol sym_let = Symbol.FromString("let");
-        public static Symbol sym_local = Symbol.FromString("local");
+        public static Symbol sym_with = Symbol.FromString("with");
         public static Symbol sym_argindex_0 = Symbol.FromString("%0");
         public static Symbol sym_recur = Symbol.FromString("recur");
         public static Symbol sym_recur_to = Symbol.FromString("recur-to");

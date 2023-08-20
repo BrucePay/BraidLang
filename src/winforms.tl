@@ -18,7 +18,7 @@
 ; Bind a function to cycle through a list of colors
 ;
 (let wf/next-color
-    (let
+    (with
         [
             colors
             [
