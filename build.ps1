@@ -12,6 +12,10 @@ param (
     [switch] $Core
 )
 
+if ($env:GITHUB_WORKSPACE) {
+    return
+}
+
 $ErrorActionPreference = "stop"
 
 
