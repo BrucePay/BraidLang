@@ -501,6 +501,11 @@ jobs:
         run: dotnet restore ./src/BraidCore.csproj
       - name: dotnet build
         run: dotnet build ./src/BraidCore.csproj
+      - name: braidlang.dll artifact
+        uses: actions/upload-artifact@v3
+        with: 
+          name: braidlang.zip
+          path: '**/braidlang.dll'
       - name: Use PSSVG Action
         uses: StartAutomating/PSSVG@main
         id: PSSVG
