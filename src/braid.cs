@@ -5266,7 +5266,7 @@ namespace BraidLang
     }
 
 
-    #if !UNIX
+#if !UNIX
     ////////////////////////////////////////////////////////////////////
     /// <summary>
     /// Native methods used by some of the GUI scripts like 'textedit.tl'.
@@ -5302,6 +5302,6 @@ namespace BraidLang
             SendMessage(rtb.Handle, WM_SETREDRAW, IntPtrOne, IntPtr.Zero);
         }
     }
-    #endif
+#endif
 }
 
