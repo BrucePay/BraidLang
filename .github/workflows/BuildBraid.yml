@@ -505,7 +505,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with: 
           name: braidlang.zip
-          path: '**/braidlang.dll'
+          path: '/src/bin/**/braidlang.dll'
       - name: Use PSSVG Action
         uses: StartAutomating/PSSVG@main
         id: PSSVG
