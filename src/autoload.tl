@@ -3747,8 +3747,8 @@ Examples:
 
     ; handle named command parameters e.g. get-childitem -rec<tab>
     | prefix #"^.*[(|] *([a-z][^ ]*).* +(-[a-z]*)$" after ->
-        (let name (!! matches 1 | .value))
-        (let sw (!! matches 2 | .value))
+        (let name (!! matches 1))
+        (let sw (!! matches 2))
         (let func (getFunc name))
         (if func
             (matchp func
@@ -3779,8 +3779,8 @@ Examples:
     ; BUGBUGBUG - this works in the api but not actually on the cmd line - check c# code to see how before and after are built.
     ; object member completions of the form '(.p<tab> val)'
     | prefix (#"[|(]? *(\.[a-z]*)" member) (#" *([a-z]+)" var) ->
-        (let var (!! var 1 | .Value))
-        (let member (!! member 1 | .Value))
+        (let var (!! var 1))
+        (let member (!! member 1))
 
         (if (bound? var)
             (do
@@ -3800,9 +3800,9 @@ Examples:
 
     ; handle looking up static methods e.g. .console/w<tab>
     | #"^(\(?)\\.([a-z0-9.]+)/([a-z0-9]*)$" before after ->
-        (let typename (.value (matches 2)))
+        (let typename (matches 2))
         (let type (^type? typename))
-        (let membername (^Regex? (str "^" (.value (matches 3)))))
+        (let membername (^Regex? (str "^" (matches 3))))
 
         (if type
             (. type :getmembers
@@ -3812,7 +3812,7 @@ Examples:
                 | re/replace-all "^[gs]et_"
                 | distinct
                 | re/match-all membername
-                | map #(str (matches 1) "." typename "/" %0)
+                | map #(str (!! matches 1) "." typename "/" %0)
             )
             ; otherwise
             []
@@ -3820,7 +3820,7 @@ Examples:
 
     ; deal with type names e.g. (^func or ^func.
     | #"^(\(?)\^([^ \t]+)" before after ->
-         (let startStr (.value (!! matches 2)))
+         (let startStr (!! matches 2))
          (let candidates [
                 @__system_types
                 @((.GetTypes *callstack*) | .keys)
@@ -3831,7 +3831,7 @@ Examples:
 
          (distinct candidates
             | filter (\ candidate -> (str/startswith candidate startStr))
-                | map (\ s -> (str (.value (!! matches 1)) "^" s)))
+                | map (\ s -> (str (!! matches 1) "^" s)))
 
          ; BUGBUGBUG currently unused - returning all of the types is too much
          ;(.AppDomain/CurrentDomain | .GetAssemblies | flatmap .gettypes | filter -not #"__anonymous" | map tostring)
@@ -3839,18 +3839,18 @@ Examples:
     ; deal with looking up member names .conso<tab> .sub<tab>
     | #"^(\(?)\.([a-z0-9]+$)" before after ->
         ; search all of the types used in bound variables
-        (all-members (^regex? (str "^" (.value (!! matches 2))))
+        (all-members (^regex? (str "^" (!! matches 2)))
             | map (\ n -> (str (!! matches 1) n)))
 
     ; match quoted words against the file system
     | #"^\(?'([^ \t]+$)" before after ->
-        (let pattern (str (.value (!! matches 1)) "*"))
+        (let pattern (str (!! matches 1) "*"))
         (get-childitem -ea: :ignore pattern | to-vector | map #(str "'" (.name %0)))
 
     ; match :keyword arguments against the dictionary keys and the file system
     | #"^(\(?):([^ \t]+$)" before after ->
-        (let pattern (str (.value (!! matches 2)) "*"))
-        (let ^regex? keypattern (str "^" (.value (!! matches 2))))
+        (let pattern (str (!! matches 2) "*"))
+        (let ^regex? keypattern (str "^" (!! matches 2)))
 
         ; try matching dictionary keys from all variables
         (let results (.BraidLang.Braid/callstack | .GetSnapshot | .vars | map .value | map .value
@@ -3860,13 +3860,13 @@ Examples:
         (let results [@results @(get-childitem -ea: :ignore pattern | map .name)])
 
         ; filter, format and return the matches
-        (results | where some? | map #(str (matches 1 | .value) ":" %0))
+        (results | where some? | map #(str (matches 1) ":" %0))
 
     ; match "(cmd..."
     | #"^\( *([^ \t]+$)" before after ->
-        (let ^regex? func-pattern (str "^" (.value (!! matches 1))))
-        (let ^string script-pattern (str (.value (!! matches 1)) "*.tl"))
-        (let ^string cmdlet-pattern (str (.value (!! matches 1)) "*"))
+        (let ^regex? func-pattern (str "^" (!! matches 1)))
+        (let ^string script-pattern (str (!! matches 1) "*.tl"))
+        (let ^string cmdlet-pattern (str (!! matches 1) "*"))
 
         (concat
             ; try matching functions

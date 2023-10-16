@@ -456,16 +456,15 @@ namespace BraidLang
             {
                 return MatchElementResult.NoMatch;
             }
+
             var matchResult = Regex.Match(thingToMatch.ToString());
             if (matchResult.Success)
             {
                 var matchArray = new Vector();
-                if (matchResult != null)
+
+                for (var index = 0; index < matchResult.Groups.Count; index++)
                 {
-                    for (var index = 0; index < matchResult.Groups.Count; index++)
-                    {
-                        matchArray.Add(matchResult.Groups[index]);
-                    }
+                    matchArray.Add(matchResult.Groups[index].ToString());
                 }
 
                 if (Variable != null)
@@ -476,7 +475,14 @@ namespace BraidLang
                     }
                     else
                     {
-                        callstack.SetLocal(Variable, matchArray);
+                        if (matchArray.Count == 1)
+                        {
+                            callstack.SetLocal(Variable, thingToMatch);
+                        }
+                        else
+                        {
+                            callstack.SetLocal(Variable, matchArray);
+                        }
                     }
                 }
                 else
@@ -1002,7 +1008,7 @@ namespace BraidLang
             }
 
             // If there are more values than pattern elements, terminate the match process early
-            // unless there is a star function or &args patern element.
+            // unless there is a star function or &args pattern element.
             if (targetList.Count > NestedArity && !NestedHasAndArgs && !HasStarFunction)
             {
                 return MatchElementResult.NoMatch;

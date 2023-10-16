@@ -4106,7 +4106,7 @@ namespace BraidLang
             ///
             /// Function to define a local variable
             ///
-            var function_local = new Function(Symbol.sym_let.Value, (Vector args) =>
+            var function_let = new Function(Symbol.sym_let.Value, (Vector args) =>
             {
                 if (args.Count < 2 || args.Count > 3)
                 {
@@ -4137,7 +4137,7 @@ namespace BraidLang
                         {
                             BraidRuntimeException($"The -setter: parameter to 'local/let' requires a value of type " +
                                                 $"^IInvokableValue, not {temp.GetType()} " +
-                                                "e.g. (let foo 0 -setter: (fn x -> (* x 2)))");
+                                                "e.g. (let foo 0 -setter: (\\ x -> (* x 2)))");
                         }
                     }
 
@@ -4151,7 +4151,7 @@ namespace BraidLang
                         {
                             BraidRuntimeException($"The -getter: parameter to 'local/let' requires a value of " +
                                                 $"type ^IInvokableValue, not {temp.GetType()} " +
-                                                "e.g. (let -getter: (fn x -> (* x 2)) 0)");
+                                                "e.g. (let -getter: (\\ x -> (* x 2)) 0)");
                         }
                     }
                 }
@@ -4159,7 +4159,7 @@ namespace BraidLang
                 var argIndex = 0;
                 if (args[argIndex] == null)
                 {
-                    BraidRuntimeException("the first argument to the 'let/local' function must be a symbol, not null");
+                    BraidRuntimeException("the first argument to the 'let' function must be a symbol or vector, not null");
                 }
 
                 TypeLiteral tlit = null;
@@ -4208,6 +4208,32 @@ namespace BraidLang
                     return ppe.DoMatch(callStack, value, 0, out int consumed) == MatchElementResult.Matched;
                 }
 
+                // Handle a vector pattern e.g. (let [a 2 c] [1 2 3)
+                if (args[argIndex] is VectorLiteral vlit)
+                {
+                    if (tlit != null)
+                    {
+                        BraidRuntimeException($"type constraints like {tlit} cannot be used with vector patterns.");
+                    }
+
+                    var peList = PatternClause.CompilePatternElements(new Vector(vlit.ValueList), out int patternArity, out bool hasStarFunction);
+                    NestedPatternElement npe = new NestedPatternElement(peList, patternArity, hasStarFunction);
+
+                    value = Braid.Eval(args[++argIndex]);
+                    if (value is BraidReturnOperation retop1)
+                    {
+                        return retop1;
+                    }
+
+                    //BUGBUGBUGBUG - why is this necessary
+                    if (value is IList ilist)
+                    {
+                        value = new Vector { ilist };
+                    }
+
+                    return npe.DoMatch(callStack, value, 0, out int consumed) == MatchElementResult.Matched;
+                }
+
                 Symbol varsym = args[argIndex] as Symbol;
                 ArgIndexLiteral argindexliteral = null;
                 if (varsym == null)
@@ -4216,7 +4242,7 @@ namespace BraidLang
 
                     if (argindexliteral == null)
                     {
-                        BraidRuntimeException("The 'let/local' function requires a symbol or argument index (e.g. %0) to assign to.");
+                        BraidRuntimeException("The 'let' function requires a symbol or argument index (e.g. %0) to assign to.");
                     }
                 }
 
@@ -4332,8 +4358,8 @@ namespace BraidLang
 
                 return result;
             });
-            function_local.FType = FunctionType.SpecialForm;
-            CallStack.Const(Symbol.sym_let, function_local);
+            function_let.FType = FunctionType.SpecialForm;
+            CallStack.Const(Symbol.sym_let, function_let);
 
             /////////////////////////////////////////////////////////////////////
             //
@@ -4425,7 +4451,7 @@ namespace BraidLang
                     signature += "\n" + docString.Trim();
                 }
 
-                return new s_Expr(function_local, new s_Expr(funcsym, new s_Expr(new FunctionLiteral(func, signature))));
+                return new s_Expr(function_let, new s_Expr(funcsym, new s_Expr(new FunctionLiteral(func, signature))));
             }));
 
             /////////////////////////////////////////////////////////////////
@@ -4729,7 +4755,7 @@ namespace BraidLang
             {
                 if (args.Count < 1 || args[0] == null)
                 {
-                    BraidRuntimeException("let: requires at least 1 argument.");
+                    BraidRuntimeException("with: requires at least 1 argument e.g. (with [a 1 b 2] ...)");
                 }
 
                 // Evaluate the argument expressions in the current scope.
@@ -4772,7 +4798,7 @@ namespace BraidLang
                                 if (symToBind == null)
                                 {
                                     BraidRuntimeException(
-                                        "let: the first element of a binding pair must be a string or symbol.");
+                                        "with: the first element of a binding pair must be a string or symbol.");
                                 }
                             }
 
@@ -4784,7 +4810,7 @@ namespace BraidLang
                             {
                                 if ((Braid.Debugger & DebugFlags.Trace) != 0 && (Braid.Debugger & DebugFlags.TraceException) == 0)
                                 {
-                                    Console.WriteLine("LET    {0} '{1}' = '{2}'", spaces(_evalDepth + 2), symToBind, Braid.Truncate(vvalue));
+                                    Console.WriteLine("WITH    {0} '{1}' = '{2}'", spaces(_evalDepth + 2), symToBind, Braid.Truncate(vvalue));
                                 }
                             }
 
@@ -4816,7 +4842,7 @@ namespace BraidLang
                                     current = val.Car;
                                     if (current == null)
                                     {
-                                        BraidRuntimeException("The symbol to bind in a 'let' function call cannot be null.");
+                                        BraidRuntimeException("The symbol to bind in a 'with' function call cannot be null.");
                                     }
                                 }
                             }
@@ -4839,38 +4865,17 @@ namespace BraidLang
                         }
                     }
                 }
-                else if (args[0] is Symbol dictSym)
-                {
-                    var dict = GetValue(dictSym, true) as IDictionary;
-                    if (dict != null)
-                    {
-                        foreach (KeyValuePair<Symbol, object> pair in dict)
-                        {
-                            Symbol ps = pair.Key;
-                            if (ps == null)
-                            {
-                                ps = Symbol.FromString(pair.Key.Value);
-                            }
-                            object vvalue = Eval(pair.Value);
-                            varsToBind.Add(new BraidVariable(ps, vvalue));
-                        }
-                    }
-                    else
-                    {
-                        BraidRuntimeException($"let: symbol argument '{args[0]}' must be bound to a dictionary.");
-                    }
-                }
                 else
                 {
                     BraidRuntimeException(
-                        $"let: the first argument must be a list of binding pairs or a dictionary, not: '{args[0]}'.");
+                        $"with: the first argument must be a list of binding pairs, not: '{args[0]}'.");
                 }
 
                 try
                 {
                     // Create a stack frame for the let execution scope
                     var caller = CallStack.Caller;
-                    PSStackFrame callStack = PushCallStack(new PSStackFrame(caller.File, "let", caller, CallStack));
+                    PSStackFrame callStack = PushCallStack(new PSStackFrame(caller.File, "with", caller, CallStack));
 
                     foreach (var braidvar in varsToBind)
                     {
@@ -4889,8 +4894,13 @@ namespace BraidLang
                     object result = null;
                     for (var index = 1; index < args.Count; index++)
                     {
+                        if (Braid._stop)
+                        {
+                            break;
+                        }
                         result = BraidLang.Braid.Eval(args[index]);
                     }
+
                     return result;
 
                 }
@@ -9223,6 +9233,17 @@ namespace BraidLang
                         else
                             func = GetFunc(callStack, Eval(predicate, true, true), out ftype, out funcname);
                     }
+                }
+                else if (predicate is DictionaryLiteral dlit)
+                {
+                    var ppe = new PropertyPatternElement(dlit);
+                    Func<Vector, object> matcher = funargs =>
+                    {
+                        int consumed;
+                        return ppe.DoMatch(CallStack, funargs, 0, out consumed) == MatchElementResult.Matched;
+                    };
+                    func = new Function("matcher", matcher);
+
                 }
                 else
                 {

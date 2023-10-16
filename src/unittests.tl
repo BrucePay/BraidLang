@@ -8323,7 +8323,7 @@ lambda [
         (matchp @(re/split "foo | .ab")
         ; test explicit variable binding
         | (#"^[a-z]+$" v) "|" (#"^\..*$" m) ->
-            [(v 0 | .value) (m 0 | .value)]
+            [v m]
         )
     )
     ["foo" ".ab"]
@@ -16761,14 +16761,14 @@ lambda [
 (test/exec :propertypattern10
     (fn ->
         ([{:a 1 :b 10} {:a 2 :b 20} {:a 3 :b 30}] | project
-            | flatmap (fn | {a #"[23]" b bee} -> [(.value (a 0)) bee] | ->))
+            | flatmap (fn | {a #"[23]" b bee} -> [a bee] | ->))
     )
     ["2", 20, "3", 30]
 )
 (test/exec :propertypattern11
     (fn ->
         ([{:a 1 :b 10} {:a 2 :b 20} {:a 3 :b 30}] | project |
-            flatmap (fn | {a (#"[23]" eh) b bee} -> [(.value (eh 0)) bee] | ->))
+            flatmap (fn | {a (#"[23]" eh) b bee} -> [eh bee] | ->))
     )
     ["2", 20, "3", 30]
 )

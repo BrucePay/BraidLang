@@ -831,7 +831,7 @@ See also: wf/MenuStrip wf/Menu wf/MenuItem
             )
 
         | #"^On([a-z0-9]+)$" handler &args ->
-            (let event (!! matches 1 | .Value))
+            (let event (!! matches 1))
             (. form "add_${event}"
                 (if (is? handler ^MulticastDelegate)
                     handler
