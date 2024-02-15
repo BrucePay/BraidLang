@@ -1,5 +1,7 @@
-$msBuildCommand = Get-Command msbuild
-$dotNetCommand = Get-command dotnet
+$ErrorActionPreference = 'continue'
+
+$msBuildCommand = Get-Command msbuild -ErrorAction Ignore
+$dotNetCommand = Get-command dotnet -ErrorAction Ignore
 
 if (-not $msBuildCommand) {
     $msBuildCommand = $dotNetCommand | 
