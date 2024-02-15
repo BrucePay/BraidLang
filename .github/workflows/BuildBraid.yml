@@ -506,21 +506,41 @@ jobs:
           $msBuildCommand = Get-Command msbuild -ErrorAction Ignore
           $dotNetCommand = Get-command dotnet -ErrorAction Ignore
           
+          
+          if ($env:GITHUB_STEP_SUMMARY) {
+              @(
+                  "* MSBuild location $($msBuildCommand.Source)"
+                  "* DotNet location $($dotNetCommand.Source)"
+              ) -join [Environment]::Newline | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
+          }
+          
           if (-not $msBuildCommand) {
+              if ($env:GITHUB_STEP_SUMMARY) {        
+                  "* Finding MSBuild" | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
+              }
               $msBuildCommand = $dotNetCommand | 
                   Split-Path | 
                   Split-Path | 
                   Get-ChildItem -Filter msbuild* -Recurse -file |
                   Select-Object -First 1 -ExpandProperty FullName 
+              if ($env:GITHUB_STEP_SUMMARY) {        
+                  "* Maybe Found MSBuild - $msBuildCommand" | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
+              }
           }
           
           
           if (-not $msBuildCommand) {
+              if ($env:GITHUB_STEP_SUMMARY) {        
+                  "* Could not find MSBuild, using dotnet" | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
+              }
               Write-Warning "Could not find MSBuild, using .NET"
               & $dotNetCommand restore ./src/BraidCore.csproj
               & $dotNetCommand build ./src/BraidCore.csproj
               return
           } else {
+              if ($env:GITHUB_STEP_SUMMARY) {        
+                  "* Calling Build .PS1" | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
+              }
               Set-Alias msbuild $msBuildCommand
               .\build.ps1
           }
