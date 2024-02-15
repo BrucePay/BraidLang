@@ -1,5 +1,5 @@
 @{
-    "runs-on" = "ubuntu-latest"
+    "runs-on" = "windows-latest"
     if = '${{ success() }}'
     steps = @(
         @{
@@ -41,11 +41,6 @@
         },
         'RunPipeScript',
         'RunEZOut',
-        'RunHelpOut',
-        @{
-            name = 'PSA'
-            uses = 'StartAutomating/PSA@main'
-            id = 'PSA'
-        }        
+        'RunHelpOut'
     )
 }
