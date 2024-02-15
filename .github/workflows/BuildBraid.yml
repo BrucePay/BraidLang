@@ -497,6 +497,8 @@ jobs:
         uses: actions/setup-dotnet@v3
         with: 
           dotnet-version: 7.0.x
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
       - name: BuildBraidStep
         id: BuildBraidStep
         shell: pwsh
