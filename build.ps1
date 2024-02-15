@@ -12,12 +12,7 @@ param (
     [switch] $Core
 )
 
-if ($env:GITHUB_WORKSPACE) {
-    return
-}
-
 $ErrorActionPreference = "stop"
-
 
 $StageDir = Join-Path $PSScriptRoot "stage"
 
@@ -48,7 +43,7 @@ if ($LASTEXITCODE)
 
 if (-not (Test-Path $StageDir))
 {
-    mkdir $StageDir
+    $madeStagingDirectory = mkdir $StageDir
 }
 
 if ($Optimize)

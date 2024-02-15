@@ -499,69 +499,6 @@ jobs:
           dotnet-version: 7.0.x
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
-      - name: BuildBraidStep
-        id: BuildBraidStep
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'continue'
-          
-          $msBuildCommand = Get-Command msbuild -ErrorAction Ignore
-          $dotNetCommand = Get-command dotnet -ErrorAction Ignore
-          
-          
-          if ($env:GITHUB_STEP_SUMMARY) {
-              @(
-                  "* MSBuild location $($msBuildCommand.Source)"
-                  "* DotNet location $($dotNetCommand.Source)"
-              ) -join [Environment]::Newline | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
-          }
-          
-          if (-not $msBuildCommand) {
-              if ($env:GITHUB_STEP_SUMMARY) {        
-                  "* Finding MSBuild" | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
-              }
-              $msBuildCommand = $dotNetCommand | 
-                  Split-Path | 
-                  Split-Path | 
-                  Get-ChildItem -Filter msbuild* -Recurse -file |
-                  Select-Object -First 1 -ExpandProperty FullName 
-              if ($env:GITHUB_STEP_SUMMARY) {        
-                  "* Maybe Found MSBuild - $msBuildCommand" | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
-              }
-          }
-          
-          
-          if (-not $msBuildCommand) {
-              if ($env:GITHUB_STEP_SUMMARY) {        
-                  "* Could not find MSBuild, using dotnet" | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
-              }
-              Write-Warning "Could not find MSBuild, using .NET"
-              & $dotNetCommand restore ./src/BraidCore.csproj
-              & $dotNetCommand build ./src/BraidCore.csproj
-              return
-          } else {
-              if ($env:GITHUB_STEP_SUMMARY) {        
-                  "* Calling Build .PS1" | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
-              }    
-              Set-Alias msbuild $msBuildCommand.Source
-              if ($env:GITHUB_STEP_SUMMARY) {        
-                  @("~~~"
-                  .\build.ps1 | Out-String
-                  "~~~"
-                  ) -join [Environment]::Newline | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
-              } else {
-                  .\build.ps1 | Out-Host
-              }   
-          
-          }
-          
-          
-          
-      - name: braidlang.dll artifact
-        uses: actions/upload-artifact@v3
-        with: 
-          name: braidlang.zip
-          path: '**/src/bin/**/braidlang.dll'
       - name: Use PSSVG Action
         uses: StartAutomating/PSSVG@main
         id: PSSVG
@@ -571,6 +508,11 @@ jobs:
         uses: StartAutomating/EZOut@master
       - name: UseHelpOut
         uses: StartAutomating/HelpOut@master
+      - name: braidlang.dll artifact
+        uses: actions/upload-artifact@v3
+        with: 
+          name: braidlang.zip
+          path: '**/src/bin/**/braid*.dll'
 on: 
   push: 
   pull_request: 
