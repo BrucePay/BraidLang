@@ -14,6 +14,11 @@ param (
 
 $ErrorActionPreference = "stop"
 
+if ($Core) {
+    dotnet build (Join-path "src" "BraidCore.csproj")
+    return
+}
+
 $StageDir = Join-Path $PSScriptRoot "stage"
 
 ; msbuild properties
