@@ -18,14 +18,7 @@
                 'dotnet-version' = '7.0.x'
             }    
         },
-        @{
-            name = 'install dependencies'
-            run  = 'dotnet restore ./src/BraidCore.csproj'
-        },
-        @{
-            name = 'dotnet build'
-            run  = 'dotnet build ./src/BraidCore.csproj'
-        }
+        "BuildBraidStep",
         @{
             name = 'braidlang.dll artifact'
             uses = 'actions/upload-artifact@v3'
