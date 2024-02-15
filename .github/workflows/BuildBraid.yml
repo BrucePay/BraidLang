@@ -542,9 +542,17 @@ jobs:
           } else {
               if ($env:GITHUB_STEP_SUMMARY) {        
                   "* Calling Build .PS1" | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
-              }
-              Set-Alias msbuild $msBuildCommand
-              .\build.ps1
+              }    
+              Set-Alias msbuild $msBuildCommand.Source
+              if ($env:GITHUB_STEP_SUMMARY) {        
+                  @("~~~"
+                  .\build.ps1 | Out-String
+                  "~~~"
+                  ) -join [Environment]::Newline | Out-File -Path $env:GITHUB_STEP_SUMMARY -Append
+              } else {
+                  .\build.ps1 | Out-Host
+              }   
+          
           }
           
           
