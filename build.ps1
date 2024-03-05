@@ -9,14 +9,12 @@ param (
     [switch] $Clean,
     [switch] $Force,
     [switch] $BuildOnly,
-    [switch] $Core
+    [switch] $NonCore
 )
 
 $ErrorActionPreference = "stop"
 
-# $core = $true
-
-if ($Core) {
+if (-not $NonCore) {
     dotnet build (Join-path "src" "BraidCore.csproj")
     return
 }
