@@ -64,8 +64,6 @@
 
     <Reference Include="System.Management.Automation" />
 
-    <Reference Include="System.Windows.Forms" />
-
     <Reference Include="System.Numerics" />
 
   </ItemGroup>
