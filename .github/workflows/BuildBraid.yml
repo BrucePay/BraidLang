@@ -512,7 +512,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with: 
           name: braidlang.zip
-          path: '**/src/bin/**/braid*.dll'
+          path: '**/stage/**'
 on: 
   push: 
   pull_request: 
