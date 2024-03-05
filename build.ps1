@@ -14,6 +14,8 @@ param (
 
 $ErrorActionPreference = "stop"
 
+$core = $true
+
 if ($Core) {
     dotnet build (Join-path "src" "BraidCore.csproj")
     return
