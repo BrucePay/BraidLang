@@ -5,6 +5,5 @@ RUN @( \
     Get-ChildItem -Path /Braid -Recurse -Filter Braidlang.dll | \
         Select-Object -First 1 | \
             Copy-Item -Destination /Braid/stage/ -PassThru | Out-Host \
-    && \ 
-    New-Item -Path \$Profile -ItemType File -Force | Add-Content -Value '/Braid/Start-Braid.ps1' \
 )
+ENTRYPOINT [ "/bin/pwsh", "-nologo", "-noprofile", "-file", "/Braid/Start-Braid.ps1" ]
