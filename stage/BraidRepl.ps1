@@ -214,6 +214,10 @@ function BraidRepl
             }
         }
 
+        DefineFunction 'psVersionTable' {
+            $psVersionTable
+        }
+
         DefineFunction 'psvar' {
             if (-not $args)
             {
@@ -280,10 +284,10 @@ function BraidRepl
                 }
                 else
                 {
-                    $promptStr = "=> "
+                    $promptStr = "=>! "
                 }
             }
-            $promptStr
+            "$promptStr ≬"
         }
     }
 
