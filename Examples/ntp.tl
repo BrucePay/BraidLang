@@ -22,7 +22,7 @@
 
 ; Setting the Leap Indicator, Version Number and Mode values
 ; LI = 0 (no warning), VN = 3 (IPv4 only), Mode = 3 (Client Mode)
-(ntpData 0 (^byte? 0b0_011_011))
+(!! ntpData 0 (^byte? 0b0_011_011))
 
 ; get the IP address of the NTP server
 (let addresses (.System.Net.Dns/GetHostEntry ntpServer | .AddressList))
@@ -50,7 +50,7 @@
 
 ; Offset to get to the "Transmit Timestamp" field (time at which the reply 
 ; departed the server for the client, in 64-bit timestamp format."
-(let serverReplyTime (^byte? 40))
+(let ^byte? serverReplyTime 40)
 
 ; Get the seconds part
 (let intPart   (.BitConverter/ToUInt32 ntpData serverReplyTime))

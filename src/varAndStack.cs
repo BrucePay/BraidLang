@@ -11,6 +11,7 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Management.Automation;
 
 namespace BraidLang
 {
@@ -145,7 +146,7 @@ namespace BraidLang
     /// <summary>
     /// Represents the environment associated with a BraidLang function or lambda.
     /// </summary>
-    public sealed class PSStackFrame
+    public sealed class PSStackFrame : ICloneable
     {
         public PSStackFrame Parent { get; set; }
 
@@ -221,6 +222,32 @@ namespace BraidLang
             LineNo = caller.LineNo;
             File = caller.File;
             Function = name;
+        }
+
+        /// <summary>
+        /// Clone the lambda with it's own copy of the parent variable table.
+        /// This is needed so that things like:
+        ///      let fs (forall i (range 10) (\ -> (println "i is ${i}")))
+        /// will work. This is not done in the global scope.
+        /// </summary>
+        /// <returns>The cloned stack framed</returns>
+        public object Clone()
+        {
+            //BUGBUGBUG... - don't clone the environment - it breaks stuff
+            return this;
+
+            var newVars = new Dictionary<Symbol, BraidVariable>();
+
+            if (Parent != null)
+            {
+                foreach (var pair in Vars)
+                {
+                    newVars[pair.Key] = pair.Value.Clone();
+                }
+            }
+            var nf = new PSStackFrame(File, Function, Caller, this, newVars);
+
+            return nf;
         }
 
         public int Depth()

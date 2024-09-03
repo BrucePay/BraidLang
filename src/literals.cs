@@ -1909,7 +1909,8 @@ namespace BraidLang
         {
             get
             {
-                var func = LambdaValue.CloneWithEnv(Braid.CallStack);
+                var func = LambdaValue.CloneWithEnv(Braid.CallStack.Clone() as PSStackFrame);
+
                 if (HelpInfo != null)
                 {
                     Braid.PutAssoc(func, "helptext", HelpInfo);

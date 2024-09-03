@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Windows.Forms;
 
 namespace BraidLang
 {
@@ -829,6 +830,35 @@ namespace BraidLang
                             else
                             {
                                 BraidRuntimeException("+: you can only add a DateTime or TimeSpan object to a DateTime.");
+                            }
+                        }
+                        return dt;
+
+                    case TimeSpan dt:
+                        foreach (var arg in args)
+                        {
+                            if (_stop)
+                            {
+                                break;
+                            }
+
+                            if (arg == null)
+                            {
+                                continue;
+                            }
+
+                            if (args[1] is TimeSpan tspn)
+                            {
+                                return dt += tspn;
+                            }
+                            else if (args[1] is int intval)
+                            {
+                                var ts = new TimeSpan(0, 0, intval);
+                                dt += ts;
+                            }
+                            else
+                            {
+                                BraidRuntimeException("+: you can only add a DateTime or TimeSpan object to a TimeSpan.");
                             }
                         }
                         return dt;
@@ -2390,7 +2420,7 @@ namespace BraidLang
             {
                 if (args.Count < 1 || args.Count > 2)
                 {
-                    BraidRuntimeException("asarray: takes 1 or two argument: (asarray <coll> [<type>])");
+                    BraidRuntimeException("asarray: takes 1 or 2 argument: (asarray <collection> [<type>])");
                 }
 
                 Type targetType = typeof(object);
@@ -2420,12 +2450,12 @@ namespace BraidLang
                     return objToConvert;
                 }
 
-                Array result;
-
                 if (objToConvert is string sobj)
                 {
                     return new string[1] { sobj };
                 };
+
+                Array result;
 
                 if (objToConvert is IEnumerable enumexpr)
                 {
@@ -2454,6 +2484,46 @@ namespace BraidLang
 
             /////////////////////////////////////////////////////////////////////
             ///
+            /// Function to create an array where the element type is based on the first
+            /// non-null element encountered.
+            /// 
+            FunctionTable[Symbol.FromString("array")] = (Vector args) =>
+            {
+                if (args.Count < 1)
+                {
+                    return new object[0];
+                }
+
+                // Default the type tp be object
+                Type targetType = typeof(object);
+
+                // but use the type of the first non-null element as the array type.
+                foreach (var el in args)
+                {
+                    object obj = null;
+                    if (el is PSObject tpso)
+                    {
+                        obj = tpso.BaseObject;
+                    }
+                    if (obj != null)
+                    {
+                        targetType = obj.GetType();
+                        break;
+                    }
+                }
+
+                var result = Array.CreateInstance(targetType, args.Count);
+
+                for (int i =0; i < args.Count; i++)
+                {
+                    result.SetValue(Braid.ConvertTo(args[i], targetType), i);
+                }
+
+                return result;
+            };
+
+            /////////////////////////////////////////////////////////////////////
+            ///
             /// Read lines from a file optionally filtering with a regex then applying a lambda to the line.
             /// 
             FunctionTable[Symbol.FromString("read-file")] =
@@ -2464,10 +2534,11 @@ namespace BraidLang
                 if (args.Count < 1 || args[0] == null)
                 {
                     BraidRuntimeException(
-                        "file/read-lines: requires at least one argument: (file/read-lines [-not] <fileName> [<pattern> [<lambda>]]).");
+                        "file/read-lines: requires at least one argument: (file/read-lines [-not] [-annotate] <fileName> [<pattern> [<lambda>]]).");
                 }
 
                 bool not = false;
+                bool annotate = false;
                 var callStack = Braid.CallStack;
                 var namedParameters = callStack.NamedParameters;
                 if (namedParameters != null)
@@ -2477,11 +2548,16 @@ namespace BraidLang
                         if (key.Equals("not", StringComparison.OrdinalIgnoreCase))
                         {
                             not = Braid.IsTrue(namedParameters["not"]);
-                            break;
                         }
-
-                        BraidRuntimeException($"Named parameter '-{key}' is not valid for the 'file/read-lines' function, " +
-                                            "the only named parameter for 'file/read-lines' is '-not'");
+                        else if (key.Equals("annotate", StringComparison.OrdinalIgnoreCase))
+                        {
+                            annotate = Braid.IsTrue(namedParameters["annotate"]);
+                        }
+                        else
+                        {
+                            BraidRuntimeException($"Named parameter '-{key}' is not valid for the 'file/read-lines' function, " +
+                                                "the only named parameters for 'file/read-lines' are '-not' and '-annotate");
+                        }
                     }
                 }
 
@@ -2505,7 +2581,7 @@ namespace BraidLang
                 Regex pattern = null;
                 if (args.Count > 1)
                 {
-                    // If it's already a regex, use as is otherwise turn it into a string and make a regex out of it.
+                    // If it's already a regex, use as-is otherwise turn it into a string and make a regex out of it.
                     if (args[1] is Regex re)
                     {
                         pattern = re;
@@ -2535,6 +2611,7 @@ namespace BraidLang
                 Vector result = new Vector();
                 foreach (var element in filesToRead)
                 {
+
                     // Skip nulls
                     if (element == null)
                     {
@@ -2579,6 +2656,11 @@ namespace BraidLang
                                 continue;
                             }
 
+                            if (_stop)
+                            {
+                                return null;
+                            }
+
                             object valToReturn = null;
                             if (callable != null)
                             {
@@ -2617,7 +2699,14 @@ namespace BraidLang
 
                             if (valToReturn != null)
                             {
-                                result.Add(valToReturn);
+                                if (annotate)
+                                {
+                                    result.Add($"{fileToRead}:{linenumber}:{valToReturn}");
+                                }
+                                else
+                                {
+                                    result.Add(valToReturn);
+                                }
                             }
                         }
                     }
@@ -5421,9 +5510,7 @@ namespace BraidLang
 
                         if (swapfunc == null || Braid.IsTrue(swapfunc.Invoke(new Vector { val1[index1], val2[index2] })))
                         {
-                            object tmp = val1[index1];
-                            val1[index1] = val2[index2];
-                            val2[index2] = tmp;
+                            (val2[index2], val1[index1]) = (val1[index1], val2[index2]);
                         }
                     }
                     else

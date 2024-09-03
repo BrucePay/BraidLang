@@ -56,6 +56,6 @@ else
     cp src/bin/Debug/*.* $StageDir   
 }
 
-cp -verbose src/BraidRepl.ps1 $StageDir
-cp -verbose src/*.tl   $StageDir
+cp src/BraidRepl.ps1 $StageDir
+cp src/*.tl   $StageDir
 

@@ -355,7 +355,7 @@ namespace BraidLang
                     return MatchElementResult.NoMatch;
                 }
 
-                if (funcArgs != null && start > 0)
+                if (start > 0)
                 {
                     funcArgs = funcArgs.GetRangeVect(start);
                 }
@@ -415,7 +415,7 @@ namespace BraidLang
                 return MatchElementResult.Matched;
             }
 
-            Braid.BraidRuntimeException($"The star function name '*{FunctionVariable}' did not resolve to a Callable function.");
+            Braid.BraidRuntimeException($"The star function name '*{FunctionVariable}' did not resolve to a Pattern function.");
 
             return MatchElementResult.NoMatch;
         }
@@ -1316,8 +1316,12 @@ namespace BraidLang
                 case s_Expr sexpr when (sexpr.Car is Symbol sym && (sym.Value[0] == '%')):
                     return new VarElement(sym, null);
 
+                // FIX THIS TO ALLOW STANDALONE EXPRESSIONS without a variable
                 case s_Expr sexpr when (sexpr.Car is Symbol sym && sym.Value[0] == '*'):
-                    return new StarFunctionElement(sym.Value.Substring(1), ((s_Expr)(sexpr.Cdr)).Car as Symbol);
+                    if (sexpr.Cdr != null)
+                        return new StarFunctionElement(sym.Value.Substring(1), ((s_Expr)(sexpr.Cdr)).Car as Symbol);
+                    else
+                        return new StarFunctionElement(sym.Value.Substring(1));
 
                 case s_Expr sexpr when (sexpr.Car is Symbol sym && sexpr.Cdr is s_Expr scdr):
                     var initVal = scdr.Car;
