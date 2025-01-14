@@ -9,7 +9,7 @@ param (
     [switch] $Clean,
     [switch] $Force,
     [switch] $BuildOnly,
-    [switch] $Core
+    [switch] $NonCore
 )
 
 $ErrorActionPreference = "stop"
@@ -41,26 +41,44 @@ if ($clean)
 
 msbuild "-p:$properties"  .\src\braidlang.csproj
 
-if ($LASTEXITCODE)
-{
-    write-host "? is $?"
-    throw "Build failed with exit code $LASTEXITCODE."
-}
-
+$StageDir = Join-Path $PSScriptRoot "stage"
 if (-not (Test-Path $StageDir))
 {
-    mkdir $StageDir
+    $madeStagingDirectory = mkdir $StageDir
+}
+  
+$properties = ""
+    
+if ($Optimize)
+{
+    $properties += "Configuration=release"
+}
+else
+{
+    $properties += "Configuration=debug"
+}
+    
+if ($clean)
+{
+    msbuild "-t:clean" "-p:$properties"  .\src\braidlang.csproj | Out-Host
+}
+    
+msbuild "-p:$properties"  .\src\braidlang.csproj | Out-Host
+    
+if ($LASTEXITCODE)
+{
+    Write-Host "? is $?"
+    throw "Build.ps1 failed with exit code $LASTEXITCODE."
 }
 
 if ($Optimize)
 {
-    cp src/bin/Release/*.* $StageDir   
+    Copy-Item src/bin/Release/*.* $StageDir -PassThru   
 }
 else
 {
-    cp src/bin/Debug/*.* $StageDir   
+    Copy-Item src/bin/Debug/*.* $StageDir -PassThru 
 }
 
-cp src/BraidRepl.ps1 $StageDir
-cp src/*.tl   $StageDir
-
+Copy-Item -verbose src/BraidRepl.ps1 $StageDir -PassThru
+Copy-Item -verbose src/*.tl   $StageDir -PassThru

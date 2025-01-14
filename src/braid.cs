@@ -5251,42 +5251,5 @@ namespace BraidLang
             return sb.ToString();
         }
     }
-
-
-    ////////////////////////////////////////////////////////////////////
-    /// <summary>
-    /// Native methods used by some of the GUI scripts like 'textedit.tl'.
-    /// </summary>
-    public static class NativeMethods
-    {
-        public const int WM_SETREDRAW = 0x000B;
-        public const int WM_USER = 0x400;
-        public const int EM_GETEVENTMASK = (WM_USER + 59);
-        public const int EM_SETEVENTMASK = (WM_USER + 69);
-
-        [DllImport("user32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-        public static extern int LockWindowUpdate(int hWnd);
-
-        [DllImport("user32", CharSet = CharSet.Auto)]
-        public extern static IntPtr SendMessage(IntPtr hWnd, UInt32 msg, IntPtr wParam, IntPtr lParam);
-
-        public static IntPtr SuspendRichtextBoxEvents(System.Windows.Forms.RichTextBox rtb)
-        {
-            // Stop redrawing:
-            SendMessage(rtb.Handle, WM_SETREDRAW, IntPtr.Zero, IntPtr.Zero);
-            // Stop sending of events:
-            return SendMessage(rtb.Handle, EM_GETEVENTMASK, IntPtr.Zero, IntPtr.Zero);
-        }
-
-        static IntPtr IntPtrOne = new IntPtr(1);
-        public static void ResumeRichtextBoxEvents(System.Windows.Forms.RichTextBox rtb, IntPtr eventMask)
-        {
-            // turn on events
-            SendMessage(rtb.Handle, EM_SETEVENTMASK, IntPtr.Zero, eventMask);
-            // turn on redrawing
-            var intPtr1 = IntPtr.Add(IntPtr.Zero, 1);
-            SendMessage(rtb.Handle, WM_SETREDRAW, IntPtrOne, IntPtr.Zero);
-        }
-    }
 }
 
