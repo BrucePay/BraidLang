@@ -4,9 +4,8 @@
 ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-lambda
+lambda [(^int numItems 500)]
 
-[(^int numItems 500)]
 ;
 ; Tail-recursive merge-list that merges two sorted lists together.
 ;

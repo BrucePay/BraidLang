@@ -1696,7 +1696,7 @@ namespace BraidLang
                     if (keyVal != null)
                     {
                         Braid.BraidRuntimeException(
-                            $"A dictionary literal requires an even of items; dictionary key '{keyVal}' has no associated value.",
+                            $"A dictionary literal requires an even number of items; dictionary key '{keyVal}' has no associated value.",
                                 null, this);
                     }
 
@@ -1838,7 +1838,7 @@ namespace BraidLang
 
                 if (dictkey != null)
                 {
-                    Braid.BraidRuntimeException($"When splatting an IList into a dictionary, an even of items is required; dictionary key '{dictkey}' has no associated value.");
+                    Braid.BraidRuntimeException($"When splatting an IList into a dictionary, an even number of items is required; dictionary key '{dictkey}' has no associated value.");
                 }
 
                 return;
@@ -1909,7 +1909,8 @@ namespace BraidLang
         {
             get
             {
-                var func = LambdaValue.CloneWithEnv(Braid.CallStack);
+                var func = LambdaValue.CloneWithEnv(Braid.CallStack.Clone() as PSStackFrame);
+
                 if (HelpInfo != null)
                 {
                     Braid.PutAssoc(func, "helptext", HelpInfo);

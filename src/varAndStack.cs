@@ -11,6 +11,7 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Management.Automation;
 
 namespace BraidLang
 {
@@ -145,7 +146,7 @@ namespace BraidLang
     /// <summary>
     /// Represents the environment associated with a BraidLang function or lambda.
     /// </summary>
-    public sealed class PSStackFrame
+    public sealed class PSStackFrame : ICloneable
     {
         public PSStackFrame Parent { get; set; }
 
@@ -223,6 +224,34 @@ namespace BraidLang
             Function = name;
         }
 
+        /// <summary>
+        /// Clone the lambda with it's own copy of the parent variable table.
+        /// This is needed so that things like:
+        ///      let fs (forall i (range 10) (\ -> (println "i is ${i}")))
+        /// will work. This is not done in the global scope.
+        /// </summary>
+        /// <returns>The cloned stack framed</returns>
+        public object Clone()
+        {
+            //BUGBUGBUG... - don't clone the environment - it breaks stuff
+            return this;
+            //return new PSStackFrame(File, Function, Caller, this, new Dictionary<Symbol, BraidVariable>());
+/*
+            var newVars = new Dictionary<Symbol, BraidVariable>();
+
+            if (Parent != null)
+            {
+                foreach (var pair in Vars)
+                {
+                    newVars[pair.Key] = pair.Value.Clone();
+                }
+            }
+            var nf = new PSStackFrame(File, Function, Caller, this, newVars);
+
+            return nf;
+*/
+           }
+
         public int Depth()
         {
             return Braid.CallStackStack.Count;
@@ -290,7 +319,7 @@ namespace BraidLang
         /// Removes a binding from all lexical scopes.
         /// </summary>
         /// <param name="sym">The symbol identifying the binding to remove.</param>
-        /// <returns>True if a binding was remove, false otherwise.</returns>
+        /// <returns>True if a binding was removed, false otherwise.</returns>
         public bool RemoveVariable(Symbol sym)
         {
             bool result = false;
@@ -580,10 +609,29 @@ namespace BraidLang
                 if (filter.IsMatch(pair.Key))
                 {
                     if (detailed)
-                        Console.WriteLine($"  '{pair.Key}' = {Braid.Truncate(pair.Value)}");
+                        Console.WriteLine($" ['{pair.Key}' {Braid.Truncate(pair.Value)}]");
                     else
                         Console.Write($" '{pair.Key}'");
                 }
+            }
+
+            Console.WriteLine(" |");
+            var parent = Parent;
+            while (parent != null && parent.Parent != null)
+            {
+                foreach (var pair in parent.Vars.OrderBy(p => p.Key.Value))
+                {
+                    if (filter.IsMatch(pair.Key))
+                    {
+                        if (detailed)
+                            Console.WriteLine($"  ['{pair.Key}', {Braid.Truncate(pair.Value)}] ");
+                        else
+                            Console.Write($"   '{pair.Key}'");
+                    }
+                }
+                parent = parent.Parent;
+                Console.WriteLine(" |");
+
             }
 
             if (!detailed)

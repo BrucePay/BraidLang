@@ -26,12 +26,12 @@ Function to break a string containing JSON syntax objects into tokens.
 ;
 
 (defn json/string
-    | (#"^\"(.*)\"$" s) -> (.value (!! s 1))
+    | (#"^\"(.*)\"$" s) -> (!! s 1)
     | ->
 )
 
 (defn json/number
-    | (#"^[0-9.].*$" n) -> (^double? (.value (!! n 0)))
+    | (#"^[0-9.].*$" n) -> (^double? (!! n 0))
     | ->
 )
 
