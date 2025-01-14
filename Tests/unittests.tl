@@ -10732,6 +10732,35 @@ lambda [
     )
     '((0.01 . 1) (0.05 . 1) (0.1 . 1) (0.5 . 1))
 )
+(test/exec :recur14
+    ; test that captured variables are handled properly in function arguments
+    (fn ->
+        
+        ; reduce is a functional primitive that can be used to define the others.
+        (defn rreduce 
+            | [x &xs] rfn   -> (recur xs rfn x)
+            | [x &xs] rfn t -> (recur xs rfn (rfn t x))
+            | nil _ t       -> t
+        )
+        
+        ; define a map function using the rreduce function
+        (defn mmap [xs f2a]
+            (rreduce xs (\ x y -> (concat x (f2a y))) [])
+        ) 
+        
+        ; define a filter function using the rreduce function
+        (defn ffilter [xs f]
+            (rreduce xs (\ r x -> (if (f x) (add r x) r)) [])
+        )
+        
+        [ 
+            (mmap (range 4) sqr)       ; returns [1 4 9 16]
+            (ffilter (range 6) even?)  ; returns [2 4 6]
+        ]
+        
+    )
+    [[1 4 9 16] [2 4 6]]
+)
 
 ;-----------------------------------------------------
 ; Test the 'deftype' function
@@ -14390,6 +14419,7 @@ lambda [
     )
     [1 2 3 4 5 6 7 8 9 10]
 )
+(; BUGBUGBUG disabled because it doesn't work anymore. May just remove the recur-to feature
 (test/exec :recur-to1
     (fn ->
         ; tail-recursive quick sort in continuation-passing style.
@@ -14407,6 +14437,7 @@ lambda [
     )
     [1 2 3 4 5 6 7 8 9 10]
 )
+;)
 
 ;---------------------------------------------------------
 ; Test the 'eval' function

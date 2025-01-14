@@ -6,7 +6,8 @@
 
 param (
     [switch] $Optimize,
-    $cmd
+    [switch] $NoBuild,
+    $cmd = $null
 )
 
 if ($cmd)
@@ -14,15 +15,21 @@ if ($cmd)
     # Just run the command
     ./stage/BraidRepl $cmd @args
 }
-elseif ($IsCoreClr)
-{
-    # Don't build under core; the build setup doesn't work.
-    pwsh "$PSScriptRoot/stage/BraidRepl.ps1"
-}
 else
 {
     # Build and start braid.
-    & "$PSScriptRoot/build.ps1" -optimize:$Optimize
-    powershell "$PSScriptRoot/stage/BraidRepl.ps1"
+    if (-not $nobuild)
+    {
+        & "$PSScriptRoot/build.ps1" -optimize:$Optimize
+    }
+
+    if ($PSVersionTable.PSEdition -eq "Desktop")
+    {
+        powershell  "$PSScriptRoot/stage/BraidRepl.ps1"
+    }
+    else
+    {
+        pwsh "$PSScriptRoot/stage/BraidRepl.ps1"
+    }
 }
 

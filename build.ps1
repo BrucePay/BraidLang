@@ -14,10 +14,15 @@ param (
 
 $ErrorActionPreference = "stop"
 
+# Try and find the msbuild command
+if (-not (Get-Command "msbuild" -ErrorAction "SilentlyContinue"))
+{
+    $alias:msbuild = "${ENV:ProgramFiles}/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/arm64/msbuild.exe"
+}
 
 $StageDir = Join-Path $PSScriptRoot "stage"
 
-; msbuild properties
+# msbuild properties
 $properties = ""
 
 if ($Optimize)

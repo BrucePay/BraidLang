@@ -235,7 +235,8 @@ namespace BraidLang
         {
             //BUGBUGBUG... - don't clone the environment - it breaks stuff
             return this;
-
+            //return new PSStackFrame(File, Function, Caller, this, new Dictionary<Symbol, BraidVariable>());
+/*
             var newVars = new Dictionary<Symbol, BraidVariable>();
 
             if (Parent != null)
@@ -248,7 +249,8 @@ namespace BraidLang
             var nf = new PSStackFrame(File, Function, Caller, this, newVars);
 
             return nf;
-        }
+*/
+           }
 
         public int Depth()
         {
@@ -317,7 +319,7 @@ namespace BraidLang
         /// Removes a binding from all lexical scopes.
         /// </summary>
         /// <param name="sym">The symbol identifying the binding to remove.</param>
-        /// <returns>True if a binding was remove, false otherwise.</returns>
+        /// <returns>True if a binding was removed, false otherwise.</returns>
         public bool RemoveVariable(Symbol sym)
         {
             bool result = false;
@@ -607,10 +609,29 @@ namespace BraidLang
                 if (filter.IsMatch(pair.Key))
                 {
                     if (detailed)
-                        Console.WriteLine($"  '{pair.Key}' = {Braid.Truncate(pair.Value)}");
+                        Console.WriteLine($" ['{pair.Key}' {Braid.Truncate(pair.Value)}]");
                     else
                         Console.Write($" '{pair.Key}'");
                 }
+            }
+
+            Console.WriteLine(" |");
+            var parent = Parent;
+            while (parent != null && parent.Parent != null)
+            {
+                foreach (var pair in parent.Vars.OrderBy(p => p.Key.Value))
+                {
+                    if (filter.IsMatch(pair.Key))
+                    {
+                        if (detailed)
+                            Console.WriteLine($"  ['{pair.Key}', {Braid.Truncate(pair.Value)}] ");
+                        else
+                            Console.Write($"   '{pair.Key}'");
+                    }
+                }
+                parent = parent.Parent;
+                Console.WriteLine(" |");
+
             }
 
             if (!detailed)

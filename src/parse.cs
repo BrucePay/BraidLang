@@ -106,7 +106,7 @@ namespace BraidLang
 
         /// <summary>
         /// Parses a string into s-Expressions, optionally returning all of the tokens.
-        /// The tokens can be used for syntax colouring
+        /// (The tokens can be used for syntax colouring.)
         /// </summary>
         /// <param name="text">The string to parse.</param>
         /// <returns>The resulting s-Expression.</returns>

@@ -191,37 +191,12 @@ namespace BraidLang
         public BraidRecurOperation(Vector recurArgs)
         {
             RecurArgs = recurArgs;
-            // BUGBUGBUG - experiment for recur with continuation passing style
-            foreach (object val in recurArgs)
-            {
-                if (val is UserFunction lam)
-                {
-                    lam.Environment = Braid.CallStack.Fork();
-                }
-                else if (val is PatternFunction pm)
-                {
-                    pm.Environment = Braid.CallStack.Fork();
-                }
-            }
         }
 
         public BraidRecurOperation(Callable target, Vector recurArgs)
         {
             Target = target;
             RecurArgs = recurArgs;
-
-            // BUGBUGBUG - experiment for recur with continuation passing style
-            foreach (object val in recurArgs)
-            {
-                if (val is UserFunction lam)
-                {
-                    lam.Environment = Braid.CallStack.Fork();
-                }
-                else if (val is PatternFunction pm)
-                {
-                    pm.Environment = Braid.CallStack.Fork();
-                }
-            }
         }
 
         public new string ToString => $"(recur {Braid.Truncate(RecurArgs)})";
@@ -417,8 +392,10 @@ namespace BraidLang
         public object Cons(object obj)
         {
 
-            var sexpr = new s_Expr(obj, this);
-            sexpr._count = 1 + Count;
+            var sexpr = new s_Expr(obj, this)
+            {
+                _count = 1 + Count
+            };
             return sexpr;
         }
 
@@ -871,7 +848,7 @@ namespace BraidLang
 
                 if (car is s_Expr nested)
                 {
-                    sb.Append(nested.ToString(++depth));
+                    sb.Append(nested.ToString(depth + 1));
                 }
                 else
                 {
@@ -1645,7 +1622,7 @@ namespace BraidLang
                     if ((Braid.Debugger & DebugFlags.Trace) != 0 && (Braid.Debugger & DebugFlags.TraceException) == 0)
                     {
                         var argstr = string.Join(" ", args.ToArray());
-                        Console.WriteLine("SPFN:  {0} ({1} {2}) -->",
+                        Console.WriteLine("SPFN:  {0} ({1} {2})",
                             Braid.spaces(Braid._evalDepth + 2), Name, argstr);
                     }
 
@@ -1716,6 +1693,13 @@ namespace BraidLang
 
             try
             {
+                if ((Braid.Debugger & DebugFlags.Trace) != 0 && (Braid.Debugger & DebugFlags.TraceException) == 0)
+                {
+                    var argstr = string.Join(" ", args.ToArray());
+                    Console.WriteLine("CALL:  {0} ({1} {2})",
+                        Braid.spaces(Braid._evalDepth + 2), Name, argstr);
+                }
+
                 object result = FuncToCall.Invoke(args);
 
                 if (Braid.Debugger != 0)
@@ -1723,7 +1707,7 @@ namespace BraidLang
                     if ((Braid.Debugger & DebugFlags.Trace) != 0 && (Braid.Debugger & DebugFlags.TraceException) == 0)
                     {
                         var argstr = string.Join(" ", args.ToArray());
-                        Console.WriteLine("FUNC:  {0} ({1} {2}) --> {3}",
+                        Console.WriteLine("RTRN:  {0} ({1} {2}) --> {3}",
                             Braid.spaces(Braid._evalDepth + 2), Name, argstr, Braid.Truncate(result));
                     }
                 }
@@ -4205,7 +4189,7 @@ namespace BraidLang
         }
 
         [ThreadStatic]
-        public static PSStackFrame _callStack = new PSStackFrame("repl", "global", 0);
+        public static PSStackFrame _callStack = new PSStackFrame("REPL", "global Scope", 0);
 
         [ThreadStatic]
         public static Stack<PSStackFrame> _callStackStack = new Stack<PSStackFrame>();
@@ -4252,9 +4236,12 @@ namespace BraidLang
         /// <returns></returns>
         public static PSStackFrame PopCallStack()
         {
-            //string offset = Enumerable.Range(0, _callStackStack.Count * 4).Select(s => " ").Aggregate((x, y) => (string.Concat(x, y)));
-            //string vars = string.Join(",", _callStack.Vars.Keys);
-            //Console.WriteLine($"{offset}Popping CallStack function:{_callStack.Function} depth {_callStackStack.Count } keys: {vars}");
+            // BUGBUGBUG
+            /*
+            string offset = Enumerable.Range(0, _callStackStack.Count * 4).Select(s => " ").Aggregate((x, y) => (string.Concat(x, y)));
+            string vars = string.Join(",", _callStack.Vars.Keys);
+            Console.WriteLine($"{offset}Popping CallStack function:{_callStack.Function} depth {_callStackStack.Count } keys: {vars}");
+            */
 
             if (_callStackStack.Count == 0)
             {

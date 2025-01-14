@@ -3341,9 +3341,12 @@ namespace BraidLang
                 }
                 else if (afunc != null && afunc is Func<Vector, object> func)
                 {
-                    Vector argvect = new Vector();
-                    argvect.Add(null);
-                    argvect.Add(null);
+                    Vector argvect = new Vector
+                    {
+                        null,
+                        null
+                    };
+
                     zipped = Enumerable.Zip(list1, list2, (arg1, arg2) =>
                     {
                         argvect[0] = arg1;
@@ -3423,9 +3426,11 @@ namespace BraidLang
                 object reduced;
                 if (func is IInvokeableValue invokeable)
                 {
-                    Vector argvect = new Vector();
-                    argvect.Add(null);
-                    argvect.Add(null);
+                    Vector argvect = new Vector
+                    {
+                        null,
+                        null
+                    };
 
                     if (args.Count == 3)
                     {
@@ -4455,7 +4460,7 @@ namespace BraidLang
             // Define a function (defn name "doc string" [args...] body ... )
             //
             CallStack.Const(Symbol.sym_defn, new Macro(Symbol.sym_defn.Value, (Vector args) =>
-            // SpecialForms[Symbol.sym_defn] = (Vector args) =>
+            //SpecialForms[Symbol.sym_defn] = (Vector args) =>
             {
                 if (args.Count < 2)
                 {

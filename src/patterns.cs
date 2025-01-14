@@ -1577,6 +1577,7 @@ namespace BraidLang
                     PatternClause.RunActions(args, BeginActions, out result);
                     if (result is BraidLang.BraidRecurOperation recur)
                     {
+                        // Handle the matchp case rather than a pattern function.
                         if (! IsFunction)
                         {
                             return true;
