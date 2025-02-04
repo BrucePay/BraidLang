@@ -169,6 +169,7 @@ function BraidRepl
             [void] [BraidLang.Braid]::SetVariable("IsCOreClr", $false)
         }
 
+        # Helper functions to allow Braid functions to be defined in PowerShell
         function DefineFunction([string] $name, [ScriptBlock] $action)
         {
             #[BraidLang.Braid]::SetFunction($name, $action)
@@ -179,6 +180,8 @@ function BraidRepl
         {
             [BraidLang.Braid]::SetSpecialForm($name, $action)
         }
+
+        #-------------------------------------------------------------------------------
 
         DefineFunction "dump-error" {
             $err = $error | Select-Object -First 1
@@ -214,7 +217,7 @@ function BraidRepl
             }
         }
 
-        DefineFunction 'psVersionTable' {
+        DefineFunction 'PSVersionTable' {
             $psVersionTable
         }
 
@@ -284,10 +287,10 @@ function BraidRepl
                 }
                 else
                 {
-                    $promptStr = "=>! "
+                    $promptStr = "=>"
                 }
             }
-            "$promptStr ≬"
+            "$promptStr "
         }
     }
 

@@ -716,10 +716,6 @@ Examples:
         highlights      ; A hashtable of regex/colours to use to do highligting. 
     ]
 
-    (let eventMask (.BraidLang.NativeMethods/SuspendRichtextBoxEvents editbox))
-
-    ;(.BraidLang.nativemethods/LockWindowUpdate (editbox | .Handle | .ToInt32))
-    ;(.suspendlayout editbox)
     (const ocolor (.ForeColor editbox))
     (const pos    (.SelectionStart editbox))
 
@@ -776,10 +772,7 @@ Examples:
         (.Select editbox pos 0)
     )
 
-    ;(.BraidLang.nativemethods/LockWindowUpdate 0)
-    (.BraidLang.NativeMethods/ResumeRichtextBoxEvents editbox eventMask)
     (.Invalidate editbox true)
-    ;(.resumelayout editbox)
     (.SelectionColor editBox ocolor)
 )
 

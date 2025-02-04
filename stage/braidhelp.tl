@@ -30,9 +30,9 @@ lambda [:quiet]
         ; Document head
         (list
             (html/title "Braid Functions")
-            (html/style "
+            (html/style """
                     body {
-                        font-family: \"Open Sans\", Helvetica, Arial, Sans-Serif;
+                        font-family: "Open Sans", Helvetica, Arial, Sans-Serif;
                     }
                     table {
                         border: 1px solid black;
@@ -48,21 +48,21 @@ lambda [:quiet]
                         vertical-align: top;
                     }
                     tr:nth-child(even) {background-color: #f2f2f2;}
-            ")
+            """)
         )
         ; Document body.
         (list
             (html/h2 "Braid Function Documentation")
             ; generate a table of the functions and their help content
             (html/p
-                "
+                """
                 This page lists all of the Braid functions generally
                 available to the user. Functions are either built into
                 <br>
-                the interpreter directly, defined in the file ${(html/b \"autoload.tl\")}
+                the interpreter directly, defined in the file ${(html/b "autoload.tl")}
                 or loaded from other utility modules.
                 <br>
-                "
+                """
             )
             (html/table
                 ; the table header

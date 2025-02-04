@@ -961,6 +961,15 @@ namespace BraidLang
                                 Braid.BraidRuntimeException(
                                     $"Accessing property '{_toString}' on type '^{otype}' failed with message: {te.Message}", te);
                             }
+                            catch (InvalidOperationException ie)
+                            {
+                                if (quiet)
+                                    return null;
+
+                                Braid.BraidRuntimeException(
+                                    $"InvalidOperationException was raised while accessing property '{_toString}' on an object of type '^{otype}': {ie.Message}", ie);
+
+                            }
                         }
 
                         FieldInfo fieldInfo = null;
