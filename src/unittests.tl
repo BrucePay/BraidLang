@@ -5689,6 +5689,7 @@ lambda [
     3628800
 )
 
+
 ;-------------------------------------------------------
 ; test the char function
 ; test turing a 1-element string into a char
@@ -10761,6 +10762,21 @@ lambda [
     )
     [[1 4 9 16] [2 4 6]]
 )
+(test/exec :recur15
+    (\ ->
+        ; test that recuring to an existing scope doesn't clear the scope
+        (defn maxCPS
+            | ^    -> (let-default maxTail (.int/minvalue))
+            | nil  -> maxTail
+            | x:   -> (max x maxTail)
+            | x:xs ->
+                (let maxTail (max x maxTail))
+                (recur xs)
+        )
+        (maxCPS [3 1 4 1 5 9 7 1])
+    )
+    9
+)
 
 ;-----------------------------------------------------
 ; Test the 'deftype' function
@@ -14422,7 +14438,7 @@ lambda [
 
 ;---------------------------------------------------------
 ; Test the 'recur-to' function
-(test/exec "recur-to1"
+(test/exec :recur-to1
     (fn ->
         (defn foo [i]
             (defn bar []
@@ -14437,31 +14453,145 @@ lambda [
     )
     "all done!"
 )
-(; BUGBUGBUG disabled because it doesn't work anymore. May just remove the recur-to feature
 (test/exec :recur-to2
-    (fn ->
+    (\ ->
         ; tail-recursive quick sort in continuation-passing style.
+        ; note the use of the 'continuation' function
         (defn trqsort
             | []   f -> (f nil)
             | x:   f -> (f x)
             | x:xs f ->
                 (let s:l: (list/split xs (<= x)))
-                (recur s (fn m ->
-                    (recur-to trqsort l (fn n ->
-                        (f (append m x n))))))
+                (recur s (continuation (\ m ->
+                    (recur-to trqsort l (\ n ->
+                        (f (append m x n)))))))
             | xs     -> (recur xs echo)
         )
         (trqsort [5 2 6 1 3 7 9 4 10 8])
     )
     [1 2 3 4 5 6 7 8 9 10]
 )
-;)
+(test/exec :continuation1
+    (\ ->
+        ; Tail-recursively find the max value in the tree
+        ; note the use of the 'continuation' function
+        (defn maxtree
+            | left:right: f ->
+                (recur left
+                    (continuation (\ lmax ->
+                        (recur-to maxtree right
+                            (\ rmax ->
+                                (f (max lmax rmax)))))))
+            | n f -> (f n)
+            | tree -> (recur tree echo)
+        )
+
+        (defn gentree
+            | 0 -> (random 1 1 100)
+            | n -> [(gentree (-- n)) (gentree (-- n))]
+            | n -> (recur n 0)
+        )
+
+        (let data (gentree 10))
+        (== (maxtree data) (flatten data | max-list))
+    )
+    true
+)
+(test/exec :continuation2
+    (\ ->
+
+        ; Tail-recursively count the elements in the tree
+        ; note the use of the 'continuation' function
+        (defn cnttree
+            | left:right: f ->
+                (recur left
+                    (continuation (\ n -> (recur-to cnttree right
+                        (\ m -> (f (+ m n)))))))
+            | n f -> (f 1)
+            | tree -> (recur tree echo)
+        )
+          
+        (defn gentree
+            | 0 -> (random 1 1 100)
+            | n -> [(gentree (-- n)) (gentree (-- n))]
+            | n -> (recur n 0)
+        )
+      
+        (let data (gentree 10))
+        (== (cnttree data) (flatten data | count))
+    )
+    true
+)
+(test/exec :continuation3
+    (\ ->
+        ; Tail-recursively a binary tree tree
+        ; note the use of the 'continuation' function
+        (defn recflat
+            | x:xs f ->
+                (recur x
+                    (continuation (fn n -> (recur-to recflat xs
+                        (fn m -> (list @n @m | f))))))
+            | n f -> (f n)
+            | n -> (recur n echo)
+        )
+          
+        (defn gentree
+            | 0 -> (random 1 1 100)
+            | n -> [(gentree (-- n)) (gentree (-- n))]
+            | n -> (recur n 0)
+        )
+
+        (let data (gentree 10))
+        (== (recflat data) (flatten data))
+    )
+    true
+)
+(test/exec :continuation4
+    (\ ->
+        ; Tail-recursively sum the elements in the tree
+        ; note the use of the 'continuation' function
+        (defn sumtree
+            | a:b: f ->
+                (recur a
+                    (continuation (fn x -> (recur-to sumtree b
+                        (fn y -> (f (+ x y)))))))
+            | n f -> (f n)
+            | n -> (recur n echo)
+        )
+          
+        (defn gentree
+            | 0 -> (random 1 1 100)
+            | n -> [(gentree (-- n)) (gentree (-- n))]
+            | n -> (recur n 0)
+        )
+
+        (let data (gentree 10))
+        (== (sumtree data) (flatten data | sum))
+    )
+    true
+)
 
 ;---------------------------------------------------------
 ; Test the 'eval' function
 (test/exec :eval1
     #(eval '(+ 2 3))
     5
+)
+(test/exec :eval2
+    (\ ->
+        ; cons up the code to run
+        (let code (cons + (cons 12 (cons 10 nil))))
+        (eval code)
+    )
+    22
+)
+(test/exec :eval3
+    (\ ->
+        ; cons up the code to run
+        (let code (cons "+" (cons 12 (cons 10 (cons 18 nil)))))
+        (eval code)
+    )
+    40
 )
 
 ;---------------------------------------------------------
@@ -17015,6 +17145,36 @@ lambda [
     true
 )
 
+;--------------------------------------------------------------------
+; Test selection-sort
+
+(test/exec :selection-sort1
+    (\ ->
+        (defn selection-sort
+        "Implementation of in-place selection sort"
+            ^void [(^IList dataToSort)]
+        
+            ; move the largest element in the collection to the end of the collection
+            (foreach j (range (-- (length dataToSort)) 1)
+                (let d (dataToSort j))
+                (foreach i (range 0 (-- j))
+                    (let ival (dataToSort i))
+                    (when (> ival d)
+                        (swap dataToSort i dataToSort j)
+                        (let d ival)
+                    )
+                )
+            )
+        )
+        
+        ; Now test it out on a small data set
+        (let data (random 100))
+        (selection-sort data)
+        (list/monotonic data)
+    )
+    true
+)
+ 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;

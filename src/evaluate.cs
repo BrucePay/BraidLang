@@ -552,15 +552,13 @@ namespace BraidLang
         {
             namedParameters = null;
 
-            // Allocate a buffer to hold the evaluated arguments.
-            evaledArgs = new Vector();
             ISeq sequence;
-
             if (skipFunc)
             {
                 // The first element of an s_Expr is the function, the actual arguments start at the Cdr.
                 if (fnCall.Cdr == null)
                 {
+                    evaledArgs = new Vector();
                     return;
                 }
                 sequence = fnCall.Cdr as ISeq;
@@ -574,6 +572,9 @@ namespace BraidLang
             {
                 BraidRuntimeException($"invalid argument structure; arguments must be a list, not '{fnCall.Cdr}'.");
             }
+
+            // Allocate a buffer to hold the evaluated arguments.
+            evaledArgs = new Vector(sequence.Count);
 
             if (ftype != FunctionType.SpecialForm && ftype != FunctionType.Macro && dontEvalArgs == false)
             {
@@ -717,27 +718,25 @@ namespace BraidLang
                     //BUGBUGBUG - check error handling, make sure the semantic is correct...
                     // Handle splatted arguments.
                     // BUGBUGBUG Should this happen when args are not being evaluated? Need to rethink this.
+                    object splatVal = null;
                     if (itValue is s_Expr sargval && sargval.IsSplat)
                     {
-                        object splatVal = null;
-
                         // BUGBUGBUGBUGBUG - this is a hack - @x should be (splat "x") it should be a symbol.
                         // not sure why this is happening, need to check the parser.    
-                        if (sargval.Cdr is string str)
+                        switch (sargval.Cdr)
                         {
-                            splatVal = callStack.GetValue(Symbol.FromString(str));
-                        }
-                        else if (sargval.Cdr is Symbol sym)
-                        {
-                            splatVal = callStack.GetValue(sym);
-                        }
-                        else if (sargval.Cdr is s_Expr splatexpr)
-                        {
-                            splatVal = Eval(splatexpr.Car);
-                        }
-                        else
-                        {
-                            splatVal = Eval(sargval.Cdr);
+                            case string str:
+                                splatVal = callStack.GetValue(Symbol.FromString(str));
+                                break;
+                            case Symbol sym:
+                                splatVal = callStack.GetValue(sym);
+                                break;
+                            case s_Expr splatexpr:
+                                splatVal = Eval(splatexpr.Car);
+                                break;
+                            default:
+                                splatVal = Eval(sargval.Cdr);
+                                break;
                         }
 
                         //BUGBUGBUGBUG - this is a hack that goes along with the hack in new-dict. There has

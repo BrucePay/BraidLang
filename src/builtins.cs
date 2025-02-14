@@ -137,6 +137,21 @@ namespace BraidLang
             FunctionTable[Symbol.sym_recur_to] =
                 recur_to_function = (Vector args) => new BraidRecurOperation((Callable)args[0], args.GetRangeVect(1));
 
+            /////////////////////////////////////////////////////////////////////
+            ///
+            /// Fork the lambda environment so continuation passing works
+            /// 
+            FunctionTable[Symbol.FromString("continuation")] = (Vector args) =>
+            {
+                if (args != null && args.Count == 1 && args[0] is Callable lambda)
+                {
+                    lambda.Environment = (PSStackFrame)Braid.CallStack.Fork();
+                    return lambda;
+                }
+                BraidRuntimeException($"The 'continuation' function requires 1 argument which must be the lambda to fork");
+                return null;
+            };
+
             /// Get the actual arguments for the current function.
             FunctionTable[Symbol.FromString("get-args")] = (Vector args) =>
             {
@@ -798,6 +813,7 @@ namespace BraidLang
                     case int ival1 when args.Count == 2 && args[1] is int ival2:
                         try
                         {
+                            // checked operation will throw on overflow
                             return BoxInt(checked(ival1 + ival2));
                         }
                         catch
@@ -1162,6 +1178,7 @@ namespace BraidLang
                     case int ival1 when args.Count == 2 && args[1] is int ival2:
                         try
                         {
+                            // checked operation will throw on overflow
                             return BoxInt(checked(ival1 - ival2));
                         }
                         catch
@@ -2141,7 +2158,7 @@ namespace BraidLang
             ///
             FunctionTable[Symbol.FromString("concat")] = (Vector args) =>
             {
-                Vector result = new Vector();
+                Vector result = new Vector(args.Count);
                 foreach (object arg in args)
                 {
                     switch (arg)
@@ -2641,7 +2658,7 @@ namespace BraidLang
                     {
                         string line;
                         Match match = null;
-                        Vector argvec = new Vector();
+                        Vector argvec = new Vector(nargs);
                         for (int i = 0; i < nargs; i++)
                         {
                             argvec.Add(null);
@@ -3500,9 +3517,7 @@ namespace BraidLang
                 object reduced;
                 if (args[1] is Callable binlambda)
                 {
-                    var argvec = new Vector();
-                    argvec.Add(null);
-                    argvec.Add(null);
+                    var argvec = new Vector { null, null };
                     reduced = Enumerable.Aggregate(list1, seed, (arg1, arg2) =>
                     {
                         argvec[0] = arg1;
@@ -4460,7 +4475,6 @@ namespace BraidLang
             // Define a function (defn name "doc string" [args...] body ... )
             //
             CallStack.Const(Symbol.sym_defn, new Macro(Symbol.sym_defn.Value, (Vector args) =>
-            //SpecialForms[Symbol.sym_defn] = (Vector args) =>
             {
                 if (args.Count < 2)
                 {
@@ -7010,13 +7024,13 @@ namespace BraidLang
                     BraidRuntimeException("The 'chars' function requires exactly 1 string argument. e.g. (chars \"hello\")");
                 }
 
-                Vector result = new Vector();
                 if (args[0] == null)
                 {
-                    return result;
+                    return new Vector();
                 }
 
                 string data = args[0].ToString();
+                Vector result = new Vector(data.Length);
 
                 // copy the chars into the result vector; don't use .toCharArray because it means copying twice 
                 for (int i = 0; i < data.Length; i++)
@@ -10121,8 +10135,6 @@ namespace BraidLang
             FunctionTable[Symbol.FromString("await")] =
             FunctionTable[Symbol.FromString("resolve")] = (Vector args) =>
             {
-                Vector result = new Vector();
-
                 if (args.Count == 1 && args[0] is Task tsk)
                 {
                     if (tsk.IsFaulted)
@@ -10152,6 +10164,7 @@ namespace BraidLang
                 }
 
                 var taskArray = tasks.ToArray();
+                Vector result = new Vector(taskArray.Length);
                 Task.WaitAll(taskArray);
 
                 foreach (Task t in taskArray)
@@ -10953,7 +10966,7 @@ namespace BraidLang
                     }
 
                     // Return the results of the object as a vector instead of a list
-                    Vector vresult = new Vector();
+                    Vector vresult = new Vector(psresult.Count);
                     foreach (var item in psresult)
                     {
                         vresult.Add(item);

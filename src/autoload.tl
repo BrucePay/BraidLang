@@ -501,6 +501,17 @@ Examples:
     `(let ~varToSet ~(args | join | tokenize | parseexpr))
 )
 
+
+;--------------------------------------------------------------------------
+;
+; Macros to do the equivalent of +=, -=etc.
+;
+(defmacro let+ [sym val] `(let ~sym (+ ~sym ~val)))
+(defmacro let- [sym val] `(let ~sym (- ~sym ~val)))
+(defmacro let* [sym val] `(let ~sym (* ~sym ~val)))
+(defmacro let/ [sym val] `(let ~sym (/ ~sym ~val)))
+
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro from

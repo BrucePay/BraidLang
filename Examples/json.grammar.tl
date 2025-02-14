@@ -133,8 +133,10 @@ Function to break a string containing JSON syntax objects into tokens.
     ]
 """))
 
-(alert "Test 5")
-(let data (json/parse (http/get "https://fakerapi.it/api/v1/addresses?_quantity=5")))
-(time 
-    (println "Faker API" data)
-)
+(alert "Test 5 - retrieving data..." )
+(time 1 (let data (http/get "https://fakerapi.it/api/v1/addresses?_quantity=100")))
+(alert "  parsing data")
+(time 1 (let data (json/parse data)))
+
+; (println "Faker API" data)
+

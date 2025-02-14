@@ -36,14 +36,14 @@
 
 (let pathTextBox (wpf-control window "PathTextBox"))
 
-(wpf-click window "ValidateButton" (fn e o ->
+(wpf-click window "ValidateButton" (\ e o ->
         (if (not (Test-Path (.text pathTextBox)))
             (.text pathTextBox "")
         )
     )
 )
 
-(wpf-click window "RemoveButton" (fn e o ->
+(wpf-click window "RemoveButton" (\ e o ->
         (If (.text pathTextBox)
             (If (Test-Path (.text pathTextBox))
                 (Remove-Item (.text pathTextBox))

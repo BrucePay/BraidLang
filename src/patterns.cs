@@ -1504,7 +1504,7 @@ namespace BraidLang
             if (argvect == null)
             {
                 var ie = new ArgumentException("argvect");
-                Braid.BraidRuntimeException($"Invoking pattern function '{Name}': Invoking PatternFunction: {ie.Message}", ie, this);
+                Braid.BraidRuntimeException($"Invoking pattern function '{Name}': {ie.Message}", ie, this);
             }
 
             object result;
