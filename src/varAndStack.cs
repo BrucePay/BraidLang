@@ -236,21 +236,21 @@ namespace BraidLang
             //BUGBUGBUG... - don't clone the environment - it breaks stuff
             return this;
             //return new PSStackFrame(File, Function, Caller, this, new Dictionary<Symbol, BraidVariable>());
-/*
-            var newVars = new Dictionary<Symbol, BraidVariable>();
+            /*
+                        var newVars = new Dictionary<Symbol, BraidVariable>();
 
-            if (Parent != null)
-            {
-                foreach (var pair in Vars)
-                {
-                    newVars[pair.Key] = pair.Value.Clone();
-                }
-            }
-            var nf = new PSStackFrame(File, Function, Caller, this, newVars);
+                        if (Parent != null)
+                        {
+                            foreach (var pair in Vars)
+                            {
+                                newVars[pair.Key] = pair.Value.Clone();
+                            }
+                        }
+                        var nf = new PSStackFrame(File, Function, Caller, this, newVars);
 
-            return nf;
-*/
-           }
+                        return nf;
+            */
+        }
 
         public int Depth()
         {
@@ -556,26 +556,22 @@ namespace BraidLang
 
         Dictionary<Symbol, BraidVariable> GetSnapshotInternal()
         {
+            Dictionary<Symbol, BraidVariable> dict;
             if (Parent == null)
             {
-                var dict = new Dictionary<Symbol, BraidVariable>();
-                foreach (var pair in Vars)
-                {
-                    dict[pair.Key] = pair.Value.Clone();
-                }
-
-                return dict;
+                dict = new Dictionary<Symbol, BraidVariable>();
             }
             else
             {
-                var dict = Parent.GetSnapshotInternal();
-                foreach (var pair in Vars)
-                {
-                    dict[pair.Key] = pair.Value.Clone();
-                }
-
-                return dict;
+                dict = Parent.GetSnapshotInternal();
             }
+
+            foreach (var pair in Vars)
+            {
+                dict[pair.Key] = pair.Value?.Clone();
+            }
+
+            return dict;
         }
 
         /// <summary>

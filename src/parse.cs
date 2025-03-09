@@ -1695,8 +1695,12 @@ namespace BraidLang
             }
             else
             {
-                var lambda = new UserFunction("lambda");
-                lambda = parseFunctionBody(lambda, "lambda", args, 0);
+                var lambda = new UserFunction("lambda");    // Stub for the function body
+                lambda.File = Braid._current_file;          // but still need context
+                lambda.Name = "lambda";
+                lambda.Environment = CallStack;
+
+                lambda = parseFunctionBody(lambda, "lambda", args, 0); // Now create the real lambda
                 lambda.File = Braid._current_file;
                 lambda.Name = "lambda";
                 lambda.Environment = CallStack;
@@ -1742,10 +1746,12 @@ namespace BraidLang
                     mi++;
 
                     object nameObject = members[mi++];
-                    if (nameObject is s_Expr || nameObject == null)
+                    string nameObjectString = nameObject.ToString();
+                    char nameChar = nameObjectString[0];
+                    if (!(nameObject is Symbol t) || !(Char.IsLetter(nameChar) || nameChar == '_' || nameChar == '/'))
                     {
                         BraidRuntimeException(
-                            $"{funcName}: the name of a method must be a symbol, not '{nameObject}'. (Perhaps you are missing the name?) Syntax: :defm methodName (lambda [...] ...)"
+                            $"{funcName}: a method name must be a symbol that starts with a letter, not '{nameObject}'. (Perhaps you are missing the name?) Syntax: :defm methodName (lambda [...] ...)"
                         );
                     }
 
@@ -1816,7 +1822,15 @@ namespace BraidLang
                             type = typeof(object);
                         }
 
+                        string nameObjectString = val.ToString();
+                        char nameChar = nameObjectString[0];
+                        if (!(val is Symbol t) || !(Char.IsLetter(nameChar) || nameChar == '_' || nameChar == '/'))
+                        {
+                            BraidRuntimeException($"{funcName}: Invalid member name '{val}' encountered while defining type '{typeName}'. Only symbols starting with a letter can be used as member variable names.");
+                        }
+
                         string memberName = val.ToString();
+
                         if (memberDict.Contains(memberName))
                         {
                             BraidRuntimeException($"{funcName}: duplicate member name '{memberName}' encountered while defining type '{typeName}");
@@ -1986,8 +2000,9 @@ namespace BraidLang
 
             if (!(args[index] is VectorLiteral || args[index] is Vector))
             {
+                ISourceContext code = (args[index] is ISourceContext s) ? s : null;
                 BraidRuntimeException(
-                    $"parsing {name}: arguments should be a vector of symbols not '{args[index]}'.");
+                    $"parsing {name}: arguments should be a vector of symbols not '{args[index]}'.", null, code);
                 return null;
             }
 
@@ -2050,7 +2065,14 @@ namespace BraidLang
                             Symbol var = null;
                             MatchElementBase meb = null;
 
-                            sexpr = (s_Expr)sexpr.Cdr;
+                            if (sexpr.Cdr is s_Expr s)
+                            {
+                                sexpr = s;
+                            }
+                            else
+                            {
+                                sexpr = null;
+                            }
 
                             if (psym != null)
                             {

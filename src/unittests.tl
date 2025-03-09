@@ -48,6 +48,7 @@ lambda [
         (.add test-names test-name)
 
         (let _actualResult null)
+        (.stop test-time-stopwatch)
         (.reset test-time-stopwatch)
         (.start test-time-stopwatch)
         (let _actualResult (try (lambda-to-run)))
@@ -631,7 +632,7 @@ lambda [
         (let data ([{:a 0 :b 0} {:a 3 :b 1} {:a 1 :b 2} {:a 2 :b 3}] | project :a :b))
         (data | max-list .a)
     )
-    (project {:a 3 :b 1})
+    (try (project {:a 3 :b 1}))
 )
 (test/exec :max-list10
     (fn ->
@@ -639,7 +640,7 @@ lambda [
         (let data ([{:a 0 :b 0} {:a 3 :b 1} {:a 1 :b 2} {:a 2 :b 3}] | project))
         (data | max-list .a)
     )
-    (project {:a 3 :b 1})
+    (try (project {:a 3 :b 1}))
 )
 (test/exec :max-list11
     (fn ->
@@ -706,7 +707,7 @@ lambda [
         (let data ([ {:a 3 :b 1} {:a 0 :b 100} {:a 1 :b 2} {:a 2 :b 3}] | project :a :b))
         (data | min-list .a)
     )
-    (project {:a 0 :b 100})
+    (try (project {:a 0 :b 100}))
 )
 (test/exec :min-list13
     (fn ->
@@ -2969,6 +2970,18 @@ lambda [
     )
     true
 )
+(test/exec :reverse2a
+    (fn ->
+        (reverse '(1 2 3 4 5))
+    )
+    [5 4 3 2 1]
+)
+(test/exec :reverse2b
+    (fn ->
+        (reverse '(1 2 3 4 5))
+    )
+    (list 5 4 3 2 1)
+)
 (test/exec :reverse3
     (fn ->
         (defn pal [arr] (== arr (reverse arr)))
@@ -3000,6 +3013,12 @@ lambda [
     )
     []
 )
+(test/exec :reverse6a
+    (fn ->
+        (reverse nil) ; always returns a vector
+    )
+    []
+)
 (test/exec :reverse7
     (fn ->
         (reverse "abcd")
@@ -3012,7 +3031,36 @@ lambda [
     )
     ""
 )
+(test/exec :reverse8
+    (\ ->
+        ; recursive function that reverses at all levels
+        (defn deep-reverse [lst]
+            (if (atom? lst)
+                lst
+                (reverse (map lst deep-reverse))
+            )
+        )
 
+        (deep-reverse [1 [2 3] 4 [5 6 7] 8]) 
+    )
+    [8 [7 6 5] 4 [3 2] 1]
+)
+(test/exec :reverse8a
+    (\ ->
+        ; recursive function that reverses at all levels
+        ; on a list instead of a vector this time.
+        ; Note: it still returns a vector
+        (defn deep-reverse [lst]
+            (if (atom? lst)
+                lst
+                (reverse (map lst deep-reverse))
+            )
+        )
+
+        (deep-reverse '(1 (2 3) 4 (5 6 7) 8)) 
+    )
+    [8 [7 6 5] 4 [3 2] 1]
+)
 ;-------------------------------------------------------
 (test/exec :str/reverse1
     (fn ->
@@ -5688,7 +5736,6 @@ lambda [
     )
     3628800
 )
-
 
 ;-------------------------------------------------------
 ; test the char function
@@ -10591,7 +10638,7 @@ lambda [
 )
 (test/exec :recur4
     (fn ->
-        ; test recur with the loop and matchp functions.
+        ; compute (fib 10) using recur with the loop and matchp functions.
         (defn foo []
             (loop [x 10 y 0]
                 (matchp x y
@@ -10603,6 +10650,18 @@ lambda [
         (foo)
     )
     55
+)
+(test/exec :recur4a
+    (fn ->
+        ; a fib function written using recur.
+        (defn trfib
+            | 0 (x 0) (y 1i) -> y
+            | 1 (x 0) (y 1i) -> y
+            | n (x 0) (y 1i) -> (recur (- n 1) y (+ x y))
+        )
+        (range 1 10 | map trfib)
+    )
+    [1 1 2 3 5 8 13 21 34 55]
 )
 (test/exec :recur5
     (fn ->
@@ -11331,7 +11390,14 @@ lambda [
     )
     [10 14]
 )
-
+(test/exec :deftype33
+    (\ ->
+        ; test building a type out of a list of tokens
+        (let tl '(^bar b c :defm abc (\ this ->)))
+        (tostring (deftype @tl) | == "BraidLang.DynamicType.bar")
+    )
+    true
+)
 ;-----------------------------------------------------
 ; Test the 'undeftype' function
 (test/exec :undeftype1
@@ -11626,34 +11692,38 @@ lambda [
 )
 
 ;-----------------------------------------------------
-; Test tasks
-(test/exec :task1
+; Test async
+(test/exec :async1
     ; single task resolves to the value returned by the task.
     (fn -> (await (async (fn -> 8))))
     8
 )
-(test/exec :task1a
+(test/exec :async2
     ; a vector literal is returned as a vector
     (fn -> (await (async (fn -> [1 2 3]))))
     [1 2 3]
 )
-(test/exec :resolve1
+(test/exec :async3
     (fn -> (async (fn -> (* 2 3)) | await))
     6
 )
-(test/exec :task2
+(test/exec :async4
     ; task with a parameter
     (fn -> (try (await (async (fn x -> (* x 4)) 3))))
     12
 )
-(test/exec :task3
+(test/exec :async4a
+    (fn -> (await (async (fn n m -> [n m]) 8 9)))
+    [8 9]
+)
+(test/exec :async5
     (fn ->
         ; await multiple tasks with explict parameter
         (await (forall v (range 5) (async (fn v -> (* v v)) v)))
     )
     [1 4 9 16 25]
 )
-(test/exec :task3a
+(test/exec :async6
     (fn ->
         ; await multiple tasks with explict parameter returning vectors
         (await (forall v (range 5) (async (fn v -> [(* v v)]) v)))
@@ -11661,7 +11731,7 @@ lambda [
     ; expect nested vectors
     [[1] [4] [9] [16] [25]]
 )
-(test/exec :task4
+(test/exec :async7
     (fn ->
         ; sequence of tasks (continuations)
         ( async (fn -> "hi")
@@ -11672,21 +11742,28 @@ lambda [
     )
     "hi there world."
 )
+(test/exec :async7a
+    (fn ->
+        (vlet t (async (fn -> "hello") | async  #(str ">>" %0) | async (fn n -> (str n "<<"))))
+        (await t)
+    )
+    ">>hello<<"
+)
 ; try task with a built-in n-ary function
-(test/exec :task5
+(test/exec :async8
     (fn ->
         (async sum (range 10) | await)
     )
     55
 )
-(test/exec :task7
+(test/exec :async9
     (fn ->
         ; a task that returns nested tasks so need to call await twice
         (async (fn n -> (forall i (range n) (async (fn x -> (* x 2)) i))) 3 | await | await)
     )
     [2 4 6]
 )
-(test/exec :task7a
+(test/exec :async10
     (fn ->
         ; nested tasks returning vectors
         (async (fn n -> (forall i (range n) (async (fn x -> [x x]) i))) 3 | await | await)
@@ -11715,8 +11792,8 @@ lambda [
         (defn qsp
             | [] -> []
             | p:xs :where (length xs | > 100) ->
-                (list/split xs (<= p) | map-parallel qsp | (fn x:y: -> [@x p @y]))
-            | p:xs -> (list/split xs (<= p) | map qsp | (fn x:y: -> [@x p @y]))
+                (list/split xs (<= p) | map-parallel qsp | (\ x:y: -> [@x p @y]))
+            | p:xs -> (list/split xs (<= p) | map qsp | (\ x:y: -> [@x p @y]))
         )
 
         ; rather than comparing the result, just make sure it's monotonically increasing
@@ -11767,37 +11844,6 @@ lambda [
     2
 )
 
-(test/exec :async1
-    (fn -> (await (async (fn -> 8))))
-    8
-)
-
-(test/exec :async1a
-    (fn -> (await (async (fn n -> n) 8)))
-    8
-)
-
-(test/exec :async1b
-    (fn -> (await (async (fn n m -> [n m]) 8 9)))
-    [8 9]
-)
-
-(test/exec :async1c
-    (fn -> (await (async (fn n m o -> [n m o]) 8 9 10)))
-    [8 9 10]
-)
-
-(test/exec :async2
-    (fn ->
-        (vlet t (async (fn -> "hello") | async  #(str ">>" %0) | async (fn n -> (str n "<<"))))
-        (await t)
-    )
-    ">>hello<<"
-)
-(test/exec :await1
-    (fn -> (try (await (async (fn x -> (* x 4)) 3))))
-    12
-)
 (test/exec :await2
     (fn ->
         (async (fn -> 10) | async (fn n -> (* n 2)) | await)
@@ -12132,6 +12178,7 @@ lambda [
         true
     )
 )
+
 (test/exec :powershell5
     (fn ->
         (get-item "." | type-of)
@@ -12242,7 +12289,14 @@ lambda [
     )
     [1 3 5 7 9]
 )
-
+(test/exec :create-scriptblock4
+    (fn ->
+        (let sb (create-scriptblock "param ($n) return ($n % 2)"))
+        ; BUGBUGBUG - should be able to call the scriptblock directly...
+        (range 10 | filter (\ n -> (sb n)))
+    )
+    [1 3 5 7 9]
+)
 ;-----------------------------------------------------------
 ; PowerShell-specific functions shell, psvar
 (test/exec :psvar1

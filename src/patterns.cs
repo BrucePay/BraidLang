@@ -783,6 +783,12 @@ namespace BraidLang
 
         public PropertyPatternElement(DictionaryLiteral dictionaryLiteral)
         {
+            if (dictionaryLiteral == null || dictionaryLiteral.ValueList == null)
+            {
+                Braid.BraidRuntimeException(
+                    $"In a property pattern definition, the value list must not be null");
+            }
+
             object key = null;
 
             foreach (var obj in dictionaryLiteral.ValueList)

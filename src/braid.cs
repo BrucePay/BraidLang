@@ -57,8 +57,7 @@ namespace BraidLang
 
             if (context == null)
             {
-                Braid.WriteConsoleColor(ConsoleColor.Red, $"In BraidRuntimeException.Annotate() : CallStack.Caller was null, message was '{message}'.");
-                throw new NullReferenceException($"In BraidRuntimeException.Annotate() : CallStack.Caller was null, message was '{message}'");
+                context = new s_Expr();
             }
 
             return string.Format("-> at ({0}:{1}) {2}\n{3}", context.File, context.LineNo,
@@ -512,6 +511,7 @@ namespace BraidLang
             }
             else
             {
+                // Set up fake context instead of erroring out
                 this.LineNo = -1;
                 this.File = "*unknown*";
                 this.Function = "*runtime*";
@@ -524,6 +524,7 @@ namespace BraidLang
         {
             if (_car is Symbol sym)
             {
+                /* BUGBUGBUG - bad code - this makes `(lambda ~bindings ~body) fail...*/
                 if (sym == Symbol.sym_lambda)
                 {
                     _isLambda = true;
@@ -4043,10 +4044,8 @@ namespace BraidLang
         /// <returns></returns>
         static Task<object> ExpressionToTask(Callable expression, object argument)
         {
-            // Make a copy of the current variable settings
+            // Make a copy of the current variable bindings
             var callstack = CallStack.GetSnapshot();
-
-            var argvec = new Vector { argument };
 
             Func<object> func = () =>
             {
@@ -4056,6 +4055,8 @@ namespace BraidLang
                 }
 
                 _callStack = callstack;
+
+                var argvec = new Vector { argument };
 
                 try
                 {

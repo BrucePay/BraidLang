@@ -2509,6 +2509,7 @@ namespace BraidLang
                 if (args.Count < 1)
                 {
                     return new object[0];
+
                 }
 
                 // Default the type tp be object
@@ -2531,12 +2532,43 @@ namespace BraidLang
 
                 var result = Array.CreateInstance(targetType, args.Count);
 
-                for (int i =0; i < args.Count; i++)
+                for (int i = 0; i < args.Count; i++)
                 {
                     result.SetValue(Braid.ConvertTo(args[i], targetType), i);
                 }
 
                 return result;
+            };
+
+            /////////////////////////////////////////////////////////////////////
+            ///
+            /// Function to create an array where the element type is passed as
+            /// the first argument.
+            /// 
+            FunctionTable[Symbol.FromString("array-of")] = (Vector args) =>
+            {
+                if (args.Count < 1)
+                {
+                    BraidRuntimeException("array-of: requires a type parameter: (array-of <type> <values...>).");
+                }
+
+                if (!(args[0] is Type))
+                {
+                    BraidRuntimeException("array-of: the first argument must specify a valid type: (array-of <type> <values...>).");
+                }
+
+                // Get the type of the array to create
+                Type targetType = args[0] as Type;
+
+                var resultArray = Array.CreateInstance(targetType, args.Count-1);
+
+                int i = 0;
+                foreach (object arg in args.Skip(1))
+                {
+                    resultArray.SetValue(Braid.ConvertTo(arg, targetType), i++);
+                }
+
+                return resultArray;
             };
 
             /////////////////////////////////////////////////////////////////////
@@ -8286,7 +8318,7 @@ namespace BraidLang
 
                 if (args.Count != 2 || args[1] == null)
                 {
-                    BraidRuntimeException("map-parallel: requires at least 2 arguments; actual number provided: " + args.Count);
+                    BraidRuntimeException("map-parallel: requires at least 2 arguments; actual number provided was: " + args.Count);
                 }
 
                 object exprval = args[0];
@@ -8322,6 +8354,7 @@ namespace BraidLang
                                 break;
                             }
 
+                            call.Environment = (PSStackFrame)Braid.CallStack.Fork();
                             tasks.Add(ExpressionToTask(call, item));
                         }
                         break;
@@ -8336,6 +8369,11 @@ namespace BraidLang
                 // Now get all of the results...
                 foreach (var task in tasks)
                 {
+                    if (_stop)
+                    {
+                        break;
+                    }
+
                     result.Add(task.Result);
                 }
 
@@ -8361,7 +8399,8 @@ namespace BraidLang
                 {
                     return Braid.Eval(ifPart);
                 }
-                else if (elsePart != null)
+
+                if (elsePart != null)
                 {
                     return Braid.Eval(elsePart);
                 }
@@ -10012,6 +10051,7 @@ namespace BraidLang
                 {
                     if (args[0] is Callable f)
                     {
+                        f.Environment = (PSStackFrame)Braid.CallStack.Fork();
                         function = f;
                         startIndex = 1;
                     }

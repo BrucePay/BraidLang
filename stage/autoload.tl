@@ -3384,7 +3384,8 @@ See also: deftype defobject
                 ; find or build an appropriate anonymous type
                 (const tkey (sort propnames | join ","))
                 (unless (let ptype (!! *anonymous-types* tkey))
-                    (let ptype (deftype "_projected_${(random 1 1 100_000)}" @(map propNames tostring)))
+                    (let typelit (new ^typeliteral? "_projected_${(random 1 1 100_000)}" 0 ""))
+                    (let ptype (apply deftype [typelit @(propNames | map Symbol)]))
                     (.add *anonymous-types* tkey ptype)
                 )
 
@@ -3413,8 +3414,6 @@ See also: deftype defobject
                 ; non-dictionaries pass unchanged
                 data
             )
-            
-
         )
         ; otherwise
         (do
@@ -3424,7 +3423,8 @@ See also: deftype defobject
             ; find or build the type
             (const tkey (sort propnames | join ","))
             (unless (let ptype (!! *anonymous-types* tkey))
-                (let ptype (deftype "_projected_${(random 1 1 100_000)}" @(map propNames tostring)))
+                (let typelit (new ^typeliteral? "_projected_${(random 1 1 100_000)}" 0 ""))
+                (let ptype (apply deftype [typelit @(propNames | map symbol)]))
                 (.add *anonymous-types* tkey ptype)
             )
 
