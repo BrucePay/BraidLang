@@ -1300,7 +1300,7 @@ namespace BraidLang
             return str;
         }
 
-        static Regex number_regex = new Regex(@"^(-?[0-9][0-9_]*(\.[0-9_]+)?(e[+-]?[_0-9]+)?|[0-9][0-9_]*i?|0x[0-9a-f_]+)$|0b[10_]+$",
+        static Regex number_regex = new Regex(@"^(-?[0-9][0-9_]*(\.[0-9_]+)?(e[+-]?[_0-9]+)?[md]?|[0-9][0-9_]*[lni]?|0x[0-9a-f_]+)$|0b[10_]+$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
         //BUGBUGBUG The regex is wrong - it should be much more strict w.r.t. type name syntax.
@@ -1328,8 +1328,49 @@ namespace BraidLang
                 // Keep the original token string for use in creating token objects.
                 string origTokenStr = tokenStr;
                 tokenStr = tokenStr.Replace("_", string.Empty);
+                int result = 0;
+                long lresult = 0;
+                if (tokenStr.StartsWith("0x"))
+                {
+                    if (int.TryParse(tokenStr.Substring(2), System.Globalization.NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture, out result))
+                    {
+                        if (tokenList != null)
+                        {
+                            tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
+                        }
 
-                if (tokenStr[tokenStr.Length - 1] == 'i')
+                        return BoxInt(result);
+                    }
+
+                    if (long.TryParse(tokenStr.Substring(2), System.Globalization.NumberStyles.HexNumber,
+                        CultureInfo.InvariantCulture, out lresult))
+                    {
+                        if (tokenList != null)
+                        {
+                            tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
+                        }
+
+                        return lresult;
+                    }
+
+                    BraidRuntimeException($"Error occurred parsing hex number literal '{tokenStr.Substring(2)}'");
+                }
+
+                if (tokenStr.StartsWith("0b"))
+                {
+                    if (tokenList != null)
+                    {
+                        tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
+                    }
+
+                    long result64 = Convert.ToInt64(tokenStr.Substring(2), 2);
+
+                    return result64;
+                }
+
+                char lastChar = tokenStr[tokenStr.Length - 1];
+                if (lastChar == 'i' || lastChar == 'n')
                 {
                     tokenStr = tokenStr.Substring(0, tokenStr.Length - 1);
                     BigInteger bi = BigInteger.Parse(tokenStr);
@@ -1339,100 +1380,96 @@ namespace BraidLang
                     }
                     return bi;
                 }
-                else if (tokenStr.Contains('.') || (!tokenStr.StartsWith("0x") && tokenStr.Contains('e')))
+
+                if (lastChar == 'm')
                 {
+                    tokenStr = tokenStr.Substring(0, tokenStr.Length - 1);
+                    BigDecimal bd = (BigDecimal)tokenStr;
                     if (tokenList != null)
                     {
                         tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
                     }
-                    return double.Parse(tokenStr);
+                    return bd;
                 }
-                else
+
+                if (lastChar == 'l')
                 {
-                    int result = 0;
-                    if (tokenStr.StartsWith("0x"))
+                    tokenStr = tokenStr.Substring(0, tokenStr.Length - 1);
+                    long l = Int64.Parse(tokenStr);
+                    if (tokenList != null)
                     {
-                        if (int.TryParse(tokenStr.Substring(2), System.Globalization.NumberStyles.HexNumber,
-                            CultureInfo.InvariantCulture, out result))
-                        {
-                            if (tokenList != null)
-                            {
-                                tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
-                            }
-
-                            return BoxInt(result);
-                        }
+                        tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
                     }
-                    else if (tokenStr.StartsWith("0b"))
+                    return l;
+                }
+
+                if (lastChar == 'd')
+                {
+                    tokenStr = tokenStr.Substring(0, tokenStr.Length - 1);
+                    decimal d = Decimal.Parse(tokenStr);
+                    if (tokenList != null)
                     {
-                        if (tokenList != null)
-                        {
-                            tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
-                        }
-
-                        long result64 = Convert.ToInt64(tokenStr.Substring(2), 2);
-
-                        return result64;
+                        tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
                     }
-                    else
-                    {
-                        if (int.TryParse(tokenStr, out result))
-                        {
-                            if (tokenList != null)
-                            {
-                                tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
-                            }
+                    return d;
+                }
 
-                            return BoxInt(result);
-                        }
-                    }
-
-                    // Try long instead.
-                    long lresult = 0;
-                    if (tokenStr.StartsWith("0x"))
-                    {
-                        if (long.TryParse(tokenStr.Substring(2), System.Globalization.NumberStyles.HexNumber,
-                            CultureInfo.InvariantCulture, out lresult))
-                        {
-                            if (tokenList != null)
-                            {
-                                tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
-                            }
-                            return lresult;
-                        }
-                    }
-                    else
-                    {
-                        if (long.TryParse(tokenStr, out lresult))
-                        {
-                            if (tokenList != null)
-                            {
-                                tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
-                            }
-                            return lresult;
-                        }
-                    }
-
-                    // Finally try BigInteger.
-                    BigInteger bresult = 0;
-                    if (tokenStr.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
-                    {
-                        bresult = BigInteger.Parse(tokenStr.Substring(2), System.Globalization.NumberStyles.HexNumber);
-                    }
-                    else
-                    {
-                        bresult = BigInteger.Parse(tokenStr);
-                    }
-
+                if (tokenStr.Contains('.') || (!tokenStr.StartsWith("0x") && tokenStr.Contains('e')))
+                {
                     if (tokenList != null)
                     {
                         tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
                     }
 
+                    double.TryParse(tokenStr, out double dresult);
+                    if (dresult == double.PositiveInfinity || dresult == double.NegativeInfinity)
+                    {
+                        // Roll up to BigDecimal if we have an infinity.
+                        // BUGBUGBUG - need a parse call for BigDecimal here instead of the cast. Check of errors?
+                        return (BigDecimal)tokenStr;
+                    }
+                    else
+                    {
+                        return dresult;
+                    }
+
+
+                }
+
+                if (int.TryParse(tokenStr, out result))
+                {
+                    if (tokenList != null)
+                    {
+                        tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
+                    }
+
+                    return BoxInt(result);
+                }
+
+                if (long.TryParse(tokenStr, out lresult))
+                {
+                    if (tokenList != null)
+                    {
+                        tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
+                    }
+                    return lresult;
+                }
+
+                // Finally try BigInteger.
+                BigInteger bresult = 0;
+                if (BigInteger.TryParse(tokenStr, out bresult))
+                {
+                    if (tokenList != null)
+                    {
+                        tokenList.Add(new Token { Type = TokenType.Number, LineNo = lineno, Offset = offset, File = _current_file, Text = text, Function = "", TokenString = origTokenStr });
+                    }
                     return bresult;
                 }
+
+                BraidRuntimeException($"Error occurred parsing number literal '{tokenStr.Substring(2)}'");
             }
-            else if (firstc == '\\' && charLiteral_regex.IsMatch(tokenStr))
+
+            if (firstc == '\\' && charLiteral_regex.IsMatch(tokenStr))
             {
                 if (tokenStr.Length == 2)
                 {
@@ -1663,7 +1700,6 @@ namespace BraidLang
                                 TokenString = tokenStr,
                             }
                         );
-
                     }
                 }
 

@@ -73,11 +73,11 @@ if ($LASTEXITCODE)
 
 if ($Optimize)
 {
-    Copy-Item src/bin/Release/*.* $StageDir -PassThru   
+    Copy-Item src/bin/Release/braidlang.* $StageDir -PassThru   
 }
 else
 {
-    Copy-Item src/bin/Debug/*.* $StageDir -PassThru 
+    Copy-Item src/bin/Debug/braidlang.* $StageDir -PassThru 
 }
 
 Copy-Item -verbose src/BraidRepl.ps1 $StageDir -PassThru

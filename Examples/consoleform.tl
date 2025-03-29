@@ -25,7 +25,7 @@
     ^int y
     ^string text
 
-    :defm render (fn this ->
+    :defm render (\ this ->
         (console/writeat -foreground: "cyan" (.x this) (.y this) (.text this))
     )
 )
@@ -40,11 +40,11 @@
     ^int width
     ^consolecolor? color
 
-    :defm render (fn this ->
+    :defm render (\ this ->
         (drawbox (.x this) (.y this) (.length this) (.width this) (.color this))
     )
 
-    :defm new (fn this x y length width (^consolecolor? color) ->
+    :defm new (\ this x y length width (^consolecolor? color) ->
         (this
         | .x x
         | .y y
@@ -66,14 +66,14 @@
     Action          ; Holds a callback that implements the button's action.
                     ; It's called with the parent control as it's first parameter
 
-    :defm render (fn this ->
+    :defm render (\ this ->
         ; center and frame the button
         (let pad (^int (/ (- (.width this) (length (.text this))) 2)))
         (let text (str "<" (* " " pad) (.text this) (* " " pad) ">"))
         (console/writeat (.x this) (.y this) text)
     )
 
-    :defm Activate (fn this ->
+    :defm Activate (\ this ->
         (let oldfg (.console/foregroundcolor))
         (let oldbg (.console/backgroundcolor))
         (.console/foregroundcolor .consolecolor/black)
@@ -131,12 +131,12 @@
     ^string HelpText
 
     ; Method to render the field
-    :defm render (fn this ->
+    :defm render (\ this ->
         (console/writeat (-- (.x this)) (.y this) (str "[" (* " " (.width this)) "]"))
         (console/writeat (.x this) (.y this) (.currenttext this))
     )
 
-    :defm Activate (fn this ->
+    :defm Activate (\ this ->
 
         (let result (.CurrentText this))
         (let keypress "")
@@ -270,36 +270,36 @@
     ; Index of the current form element
     ^int Index
 
-    :defm new (fn this title -> (this | .Elements [] | .Fields {} | .Title title))
+    :defm new (\ this title -> (this | .Elements [] | .Fields {} | .Title title))
 
-    :defm AddField (fn this x y name width initialText helpText ->
+    :defm AddField (\ this x y name width initialText helpText ->
         (let field (new ^field x y name width initialText helptext))
         (!! (.fields this) name field)
         (.Elements this | .add field)
         this
     )
 
-    :defm AddLabel (fn this x y text ->
+    :defm AddLabel (\ this x y text ->
         (let label (new ^Label x y text))
         (.Elements this | .add label)
         this
     )
 
-    :defm AddBox (fn this x y length width color ->
+    :defm AddBox (\ this x y length width color ->
         (let box (new ^Box x y length width "cyan"))
         (.Elements this | .add box)
         this
     )
         
 
-    :defm AddButton (fn this x y text width action ->
+    :defm AddButton (\ this x y text width action ->
         (let button (new ^button x y text width action))
         (.Elements this | .add button)
         this
     )
 
     ; method to move to the next activatable field
-    :defm _moveNext (fn this inc ->
+    :defm _moveNext (\ this inc ->
         (when (.Elements this)
             (.index this (% (+ (.index this) inc) (length (.Elements this))))
             (while (!! (.Elements this) (.index this) | is? ^Inactive)
@@ -316,11 +316,11 @@
     ; if true return the form contents otherwise return null.
     ^bool accept
 
-    :defm CancelForm (fn this -> (.accept this false) (.loop this false))
+    :defm CancelForm (\ this -> (.accept this false) (.loop this false))
 
-    :defm AcceptForm (fn this -> (.accept this true) (.loop this false))
+    :defm AcceptForm (\ this -> (.accept this true) (.loop this false))
 
-    :defm Activate (fn this ->
+    :defm Activate (\ this ->
         (cls)
 
         (when (not (.Elements this))
@@ -386,17 +386,17 @@
     | .addLabel 20 6 "The Menu Form: Select an Action then hit Enter."
                        ;012345678901234567890123456789
     | .addButton 30 10 "          Turtle Demo         " 30
-        (fn form -> (turtle.tl))
+        (\ form -> (turtle.tl))
     | .addButton 30 12 "          Snake Game          " 30
-        (fn form -> (snake.tl))
+        (\ form -> (snake.tl))
     | .addButton 30 14 "         Time and Date        " 30
-        (fn form -> (announce "The time and date are:  ${(.datetime/now)}" .consolecolor/cyan))
+        (\ form -> (announce "The time and date are:  ${(.datetime/now)}" .consolecolor/cyan))
     | .addButton 30 16 "     Get BIOS Information     " 30
-        (fn form -> (announce (get-ciminstance 'win32_bios | out-string) .consolecolor/cyan))
+        (\ form -> (announce (get-ciminstance 'win32_bios | out-string) .consolecolor/cyan))
     | .addButton 30 18 "       Tic-Tac-Toe Game       " 30
-        (fn form -> (tictactoe.tl))
+        (\ form -> (tictactoe.tl))
     | .addButton 30 20 "             Exit             " 30
-        (fn form -> (.CancelForm form))
+        (\ form -> (.CancelForm form))
     )
 )
 
@@ -430,13 +430,15 @@
 
     ;| .addLabel 5  18 (* "=" 90)
 
-    | .addbutton 20 20 "Accept"  10 (fn form -> (.AcceptForm form))
-    | .addbutton 35 20 "Options" 10 (fn form -> (.Activate   optionForm))
-    | .addbutton 50 20 "Cancel"  10 (fn form -> (.Cancelform form))
+    | .addbutton 20 20 "Accept"  10 (\ form -> (.AcceptForm form))
+    | .addbutton 35 20 "Options" 10 (\ form -> (.Activate   optionForm))
+    | .addbutton 50 20 "Cancel"  10 (\ form -> (.Cancelform form))
     )
 )
 
 (let result (.Activate  addressform))
+
+(println "\n\n\n\n\n")
 
 result
 

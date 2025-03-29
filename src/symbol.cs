@@ -41,11 +41,9 @@ namespace BraidLang
         // Get the symbol corresponding to a string. Create a new symbol if one doesn't exist.
         public static Symbol FromString(string name)
         {
-            Symbol symout;
-
             lock (_lockObj)
             {
-                if (_symbolTable.TryGetValue(name, out symout))
+                if (_symbolTable.TryGetValue(name, out Symbol symout))
                 {
                     return symout;
                 }

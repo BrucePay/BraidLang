@@ -254,7 +254,7 @@ namespace BraidLang
 
         public int Depth()
         {
-            return Braid.CallStackStack.Count;
+            return Braid._callStackStack.Count;
         }
 
         /// <summary>

@@ -22,7 +22,6 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Windows.Forms;
 
 namespace BraidLang
 {
@@ -63,7 +62,7 @@ namespace BraidLang
         public static bool Numberp(object val)
         {
             return val is int || val is long || val is float || val is double || val is BigInteger
-                || val is byte || val is sbyte || val is UInt32 || val is UInt64;
+                || val is BigDecimal|| val is byte || val is sbyte || val is UInt32 || val is UInt64;
         }
 
         /// <summary>
@@ -115,6 +114,7 @@ namespace BraidLang
             CallStack.SetTypeAlias("BraidComparer", typeof(BraidLang.BraidComparer));
             CallStack.SetTypeAlias("ExpandableString", typeof(BraidLang.ExpandableStringLiteral));
             CallStack.SetTypeAlias("ExpandableStringLiteral", typeof(BraidLang.ExpandableStringLiteral));
+            CallStack.SetTypeAlias("BigDecimal", typeof(BraidLang.BigDecimal));
 
             CallStack.Set("args", null);           // Create the args variable at the top level  
 
@@ -810,6 +810,44 @@ namespace BraidLang
                         }
                         return sb.ToString();
 
+                    case BigDecimal bd:
+                        foreach (var arg in args.Skip(1))
+                        {
+                            if (_stop)
+                            {
+                                break;
+                            }
+
+                            if (arg != null)
+                            {
+                                switch (arg)
+                                {
+                                    case int ival:
+                                        bd += (BigDecimal)ival;
+                                        break;
+                                    case long lval:
+                                        bd += (BigDecimal)lval;
+                                        break;
+                                    case float fval:
+                                        bd += (BigDecimal)fval;
+                                        break;
+                                    case double dval:
+                                        bd += (BigDecimal)dval;
+                                        break;
+                                    case BigInteger bival:
+                                        bd += new BigDecimal(bival, 0);
+                                        break;
+                                    case Decimal deval:
+                                        bd += (BigDecimal)deval;
+                                        break;
+                                    default:
+                                        bd += (BigDecimal)arg.ToString();
+                                        break;
+                                }
+                            }
+                        }
+                        return bd;
+
                     case int ival1 when args.Count == 2 && args[1] is int ival2:
                         try
                         {
@@ -898,13 +936,21 @@ namespace BraidLang
                                     continue;
                                 }
 
-                                // Necessary because C# dynamic doesn't follow the left-hand rule and converts
-                                // everything to string if anything is a string.
-                                if (val is string str)
+                                if (val is BigDecimal bd)
                                 {
-                                    val = ConvertTo(str, result.GetType());
+                                    result = (BigDecimal)result + bd;
                                 }
-                                result = checked(result + val);
+                                else
+                                {
+                                    // Necessary because C# dynamic doesn't follow the left-hand rule and converts
+                                    // everything to string if anything is a string.
+                                    if (val is string str)
+                                    {
+                                        val = ConvertTo(str, result.GetType());
+                                    }
+
+                                    result = checked(result + val);
+                                }
                             }
 
                             return result;
@@ -1066,6 +1112,36 @@ namespace BraidLang
                         return vresult;
                     }
 
+                    if (args[0] is BigDecimal bd)
+                    {
+                        foreach (object arg in args.Skip(1))
+                        {
+                            switch (arg)
+                            {
+                                case int ival:
+                                    bd *= (BigDecimal)ival;
+                                    break;
+                                case long lval:
+                                    bd *= (BigDecimal)lval;
+                                    break;
+                                case float fval:
+                                    bd *= (BigDecimal)fval;
+                                    break;
+                                case double dval:
+                                    bd *= (BigDecimal)dval;
+                                    break;
+                                case Decimal dval:
+                                    bd *= (BigDecimal)dval;
+                                    break;
+                                default:
+                                    bd *= (BigDecimal)(arg.ToString());
+                                    break;
+                            }
+                        }
+
+                        return bd;
+                    }
+
                     dynamic result = 1;
                     int indexer = 0;
                     dynamic val;
@@ -1079,7 +1155,14 @@ namespace BraidLang
                             }
 
                             val = args[indexer];
-                            result = checked(result * val);
+                            if (val is BigDecimal bdval)
+                            {
+                                result = (BigDecimal)result * bdval;
+                            }
+                            else
+                            {
+                                result = checked(result * val);
+                            }
                         }
 
                         return result;
@@ -1186,6 +1269,27 @@ namespace BraidLang
                             goto default;
                         }
 
+                    case BigDecimal bd:
+                        if (args[1] is BigDecimal bd2)
+                        {
+                            return bd - bd2;
+                        }
+                        switch (args[1])
+                        {
+                            case int ival:
+                                return bd - (BigDecimal)ival;
+                            case long lval:
+                                return bd - (BigDecimal)lval;
+                            case float fval:
+                                return bd - (BigDecimal)fval;
+                            case double dval:
+                                return bd - (BigDecimal)dval;
+                            case decimal dval:
+                                return bd - (BigDecimal)dval;
+                            default:
+                                return bd - (BigDecimal)(args[1].ToString());
+                        }
+
                     default:
                         dynamic first;
                         if (args[0] == null)
@@ -1214,6 +1318,50 @@ namespace BraidLang
                 {
                     BraidRuntimeException("The '/' function takes exactly 2 arguments");
                     return null;
+                }
+
+                if (args[0] is BigDecimal bd)
+                {
+                    if (args[1] is BigDecimal bd2)
+                    {
+                        return bd / bd2;
+                    }
+
+                    switch (args[1])
+                    {
+                        case int ival:
+                            return bd / (BigDecimal)ival;
+                        case long lval:
+                            return bd / (BigDecimal)lval;
+                        case float fval:
+                            return bd / (BigDecimal)fval;
+                        case double dval:
+                            return bd / (BigDecimal)dval;
+                        case Decimal dval:
+                            return bd / (BigDecimal)dval;
+                        default:
+                            BraidRuntimeException("The '/' function takes exactly 2 arguments");
+                            return null;
+                    }
+                }
+
+                if (args[1] is BigDecimal rbd)
+                {
+                    switch (args[0])
+                    {
+                        case int ival:
+                            return (BigDecimal)ival / rbd;
+                        case long lval:
+                            return (BigDecimal)lval / rbd;
+                        case float fval:
+                            return (BigDecimal)fval / rbd;
+                        case double dval:
+                            return (BigDecimal)dval / rbd;
+                        case Decimal decval:
+                            return (BigDecimal)decval / rbd;
+                        default:
+                            return (BigDecimal)(args[1].ToString()) / rbd;
+                    }
                 }
 
                 dynamic first = args[0];

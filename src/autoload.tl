@@ -1550,6 +1550,31 @@ Examples:
 
 ;--------------------------------------------------------------------------
 ;
+(defn like/match
+    "do a PowerShell wildcard match against a string or list of strings."
+    [input pattern  (^keyword options null)]
+
+    (if (isnot? pattern ^System.Management.Automation.WildcardPattern)
+        (do
+            (if options
+                (let ^System.Management.Automation.WildcardOptions options (^System.Management.Automation.WildcardOptions? options))
+            )
+            (let pattern  (.System.Management.Automation.WildcardPattern/Get pattern options))
+        )
+        (if options
+            (throw "like/match: if a WildCard pattern is provided, specifing options is not supported")
+        ) 
+    )
+
+    (matchp input
+    | (^string s)      -> (.ismatch pattern (^string? s))
+    | (^IEnumerable e) -> (filter e (\ s -> (.ismatch pattern (^string? s))))
+    | (^string? s)     -> (.ismatch pattern (^string? s))
+    )
+)
+
+;--------------------------------------------------------------------------
+;
 (defn re/not-match
     "Match a single string that doesn't match a regular expression."
     [ (^string? targetString) (^regex? regex)]
@@ -1763,13 +1788,13 @@ The default split pattern is 1 or more whitespaces.
 ;--------------------------------------------------------------------------
 ;
 (defn hex
-"
+"""
 Function to take numeric arguments and turn them into hex strings. Normally
 the strings are prefixed with '0x' but if -noprefix is specified, then the
 '0x' prefix will be omitted. If a single value is converted, then it's returned
 a a string. If more than one value is converted, then the results are aggregated
 into a vector.
-"
+"""
     [:noprefix &args]
 
     (if noprefix
@@ -1809,7 +1834,7 @@ the strings are prefixed with '0b' but if -noprefix is specified, then the
 
 ;--------------------------------------------------------------------------
 ;
-(defn normalize-string
+(defn str/normalize
 "
 Concatenates all arguments into a string, reduces multiple whitespace chars
 to a single space then returns the result.
@@ -1824,10 +1849,31 @@ See also: + join qstr
 ;--------------------------------------------------------------------------
 ;
 (defn str/reverse
-    "Turns it's argument into a string then reverses that string."
+"""
+Turns it's argument into a string then reverses that string.
+"""
     [(^string? argstr)]
 
     (join (chars argstr | reverse) "")
+)
+
+;--------------------------------------------------------------------------
+;
+(defn str/replace
+"""
+Replace a subsequence of characters in a string returning a new string.
+
+Examples:
+    (str/replace "abcdefg" 2 4 "CDE") returns: "abCDEfg"
+
+See also: str slice 
+"""
+    [(^string? targetStr) (^int? firstChar) (^int lastChar) (^string? replacement)]
+
+    (str
+        @(slice targetStr 0 firstChar)  ; prefix
+        replacement
+        @(slice targetStr (++ lastChar) (length targetStr | - lastChar | --))) ; suffix
 )
 
 ;--------------------------------------------------------------------------
@@ -1906,7 +1952,7 @@ See also: str join
 ;--------------------------------------------------------------------------
 ;
 (defn ToHash
-"
+"""
 Convert a list of items into a dictionary where the keys are the items
 and the values are item counts. By default, case-insensitive string
 comparisons are used but you can specify case-sensitive comparisons with
@@ -1919,8 +1965,7 @@ Examples:
     (read-text 'foo.txt | re/split | tohash -case | sort -descending .value | take 10)
 
 See also: group
-
-"
+"""
     [lst :case]
 
     ; choose case-sensitive dictionary if desired
@@ -1979,25 +2024,23 @@ are assigned/added (like mkdir -p).
 ;--------------------------------------------------------------------------
 ;
 (defn truncate-number
-    "Truncate a floating-point number returning an integer (^int)."
-    [ num ]
-
-    (^int? (.Math/Truncate num))
+    """Truncate a floating-point number returning an integer (^int)."""
+    | (^BigDecimal bd) -> (.Truncate bd)
+    | n                -> (.Math/Truncate n | ^int?)
 )
 
 ;--------------------------------------------------------------------------
 ;
 (defn floor
-    "Compute the floor of a number."
-    [ num ]
-
-    (.Math/Floor num | ^int?)
+    """Compute the floor of a number."""
+    | (^BigDecimal bd) -> (.floor bd)
+    | n                -> (.Math/Floor n | ^int?)
 )
 
 ;--------------------------------------------------------------------------
 ;
 (defn ceiling
-    "Compute the ceiling of a number."
+    """Compute the ceiling of a number."""
     [ num ]
 
     (.Math/Ceiling num | ^int?)
@@ -2006,30 +2049,31 @@ are assigned/added (like mkdir -p).
 ;--------------------------------------------------------------------------
 ;
 (defn round
-"
+"""
 Round the argument value. An option number of places to round to can be specified.
 By default, the number is rounded with 0 decimal places.
 
 Examples:
     (round 3.1415)      ; returns 3
     (round 3.1415 2)    ; returns 3.14
-"
-    [num (places 0)]
-
-    (.Math/Round num places)
+"""
+    | (^BigDecimal bd) (places 0) -> (.round bd places)
+    | num (places 0) -> (.Math/Round num places)
+    | -> (throw "the 'round' function takes exactly one numeric argument.")
 )
 
 ;--------------------------------------------------------------------------
 ;
 (defn **
-"
+"""
 The ** operator lets you compute the exponentiation of numbers.
+It always returns a double.
 
 Examples:
     (** v n)        ; Compute the nth exponent of v
     (** 2 10)       ; returns 1024
-"
-    ^double
+"""
+    ^Double
     [(^double? x) (^double? y)]
 
     (.Math/pow x y)
@@ -2122,22 +2166,23 @@ Examples:
 
 See also: sqr
 "
-    [(^double? num)]
-
-    (.Math/sqrt num)
+    | (^BigDecimal bd) -> (.sqrt bd)
+    | num              -> (.Math/sqrt num)
+    |                  -> (throw "the 'sqrt' function takes exactly one numeric argument.") 
 )
 
 ;--------------------------------------------------------------------------
 ;
 (defn div
-"
+"""
 Performs the 'div' operation on the arguments returning the integer part of the division.
 
 Examples:
     (div 9 2) ; returns 4
 
 See also: / %
-"
+"""
+    | (^BigDecimal m) n -> (/ m n | .floor)
     | m n   -> (^int? (/ m n | ^double? | .Math/Truncate))
     | m     -> (fn n -> (div n m)) ; "curry" this function
     |       -> (throw "The 'div' function requires two numeric arguments e.g (div 9 2).")

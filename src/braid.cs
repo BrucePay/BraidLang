@@ -3207,6 +3207,11 @@ namespace BraidLang
                 return btem1 == btem2;
             }
 
+            if (item1 is BigDecimal bdtem1 && item2 is BigDecimal bdtem2)
+            {
+                return bdtem1 == bdtem2;
+            }
+
             if (item1 is IDictionary<object, object> dict1 && item2 is IDictionary<object, object> dict2)
             {
                 if (dict1.Count != dict2.Count)
@@ -3616,6 +3621,9 @@ namespace BraidLang
 
                 case BigInteger bigobj:
                     return bigobj != 0;
+
+                case BigDecimal bigdec:
+                    return bigdec != 0;
 
                 case char chr:
                     return chr != 0;
@@ -4195,7 +4203,13 @@ namespace BraidLang
         [ThreadStatic]
         public static Stack<PSStackFrame> _callStackStack = new Stack<PSStackFrame>();
 
-        public static Stack<PSStackFrame> CallStackStack { get => _callStackStack; }
+        /// <summary>
+        /// The stack of callstacks. This is a public member so that scripts can access it eg, the "vars" function.
+        /// </summary>
+        public static Stack<PSStackFrame> CallStackStack
+        {
+            get { return _callStackStack; }
+        }
 
         [ThreadStatic]
         public static PSStackFrame _globalScope = _callStack;
@@ -4237,20 +4251,12 @@ namespace BraidLang
         /// <returns></returns>
         public static PSStackFrame PopCallStack()
         {
-            // BUGBUGBUG
-            /*
-            string offset = Enumerable.Range(0, _callStackStack.Count * 4).Select(s => " ").Aggregate((x, y) => (string.Concat(x, y)));
-            string vars = string.Join(",", _callStack.Vars.Keys);
-            Console.WriteLine($"{offset}Popping CallStack function:{_callStack.Function} depth {_callStackStack.Count } keys: {vars}");
-            */
-
             if (_callStackStack.Count == 0)
             {
                 // BUGBUGBUG Console.WriteLine($"Warning: Stack underflow in function {_current_function} at {_current_file}:{_lineno}");
                 BraidRuntimeException($"Stack underflow in function '{_callStack.Function}' at '{_callStack.File}':{_callStack?.Caller.LineNo}");
                 return null;
             }
-            // BUGBUGBUG Console.WriteLine($"Popping depth {_callStackStack.Count} TID {System.Threading.Thread.CurrentThread.ManagedThreadId}: {_callStack.File}':{_callStack?.Caller.LineNo}");
 
             return (_callStack = _callStackStack.Pop());
         }

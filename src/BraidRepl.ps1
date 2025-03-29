@@ -27,12 +27,10 @@ if ($wait)
 if (test-path variable:isCoreCLR)
 {
     Add-Type -Assembly (Join-Path $PSScriptRoot 'braidlang.dll')
-#    Add-Type -Assembly (Join-Path $PSScriptRoot 'braidLineEditor.dll')
 }
 else
 {
     [void][reflection.assembly]::LoadFrom((Join-Path $PSScriptRoot 'braidlang.dll'))
-#    [void][reflection.assembly]::LoadFrom((Join-Path $PSScriptRoot 'braidLineEditor.dll'))
 }
 
 [BraidLang.Braid]::ExitBraid = $false
@@ -501,6 +499,10 @@ function BraidRepl
                             elseif ($result -is [BraidLang.BraidTypeBase])
                             {
                                 $resultString = $result.ToString()
+                            }
+                            elseif ($result -is [BraidLang.BigDecimal])
+                            {
+                                $resultString = $result.ToString() + "m"
                             }
                             elseif ($result -is [System.Collections.DictionaryEntry])
                             {

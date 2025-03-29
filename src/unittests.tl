@@ -170,6 +170,51 @@ lambda [
     (fn -> (== ^list ^BraidLang.s_Expr))
     true
 )
+(test/exec :typetest19
+    (\ -> (is? 123m ^BigDecimal))
+    true
+)
+(test/exec :typetest19a
+    (\ -> (type-of 123m))
+     ^BigDecimal
+)
+(test/exec :typetest19b
+    ; constructor requires a ^BigInteger
+    (\ -> (new ^BigDecimal 3n 0 | type-of))
+    ^BigDecimal
+)
+(test/exec :typetest20
+    (\ -> (is? 123n ^BigInteger))
+    true
+)
+(test/exec :typetest20a
+    (\ -> (type-of 123n))
+     ^BigInteger
+)
+(test/exec :typetest21
+    (\ -> (is? 123l ^long))
+    true
+)
+(test/exec :typetest21a
+    (\ -> (type-of 123l))
+     ^long
+)
+(test/exec :typetest22
+    (\ -> (is? 123.4d ^decimal))
+    true
+)
+(test/exec :typetest22a
+    (\ -> (type-of 123.4d))
+     ^decimal
+)
+(test/exec :typetest23
+    (\ -> (is? \a ^char))
+    true
+)
+(test/exec :typetest23a
+    (\ -> (type-of \a))
+     ^char
+)   
 
 ;-------------------------------------------------------
 ; the "tostring" function
@@ -203,9 +248,30 @@ lambda [
     )
     "[1,2,(567),4]"
 )
+; test all of the number tostrings - there should be no suffixes
+(test/exec :tostring6
+    (\ -> (tostring 123m))
+    "123"
+)
+(test/exec :tostring7
+    (\ -> (tostring 123n))
+    "123"
+)
+(test/exec :tostring8
+    (\ -> (tostring 123l))
+    "123"
+)
+(test/exec :tostring9
+    (\ -> (tostring 123.01d))
+    "123.01"
+)
+(test/exec :tostring10
+    (\ -> (tostring 123.01))
+    "123.01"
+)
 
 ;-------------------------------------------------------
-; the "tostring-all" function
+; test the "tostring-all" function
 (test/exec :tostring-all1
     (fn ->
         (let data (* [.datetime/now] 10))
@@ -225,7 +291,7 @@ lambda [
 ; the "str/truncate" function
 (test/exec :str/truncate1
     (fn ->
-        ; truncates the file text to a single line (i.e. no new lines
+        ; truncates the file text to a single line (i.e. no new lines)
         (str/truncate (read-text (file/join-path braidhome "autoload.tl")) | #"\n" | ^bool?)
     )
     false
@@ -304,14 +370,14 @@ lambda [
 (test/exec :fmt5
     (fn ->
         (let wordz [0xdead 0xbeef])
-        (fmt "{0:x} {1:x}" @wordz)  ; use splattting
+        (fmt "{0:x} {1:x}" @wordz)  ; use splatting
     )
     "dead beef"
 )
 (test/exec :fmt6
     (fn ->
         (let wordz [0xdead 0xbeef])
-        (fmt "{1:x} {0:x}" @wordz)  ; use splattting
+        (fmt "{1:x} {0:x}" @wordz)  ; use splatting
     )
     "beef dead"
 )
@@ -433,17 +499,89 @@ lambda [
     [124.5 ^double ] ; BUGBUGBUG - space needed between ^double and ] - make tokenizer more picky?
 )
 ;)
+; test BigDecimals
+(test/exec :+13
+    (\ ->
+        (+ 123.4m 123.4m)
+    )
+    246.8m
+)
+(test/exec :+13a
+    (\ ->
+        (+ 123.4m 123.4m | type-of)
+    )
+    ^BigDecimal
+)
+(test/exec :+14
+    (\ ->
+        (+ 123.4m  0.2 123.4m)
+    )
+    247m
+)
+(test/exec :+14a
+    (\ ->
+        (+ 123.4m  0.2 123.4m | type-of)
+    )
+    ^BigDecimal
+)
+(test/exec :+14b
+    (\ ->
+        (+ 123.4m  0.01 123.4m | tostring)
+    )
+    "246.81"
+)
+(test/exec :+14c
+    (\ ->
+        (+ 123.4m  0.2 123.4m | tostring)
+    )
+    "247"
+)
+; test ^BidDecimal "+" operation with other numeric types
+(test/exec :+15a (\ -> (+ 1m 1 | type-of)) ^BigDecimal)
+(test/exec :+15b (\ -> (+ 1m 1l | type-of)) ^BigDecimal)
+(test/exec :+15c (\ -> (+ 1m 1n | type-of)) ^BigDecimal)
+(test/exec :+15d (\ -> (+ 1m 1.0 | type-of)) ^BigDecimal)
+(test/exec :+15e (\ -> (+ 1m 1.0d | type-of)) ^BigDecimal)
+
+(test/exec :+15f (\ -> (+ 1m 1 )) 2)
+(test/exec :+15g (\ -> (+ 1m 2l)) 3)
+(test/exec :+15h (\ -> (+ 1m 3n)) 4)
+(test/exec :+15i (\ -> (+ 1m 4.0)) 5)
+(test/exec :+15j (\ -> (+ 1.0m 4.0)) 5)
+(test/exec :+15k (\ -> (+ 1m 5.0d)) 6)
+
+(test/exec :+16a (\ -> (+ 1 1m | type-of)) ^BigDecimal)
+(test/exec :+16b (\ -> (+ 1l 1m | type-of)) ^BigDecimal)
+(test/exec :+16c (\ -> (+ 1n 1m | type-of)) ^BigDecimal)
+(test/exec :+16d (\ -> (+ 1.0 1m | type-of)) ^BigDecimal)
+(test/exec :+16e (\ -> (+ 1.0d 1m | type-of)) ^BigDecimal)
+
+(test/exec :+16f (\ -> (+ 1 1m)) 2)
+(test/exec :+16g (\ -> (+ 2l 1m)) 3)
+(test/exec :+16h (\ -> (+ 3n 1m)) 4)
+(test/exec :+16i (\ -> (+ 4.0 1m)) 5)
+(test/exec :+16j (\ -> (+ 4.0 1.0m)) 5)
+(test/exec :+16k (\ -> (+ 5.0d 1m)) 6)
+
+(test/exec :+17a (\ -> (+ 1 1m 1 | type-of)) ^BigDecimal)
+(test/exec :+17b (\ -> (+ 1l 1m 1 | type-of)) ^BigDecimal)
+(test/exec :+17c (\ -> (+ 1n 1m 1 | type-of)) ^BigDecimal)
+(test/exec :+17d (\ -> (+ 1.0 1m 1 | type-of)) ^BigDecimal)
+(test/exec :+17e (\ -> (+ 1.0d 1m 1 | type-of)) ^BigDecimal)
 
 ;-------------------------------------------------------
-; the number? function
-(test/exec :number?1 #(number? (^byte? 123))  true) ; byte
+; test the number? function
+(test/exec :number?1 #(number? (^byte? 123)) true) ; byte
 (test/exec :number?2 #(number? 123)          true) ; int32
 (test/exec :number?3 #(number? 123.00)       true) ; double
-(test/exec :number?4 #(number? 123i)         true) ; bignum
-(test/exec :number?5 #(number? (^uint32? 5))  true) ; uint32
-(test/exec :number?6 #(number? (^uint64? 5))  true) ; uint64
-(test/exec :number?7 #(number? (^sbyte? 5))   true) ; uint64
-(test/exec :number?8 #(number? "abc")        false)
+(test/exec :number?4 #(number? 123i)         true) ; biginteger
+(test/exec :number?4a #(number? 123n)        true) ; biginteger
+(test/exec :number?4b #(number? 123m)        true) ; bigdecimal
+(test/exec :number?5 #(number? (^uint32? 5)) true) ; uint32
+(test/exec :number?6 #(number? (^uint64? 5)) true) ; uint64
+(test/exec :number?7 #(number? (^sbyte? 5))  true) ; uint64
+(test/exec :number?8 #(number? "abc")        false) ; string
+(test/exec :number?8a #(number? \a)          false)  ; char
 (test/exec :number?9 #(number? "123")        false)
 (test/exec :number?10 #(number? {})          false)
 (test/exec :number?11 #(number? [1 2 3 4])   false)
@@ -471,22 +609,24 @@ lambda [
 
 ;-------------------------------------------------------
 ; The sum function.
-(test/exec :sum1  (fn -> (sum 5))        5)
-(test/exec :sum2  (fn -> (sum [6]))      6)
-(test/exec :sum3  (fn -> (sum []))       0)
-(test/exec :sum3a (fn -> (sum nil))      0)
-(test/exec :sum4  (fn -> (12 | sum))     12)
-(test/exec :sum5  (fn -> ([13] | sum))   13)
-(test/exec :sum6  (fn -> ([14] | sum))   14)
+(test/exec :sum1  (\ -> (sum 5))        5)
+(test/exec :sum2  (\ -> (sum [6]))      6)
+(test/exec :sum3  (\ -> (sum []))       0)
+(test/exec :sum3a (\ -> (sum nil))      0)
+(test/exec :sum4  (\ -> (12 | sum))     12)
+(test/exec :sum5  (\ -> ([13] | sum))   13)
+(test/exec :sum6  (\ -> ([14] | sum))   14)
 (test/exec :sum7  #(sum [1 2 3 4])       10)
 (test/exec :sum8  #(sum ["a" "b" "c"])   "abc")
 (test/exec :sum9  #(sum '(1 2 3))        6)
 (test/exec :sum10 #(sum [1 "2" 3 "4"])  10)
 (test/exec :sum11 #(sum '("a" 1 "b" 2)) "a1b2")
 (test/exec :sum12 #(sum [1 2 0.5 4])    7.5) ; widening
-(test/exec :sum13 #(sum [1 2 3i 4] | type-of)   ^bigint) ; widening to bigint
+(test/exec :sum13 #(sum [1 2 3i 4] | type-of)   ^biginteger) ; widening to bigint
+(test/exec :sum13a #(sum [1 2 3n 4] | type-of)  ^biginteger) ; widening to bigint
+(test/exec :sum13b #(sum [1 2 3m 4] | type-of)  ^bigdecimal) ; widening to BigDecimal
 (test/exec :sum14
-    (fn ->
+    (\ ->
         (deftype ^foo a b c)
         ; test default constructor that populates all the variables.
         (let objs (range 10 | map (fn n -> (new ^foo n n n))))
@@ -496,7 +636,7 @@ lambda [
     55
 )
 (test/exec :sum15
-    (fn ->
+    (\ ->
         (deftype ^foo a b c)
         (let objs (range 10 | map (fn n -> (new ^foo n n n))))
         ; test summing a property.
@@ -505,7 +645,7 @@ lambda [
     55
 )
 (test/exec :sum16
-    (fn ->
+    (\ ->
         ([ {:a 1} {:a 2} {:a 3}] | sum (fn h -> (:a h)))
     )
     6
@@ -523,30 +663,35 @@ lambda [
 (test/exec :prod7  (fn -> (prod (range 10))) 3628800)
 (test/exec :prod8  (fn -> (range 10 | prod)) 3628800)
 (test/exec :prod9  (fn -> ([10 0.5] | prod)) 5)
-(test/exec :prod10 (fn -> (range 100 | prod | type-of)) ^bigint)
+(test/exec :prod10 (fn -> (range 100 | prod | type-of)) ^BigInteger)
+(test/exec :prod11 (fn -> (* [123.45m] 100 | prod | type-of)) ^bigDecimal)
 
 ;-------------------------------------------------------
 ; The average function.
-(test/exec :average1  (fn -> (average 1))             1)
-(test/exec :average2  (fn -> (average 5))             5)
-(test/exec :average2a (fn -> (average nil))           0)
-(test/exec :average2b (fn -> (average []))            0)
-(test/exec :average3  (fn -> (average (range 10)))    5.5)
-(test/exec :average4  (fn -> (range 100 | average))   50.5)
-(test/exec :average5  (fn -> (average [3 6.5]))       4.75)
-(test/exec :average6  (fn -> (range 1000 | average))  500.5)
-(test/exec :average7  (fn -> (range 10000 | average)) 5000.5)
-(test/exec :average8  (fn -> (average [1 2.0 3] | type-of)) ^double)
-(test/exec :average9  (fn -> (average 1 echo))             1)
-(test/exec :average10 (fn -> (average 5 echo))             5)
-(test/exec :average11 (fn -> (average (range 10) echo))    5.5)
-(test/exec :average12 (fn -> (range 100 | average echo))   50.5)
-(test/exec :average13 (fn -> (average [3 6.5] echo))       4.75)
-(test/exec :average14 (fn -> (range 1000 | average echo))  500.5)
-(test/exec :average15 (fn -> (range 10000 | average echo)) 5000.5)
-(test/exec :average16 (fn -> (average nil echo))           0)
-(test/exec :average17 (fn -> (average [] echo))            0)
-(test/exec :average18 (fn -> (ls | average .?length | > 0)) true)
+(test/exec :average1  (\ -> (average 1))             1)
+(test/exec :average2  (\ -> (average 5))             5)
+(test/exec :average2a (\ -> (average nil))           0)
+(test/exec :average2b (\ -> (average []))            0)
+(test/exec :average3  (\ -> (average (range 10)))    5.5)
+(test/exec :average4  (\ -> (range 100 | average))   50.5)
+(test/exec :average5  (\ -> (average [3 6.5]))       4.75)
+(test/exec :average6  (\ -> (range 1000 | average))  500.5)
+(test/exec :average7  (\ -> (range 10000 | average)) 5000.5)
+(test/exec :average8  (\ -> (average [1 2 3] | type-of)) ^double)
+(test/exec :average8a (\ -> (average [1 2.0 3] | type-of)) ^double)
+(test/exec :average8b (\ -> (average [1 2l 3] | type-of)) ^double)
+(test/exec :average8c (\ -> (average [1 2.0d 3] | type-of)) ^double)
+(test/exec :average8d (\ -> (average [1 2.0m 3] | type-of)) ^double)
+(test/exec :average9  (\ -> (average 1 echo))             1)
+(test/exec :average10 (\ -> (average 5 echo))             5)
+(test/exec :average11 (\ -> (average (range 10) echo))    5.5)
+(test/exec :average12 (\ -> (range 100 | average echo))   50.5)
+(test/exec :average13 (\ -> (average [3 6.5] echo))       4.75)
+(test/exec :average14 (\ -> (range 1000 | average echo))  500.5)
+(test/exec :average15 (\ -> (range 10000 | average echo)) 5000.5)
+(test/exec :average16 (\ -> (average nil echo))           0)
+(test/exec :average17 (\ -> (average [] echo))            0)
+(test/exec :average18 (\ -> (ls | average .?length | > 0)) true)
 
 ;-------------------------------------------------------
 ; The median function.
@@ -559,7 +704,9 @@ lambda [
 (test/exec :median7  (fn -> (median 5 echo))     5)
 (test/exec :median8  (fn -> (median [5] echo))   5)
 (test/exec :median9  (fn -> (median (range 10) echo)) 5.5)
+(test/exec :median9a (fn -> (median (range 10) echo | type-of)) ^double)
 (test/exec :median10 (fn -> (range 10 | median echo)) 5.5)
+(test/exec :median10a (fn -> (range 10 | median echo | type-of)) ^double)
 (test/exec :median11 (fn -> (median nil echo))   0)
 (test/exec :median12 (fn -> (median [] echo))    0)
 (test/exec :median13 (fn -> (ls -file | median .?length | > 0)) true)
@@ -618,6 +765,8 @@ lambda [
 (test/exec :max-list1  (fn -> (max-list [1 3 5 2 4])) 5)
 (test/exec :max-list1a (fn -> (max-list [1 3])) 3)
 (test/exec :max-list1b (fn -> (max-list '(1 3 5 2 4))) 5)
+(test/exec :max-list1c (fn -> (max-list '(1 3 5.0 2 4))) 5.0)
+(test/exec :max-list1d (fn -> (max-list '(1 3 5m 2 4))) 5m)
 (test/exec :max-list2  (fn -> (max-list 5)) 5) ; scalar argument
 (test/exec :max-list3  (fn -> (max-list [])) nil)
 (test/exec :max-list3a (fn -> (max-list nil)) nil)
@@ -671,7 +820,6 @@ lambda [
     }
 )
 
-
 ;-------------------------------------------------------
 ; The min function
 (test/exec :min1  (fn -> (min 5 6)) 5)
@@ -691,6 +839,10 @@ lambda [
 ;-------------------------------------------------------
 ; The min-list function
 (test/exec :min-list1  (fn -> (min-list [7 1 3 5 2 4])) 1)
+(test/exec :min-list1a (fn -> (min-list [7 1 3l 5 2 4])) 1)
+(test/exec :min-list1b (fn -> (min-list [7 1 3.0 5 2 4])) 1)
+(test/exec :min-list1c (fn -> (min-list [7 1 3 5n 2 4])) 1)
+(test/exec :min-list1d (fn -> (min-list [7 1 3 5m 2 4])) 1)
 (test/exec :min-list2  (fn -> (min-list 5)) 5)
 (test/exec :min-list3  (fn -> (min-list [])) null)
 (test/exec :min-list4  (fn -> (is? (try (min-list)) ^Exception)) true)
@@ -763,18 +915,20 @@ lambda [
 
 ;-------------------------------------------------------
 ; Test the 'isPrime' function.
-(test/exec :isprime1    (fn -> (isprime 8))     false)
-(test/exec :isprime2    (fn -> (isprime 9))     false)
-(test/exec :isprime3    (fn -> (isprime 19))    true)
-(test/exec :isprime4    (fn -> (isprime 101))   true)
-(test/exec :isprime5    (fn -> (isprime 1998))  false)
-(test/exec :isprime6    (fn -> (isprime 1999))  true)
-(test/exec :isprime7    (fn -> (isprime 9973))  true)
-(test/exec :isprime8    (fn -> (isprime 9974))  false)
-(test/exec :isprime9    (fn -> (isprime 49999)) true)
-(test/exec :isprime10   (fn -> (isprime 50000)) false)
+(test/exec :isprime1    (\ -> (isprime 8))     false)
+(test/exec :isprime2    (\ -> (isprime 9))     false)
+(test/exec :isprime3    (\ -> (isprime 19))    true)
+(test/exec :isprime4    (\ -> (isprime 101))   true)
+(test/exec :isprime5    (\ -> (isprime 1998))  false)
+(test/exec :isprime6    (\ -> (isprime 1999))  true)
+(test/exec :isprime7    (\ -> (isprime 9973))  true)
+(test/exec :isprime7a   (\ -> (isprime 9973m)) true)
+(test/exec :isprime8    (\ -> (isprime 9974))  false)
+(test/exec :isprime8a   (\ -> (isprime 9974m)) false)
+(test/exec :isprime9    (\ -> (isprime 49999)) true)
+(test/exec :isprime10   (\ -> (isprime 50000)) false)
 (test/exec :isprime11
-    (fn ->
+    (\ ->
         ; get all the primes between 1-100.
         (range 100 | filter isprime | join)
     )
@@ -807,6 +961,14 @@ lambda [
     )
     "007b"
 )
+(;
+(test/exec :hex4a  ; BUGBUGBUG - the hex function uses fmt which doesn't work for BigDecimal
+    (fn ->
+        (hex -noprefix 123m)
+    )
+    "007b"
+)
+;)
 (test/exec :hex5
     (fn ->
         (hex 0xdeadbeef)
@@ -908,6 +1070,18 @@ lambda [
 ;-------------------------------------------------------
 ; The minus (-) function
 (test/exec :-1 #(- 1 2) -1)
+(test/exec :-1a #(- 1l 2) -1)
+(test/exec :-1b #(- 1i 2) -1)
+(test/exec :-1c #(- 1n 2) -1)
+(test/exec :-1d #(- 1m 2) -1)
+(test/exec :-1e #(- 1.0 2) -1)
+(test/exec :-1f #(- 1.0d 2) -1)
+(test/exec :-1g #(- 1 2l) -1)
+(test/exec :-1h #(- 1 2i) -1)
+(test/exec :-1i #(- 1 2n) -1)
+(test/exec :-1j #(- 1 2m) -1)
+(test/exec :-1k #(- 1 2.0) -1)
+(test/exec :-1l #(- 1 2.0d) -1)
 ; subtracting strings should be an error
 (test/exec :-2
     #(is? (try (- "abc" "a")) ^exception)
@@ -924,6 +1098,8 @@ lambda [
 (test/exec :-6 #(type-of (- 6.0 3)) ^double)
 (test/exec :-7 #(type-of (- 6i 3)) ^bigint)
 (test/exec :-8 #(is? (- 2) ^Lambda) true)
+(test/exec :-9 #(is? 2m ^BigDecimal) true)
+(test/exec :-10 #(type-of 2m) ^BigDecimal)
 
 ;-------------------------------------------------------
 ; Test times (*) function
@@ -940,6 +1116,24 @@ lambda [
 ;BUGBUGBUG times with string coercion in the second argument raises an exception
 (test/exec :*7 #(is? (try (* 2 "4")) ^Exception) true)
 (test/exec :*8 #(is? (* 2) ^Lambda) true)
+; test with BigDecimal
+(test/exec :*9 #(* 10m 2) 20m)
+(test/exec :*9a #(* 10m 2m) 20m)
+(test/exec :*9b #(* 10m 2l) 20m)
+(test/exec :*9c #(* 10m 2d) 20m)
+(test/exec :*9d #(* 10m 2.0) 20m)
+(test/exec :*9e #(* 2 10m) 20m)
+(test/exec :*9f #(* 2m 10m) 20m)
+(test/exec :*9g #(* 2l 10m) 20m)
+(test/exec :*9h #(* 2d 10m) 20m)
+(test/exec :*9i #(* 2.0 10m) 20m)
+(test/exec :*9j #(* 2 10m 5) 100m)
+(test/exec :*9k #(* 2m 10m 5) 100m)
+(test/exec :*9l #(* 2l 10m 5) 100m)
+(test/exec :*9m #(* 2d 10m 5) 100m)
+(test/exec :*9n #(* 2.0 10m 5) 100m)
+(test/exec :*9o #(* 2.2 10m 5) 110m)
+(test/exec :*9p #(* 2.2 10m 5 | type-of) ^BigDecimal)
 
 ;-------------------------------------------------------
 ; Test division (/) function
@@ -953,6 +1147,9 @@ lambda [
 (test/exec :/8 #(/ 123i 5) 24)
 (test/exec :/9 #(/ 123i 5 | type-of) ^bigint)
 (test/exec :/10 #(is? (/ 2) ^Lambda) true)
+(test/exec :/11 #(/ 9.0m 4) 2.25) ; bigdecimal division
+(test/exec :/12 #(/ 9 4.0m) 2.25) ; bigdecimal division
+(test/exec :/13 #(/ 9.0m 4.0 | type-of) ^bigdecimal) ; bigdecimal division
 
 ;-------------------------------------------------------
 ; Test modulus (%) function
@@ -960,6 +1157,10 @@ lambda [
 (test/exec :%2 #(% 9.5678 6)     3.5678)
 (test/exec :%3 #(range 10 | filter (% 2)) [1 3 5 7 9])
 (test/exec :%4 #(is? (% 2) ^Lambda) true)
+(test/exec :%5 #(% 9m 2)           1m)
+(test/exec :%5a #(% 9 2m)           1m)
+(test/exec :%5b #(% 9m 2 | type-of) ^BigDecimal)
+(test/exec :%5c #(% 9 2m | type-of) ^BigDecimal)
 
 ;-------------------------------------------------------
 ; Test the div function
@@ -967,6 +1168,9 @@ lambda [
 (test/exec :div2 #(div 8.793 4)             2)
 (test/exec :div3 #(div 8.793 4 | is? ^int)  true)
 (test/exec :div4 #(is? (div 2) ^Lambda)     true)
+(test/exec :div5 #(div 9m 2)                4m)
+(test/exec :div6 #(div 9m 2 | type-of)      ^BigDecimal)
+; BUGBUGBUG - need the opposite test (div 9 2m) also
 
 ;-------------------------------------------------------
 ; Test the exponentiation (**) function
@@ -974,6 +1178,8 @@ lambda [
 (test/exec :**2 #(** 4 3)   64)
 (test/exec :**3 #(** 2 10)  1024)
 (test/exec :**4 #(** 0.5 3) 0.125)
+(test/exec :**5 #(** 5m 3) 125)
+; (test/exec :**5 #(** 5m 3 | type-of) ^BigDecimal) ; doesn't work - the .BigDecimal/Pow on bigdecimal is static and (^double,^double)
 
 ;-------------------------------------------------------
 ; Equals (==) function ; does value comparisons
@@ -2019,17 +2225,6 @@ lambda [
 )
 
 ;----------------------------------------------------
-; Test the defmacro function
-; BUGBUGBUG - need more tests here
-(test/exec :defmacro1
-    (fn ->
-        ; check that macros are visible as variables
-        (.ftype fn | tostring | == "Macro")
-    )
-    true
-)
-
-;----------------------------------------------------
 ; Test the upvar function
 (test/exec :upvar1
     (fn ->
@@ -3061,6 +3256,7 @@ lambda [
     )
     [8 [7 6 5] 4 [3 2] 1]
 )
+
 ;-------------------------------------------------------
 (test/exec :str/reverse1
     (fn ->
@@ -3079,6 +3275,14 @@ lambda [
         (str/reverse null)
     )
     ""
+)
+
+;-------------------------------------------------------
+(test/exec :str/replace1
+    (\ ->
+        (str/replace "abcdefg" 2 4 "XYZ")
+    )
+    "abXYZfg"
 )
 
 ;-------------------------------------------------------
@@ -10334,6 +10538,14 @@ lambda [
     )
     5
 )
+(test/exec :$2
+    (fn ->
+        ; test $ alias for compose
+        (let f ($ ++ ++))
+        (f 3)
+    )
+    5
+)
 (test/exec :compose3
     (fn ->
         (let f (compose ++ ++ ++))
@@ -12054,22 +12266,26 @@ lambda [
 
 ;-----------------------------------------------------
 ; math routines
-(test/exec :sin     (fn -> (== (sin 0.5) (.math/sin 0.5))) true)
-(test/exec :cos     (fn -> (== (cos 0.5) (.math/cos 0.5))) true)
-(test/exec :tan     (fn -> (== (tan 0.5) (.math/tan 0.5))) true)
-(test/exec :sqrt1   (fn -> (sqrt 9))   3)
-(test/exec :sqrt2   (fn -> (9 | sqrt)) 3)
-(test/exec :sqrt3   (fn -> (sqrt -5 | tostring)) "nan")
-(test/exec :sqr1    (fn -> (sqr 3))     9)
-(test/exec :sqr2    (fn -> (sqr -3))    9)
-(test/exec :sqr3    (fn -> (is? (sqr 9.3) ^double)) true)
-(test/exec :abs1    (fn -> (abs 0.5))   0.5)
-(test/exec :abs2    (fn -> (abs -0.5))  0.5)
-(test/exec :abs3    (fn -> (abs 1))     1)
-(test/exec :abs4    (fn -> (abs -1))    1)
-(test/exec :abs5    (fn -> (abs "-1"))  1)
-(test/exec :sign1   (fn -> (sign -123)) -1)
-(test/exec :sign2   (fn -> (sign 123)) 1)
+(test/exec :sin     (\ -> (== (sin 0.5) (.math/sin 0.5))) true)
+(test/exec :cos     (\ -> (== (cos 0.5) (.math/cos 0.5))) true)
+(test/exec :tan     (\ -> (== (tan 0.5) (.math/tan 0.5))) true)
+(test/exec :sqrt1   (\ -> (sqrt 9))   3)
+(test/exec :sqrt1a  (\ -> (sqrt 9m))   3)
+(test/exec :sqrt2   (\ -> (9 | sqrt)) 3)
+(test/exec :sqrt2a  (\ -> (9m | sqrt)) 3)
+(test/exec :sqrt3   (\ -> (sqrt -5 | tostring)) "nan")
+(test/exec :sqrt3a  (\ -> (try (sqrt -5m | tostring) | is? ^Exception)) true)
+(test/exec :sqrt4   (\ -> (* (sqrt 123m) (sqrt 123m) | round)) 123)
+(test/exec :sqr1    (\ -> (sqr 3))     9)
+(test/exec :sqr2    (\ -> (sqr -3))    9)
+(test/exec :sqr3    (\ -> (is? (sqr 9.3) ^double)) true)
+(test/exec :abs1    (\ -> (abs 0.5))   0.5)
+(test/exec :abs2    (\ -> (abs -0.5))  0.5)
+(test/exec :abs3    (\ -> (abs 1))     1)
+(test/exec :abs4    (\ -> (abs -1))    1)
+(test/exec :abs5    (\ -> (abs "-1"))  1)
+(test/exec :sign1   (\ -> (sign -123)) -1)
+(test/exec :sign2   (\ -> (sign 123)) 1)
 (test/exec :truncate-number1 (fn -> (truncate-number 0.5)) 0)
 (test/exec :truncate-number2 (fn -> (truncate-number 2.5)) 2)
 (test/exec :truncate-number3 (fn -> (truncate-number 2.5 | type-of)) ^int)
@@ -12085,6 +12301,15 @@ lambda [
 (test/exec :round6  (fn -> (round 3.1415 1)) 3.1)
 (test/exec :round7  (fn -> (round 3.1415 2)) 3.14)
 (test/exec :round8  (fn -> (round 3.1415 3)) 3.142)
+; same tests but with ^BigDecimal since it's a seperate code path
+(test/exec :round9  (fn -> (round 0.4m)) 0)
+(test/exec :round10 (fn -> (round 0.5m)) 1)
+(test/exec :round11 (fn -> (round 0.51m)) 1)
+(test/exec :round12 (fn -> (round 0.6m)) 1)
+(test/exec :round13 (fn -> (round 3.1415m 0)) 3)
+(test/exec :round14 (fn -> (round 3.1415m 1)) 3.1)
+(test/exec :round15 (fn -> (round 3.1415m 2)) 3.14)
+(test/exec :round16 (fn -> (round 3.1415m 3)) 3.142)
 
 ; Test the 'log' function.
 ; BUGBUGBUG - NOTE lexically "10." and ".5" don't work.
@@ -15102,6 +15327,12 @@ lambda [
 )
 
 ;-----------------------------------------------------------
+; Test base of function
+(test/exec :base-of1
+    (\ -> (base-of []))
+    ^System.Collections.Generic.List[System.Object] ; BUGBUGBUG - add more tests
+)
+;-----------------------------------------------------------
 ; test casts, especially covarient casts
 (test/exec :cast1
     (fn ->
@@ -17228,6 +17459,51 @@ lambda [
     )
     true
 )
+
+;----------------------------------------------------
+; Test the defmacro function
+; BUGBUGBUG - need more tests here
+(test/exec :defmacro1
+    (fn ->
+        ; check that macros are visible as variables
+        (.ftype fn | tostring | == "Macro")
+    )
+    true
+)
+
+;--------------------------------------------------------------------
+; Test a macro implementing the "loop" function
+(test/exec :macro_looop1
+    (\ ->
+        (defmacro looop [(^vectorliteral bindings) &body]
+            (let blist (.valuelist bindings))
+            (if (count blist | % 2)
+                (throw "looop; bindings vector length must be even")
+            )
+
+            (let new_bindings [])
+            (while (let [v n] (first blist 2))
+                (.add new_bindings (list v n))
+                (let blist (skip blist 2))
+            )
+
+            (list (cons 'lambda `(~new_bindings ~@body)))
+        )
+
+        (defn loopfact [n]
+            (looop [a n b 1i]
+                (if (> a 0)
+                    (recur (- a 1) (* a b))
+                    b
+                )
+            )
+        )
+
+        (loopfact 20)
+    )
+    2432902008176640000
+)
+
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

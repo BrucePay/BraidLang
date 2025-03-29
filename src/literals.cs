@@ -17,6 +17,8 @@ using System.Collections.Concurrent;
 using System.Management.Automation;
 using System.Threading;
 using System.Reflection;
+using System.Numerics;
+using System.Web;
 
 namespace BraidLang
 {
@@ -598,8 +600,7 @@ namespace BraidLang
                 _baseName = _baseName.Substring(0, _baseName.Length - 1);
             }
 
-            KeywordLiteral keywordOut;
-            if (_keywordTable.TryGetValue(name, out keywordOut))
+            if (_keywordTable.TryGetValue(name, out KeywordLiteral keywordOut))
             {
                 _keywordId = keywordOut._keywordId;
             }
@@ -613,11 +614,10 @@ namespace BraidLang
 
         public static KeywordLiteral FromString(string name)
         {
-            KeywordLiteral keywordOut;
 
             lock (_lockObj)
             {
-                if (_keywordTable.TryGetValue(name, out keywordOut))
+                if (_keywordTable.TryGetValue(name, out KeywordLiteral keywordOut))
                 {
                     return keywordOut;
                 }
@@ -1207,7 +1207,8 @@ namespace BraidLang
                                 methodInfo = typeof(Type)
                                     .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance |
                                                 BindingFlags.FlattenHierarchy | BindingFlags.IgnoreCase)
-                                    .Where(m => {
+                                    .Where(m =>
+                                    {
                                         // BUGBUGBUG Console.WriteLine("method {name} args {args.Count-1} matching {m.Name} {m.GetParameters().Length}");
                                         return m.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && m.GetParameters().Length == args.Count - 1;
                                     })
@@ -1487,9 +1488,8 @@ namespace BraidLang
                     return new Vector();
                 }
 
-                Vector result;
                 Dictionary<string, NamedParameter> namedParameters;
-                Braid.EvaluateArgs(Braid.CallStack, false, true, false, ValueList, FunctionType.Function, out result, out namedParameters);
+                Braid.EvaluateArgs(Braid.CallStack, false, true, false, ValueList, FunctionType.Function, out Vector result, out namedParameters);
                 return result;
             }
         }
@@ -1899,7 +1899,7 @@ namespace BraidLang
         Callable LambdaValue;
         string HelpInfo;
 
-        public FunctionLiteral(Callable lambda) :this(lambda, null)
+        public FunctionLiteral(Callable lambda) : this(lambda, null)
         {
         }
 
@@ -1935,4 +1935,520 @@ namespace BraidLang
         }
     }
 
+
+    /// <summary>
+    /// Arbitrary precision decimal, based on a mix of public-domain (see below) and AI generated code
+    /// including sqrt, round and tostring functions .
+    /// 
+    /// Author: Jan Christoph Bernack (contact: jc.bernack at gmail.com)
+    /// License: public domain
+    /// All operations are exact, except for division. Division never determines more digits than the given precision.
+    /// Source: https://gist.github.com/JcBernack/0b4eef59ca97ee931a2f45542b9ff06d
+    /// Based on https://stackoverflow.com/a/4524254
+    /// </summary>
+    public struct BigDecimal
+        : IComparable
+        , IComparable<BigDecimal>
+    {
+        /// <summary>
+        /// Specifies whether the significant digits should be truncated to the given precision after each operation.
+        /// </summary>
+        public static bool AlwaysTruncate { get; set; } = false;
+
+        /// <summary>
+        /// Sets the maximum precision of division operations.
+        /// If AlwaysTruncate is set to true all operations are affected.
+        /// </summary>
+        public static int Precision { get; set; } = 50;
+        public BigInteger Mantissa { get; set; }
+        public int Exponent { get; set; }
+
+        public BigDecimal(BigInteger mantissa, int exponent)
+            : this()
+        {
+            Mantissa = mantissa;
+            Exponent = exponent;
+            Normalize();
+            if (AlwaysTruncate)
+            {
+                Truncate();
+            }
+        }
+        public void Normalize()
+        {
+            if (this.Exponent == 0) return;
+
+            if (this.Mantissa.IsZero)
+            {
+                this.Exponent = 0;
+            }
+            else
+            {
+                BigInteger remainder = 0;
+                while (remainder == 0)
+                {
+                    var shortened = BigInteger.DivRem(dividend: this.Mantissa, divisor: 10, remainder: out remainder);
+                    if (remainder != 0)
+                    {
+                        continue;
+                    }
+                    this.Mantissa = shortened;
+                    this.Exponent++;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Truncate the number to the given precision by removing the least significant digits.
+        /// </summary>
+        /// <returns>The truncated number</returns>
+        public BigDecimal Truncate(int precision)
+        {
+            // copy this instance (remember it's a struct)
+            var shortened = this;
+            // save some time because the number of digits is not needed to remove trailing zeros
+            shortened.Normalize();
+            
+            // remove the least significant digits, as long as the number of digits is higher than the given Precision
+            int Digits = NumberOfDigits(shortened.Mantissa);
+            int DigitsToRemove = Math.Max(Digits - precision, 0);
+            shortened.Mantissa /= BigInteger.Pow(10, DigitsToRemove);
+            shortened.Exponent += DigitsToRemove;
+            
+            // normalize again to make sure there are no trailing zeros left
+            shortened.Normalize();
+            return shortened;
+        }
+
+        public BigDecimal Truncate()
+        {
+            return Truncate(Precision);
+        }
+
+        public BigDecimal Floor()
+        {
+            return Truncate(BigDecimal.NumberOfDigits(Mantissa) + Exponent);
+        }
+
+        /// <summary>
+        /// Returns a new BigDecimal rounded to 0
+        /// </summary>
+        public BigDecimal Round()
+        {
+            return Round(0, MidpointRounding.AwayFromZero);
+        }
+
+        /// <summary>
+        /// Returns a new BigDecimal rounded to the specified number of decimal places
+        /// </summary>
+        public BigDecimal Round(int decimals)
+        {
+            return Round(decimals, MidpointRounding.AwayFromZero);
+        }
+
+        /// <summary>
+        /// Returns a new BigDecimal rounded to the specified number of decimal places,
+        /// using the given midpoint rounding rule.
+        /// </summary>
+        public BigDecimal Round(int decimals, MidpointRounding mode)
+        {
+            int numDigits = NumberOfDigits(Mantissa);
+            // No rounding needed if target decimals is greater than or equal to current _scale.
+            if (decimals >= Math.Abs(Exponent))
+                return this;
+
+            int offset = numDigits - Math.Abs(Exponent);
+            int diff = numDigits - decimals - offset;
+            BigInteger divisor = BigInteger.Pow(10, diff);
+            BigInteger quotient = BigInteger.Divide(Mantissa, divisor);
+            BigInteger remainder = Mantissa - quotient * divisor;
+
+            // Determine whether to round up.
+            BigInteger absRemainder = BigInteger.Abs(remainder);
+            int cmp = BigInteger.Multiply(absRemainder, 2).CompareTo(divisor);
+            bool roundUp = false;
+            if (cmp > 0)
+            {
+                roundUp = true;
+            }
+            else if (cmp == 0)
+            {
+                // Exactly at the midpoint: use the specified rounding mode.
+                if (mode == MidpointRounding.AwayFromZero)
+                    roundUp = true;
+                else if (mode == MidpointRounding.ToEven && (quotient & 1) != 0) // if odd, round to even
+                    roundUp = true;
+            }
+
+            if (roundUp)
+                quotient = Mantissa.Sign >= 0 ? quotient + 1 : quotient - 1;
+
+            return new BigDecimal(quotient, -decimals);
+        }
+
+        public static int NumberOfDigits(BigInteger value)
+        {
+            if (value.IsZero)
+            {
+                return 1;
+            }
+            double NumberOfDigits = BigInteger.Log10(value * value.Sign);
+            if (NumberOfDigits % 1 == 0)
+            {
+                return (int)NumberOfDigits + 1;
+            }
+            return (int)Math.Ceiling(NumberOfDigits);
+        }
+
+        private static BigDecimal getInitialApproximation(BigDecimal n)
+        {
+            BigInteger integerPart = n.Mantissa;
+            int length = integerPart.ToString().Length;
+            if ((length % 2) == 0)
+            {
+                length--;
+            }
+            length /= 2;
+            BigDecimal guess = new BigDecimal(1, 0);
+            for (int i = 0; i < length; i++)
+            {
+                guess *= 10;
+            }
+
+            return guess;
+        }
+
+        public BigDecimal Sqrt()
+        { 
+            return BigDecimal.Sqrt(this);
+        }
+        public static BigDecimal Sqrt(BigDecimal n)
+        {
+            // Make sure n is a positive number
+            if (n <= 0)
+            {
+                Braid.BraidRuntimeException(".Bigdecimal/Sqrt n  - to compute the square root of n, n must be greater than zero.");
+            }
+
+            BigDecimal lastGuess;
+            BigDecimal guess = getInitialApproximation(n);
+
+            // Iterate
+
+            int iterations = 0;
+            bool more = true;
+            BigDecimal error;
+            int maxIterations = 150;
+            while (more)
+            {
+                if (Braid._stop)
+                {
+                    break;
+                }
+
+                lastGuess = guess;
+                guess = n / guess;
+                guess = guess + lastGuess;
+                guess /= 2;
+
+                error = n - (guess * guess);
+                if (++iterations >= maxIterations)
+                {
+                    more = false;
+                }
+                else if (lastGuess == guess)
+                {
+                    more = error.Floor() >= 0;
+                }
+            }
+
+            return guess;
+        }
+
+        #region Conversions
+
+        public static implicit operator BigDecimal(string value)
+        {
+            if (value == null)
+            {
+                return new BigDecimal(0, 0);
+            }
+
+            bool isDecimal = value.Contains(".");
+            if (isDecimal)
+            {
+                int exponent = value.Length - (value.IndexOf(".") + 1);
+                BigInteger mantissa = BigInteger.Parse(value.Replace(".", ""));
+                return new BigDecimal(mantissa, -exponent);
+            }
+            return new BigDecimal(BigInteger.Parse(value), 0);
+        }
+
+        public static implicit operator BigDecimal(int value)
+        {
+            return new BigDecimal(value, 0);
+        }
+
+        public static implicit operator BigDecimal(long value)
+        {
+            return new BigDecimal(value, 0);
+        }
+
+        public static implicit operator BigDecimal(BigInteger value)
+        {
+            return new BigDecimal(value, 0);
+        }
+
+        public static implicit operator BigDecimal(double value)
+        {
+            var mantissa = (BigInteger)value;
+            var exponent = 0;
+            double scaleFactor = 1;
+            while (Math.Abs(value * scaleFactor - (double)mantissa) > 0)
+            {
+                exponent -= 1;
+                scaleFactor *= 10;
+                mantissa = (BigInteger)(value * scaleFactor);
+            }
+            return new BigDecimal(mantissa, exponent);
+        }
+
+        public static implicit operator BigDecimal(decimal value)
+        {
+            var mantissa = (BigInteger)value;
+            var exponent = 0;
+            decimal scaleFactor = 1;
+            while ((decimal)mantissa != value * scaleFactor)
+            {
+                exponent -= 1;
+                scaleFactor *= 10;
+                mantissa = (BigInteger)(value * scaleFactor);
+            }
+            return new BigDecimal(mantissa, exponent);
+        }
+
+        public static explicit operator double(BigDecimal value)
+        {
+            return (double)value.Mantissa * Math.Pow(10, value.Exponent);
+        }
+
+        public static explicit operator float(BigDecimal value)
+        {
+            return Convert.ToSingle((double)value);
+        }
+
+        public static explicit operator decimal(BigDecimal value)
+        {
+            return (decimal)value.Mantissa * (decimal)Math.Pow(10, value.Exponent);
+        }
+
+        public static explicit operator int(BigDecimal value)
+        {
+            return (int)(value.Mantissa * BigInteger.Pow(10, value.Exponent));
+        }
+
+        public static explicit operator long(BigDecimal value)
+        {
+            return (int)(value.Mantissa * BigInteger.Pow(10, value.Exponent));
+        }
+
+        public static explicit operator uint(BigDecimal value)
+        {
+            return (uint)(value.Mantissa * BigInteger.Pow(10, value.Exponent));
+        }
+
+        #endregion
+
+        #region Operators
+
+        public static BigDecimal operator +(BigDecimal value)
+        {
+            return value;
+        }
+
+        public static BigDecimal operator -(BigDecimal value)
+        {
+            value.Mantissa *= -1;
+            return value;
+        }
+
+        public static BigDecimal operator ++(BigDecimal value)
+        {
+            return value + 1;
+        }
+
+        public static BigDecimal operator --(BigDecimal value)
+        {
+            return value - 1;
+        }
+
+        public static BigDecimal operator +(BigDecimal left, BigDecimal right)
+        {
+            return Add(left, right);
+        }
+
+        public static BigDecimal operator -(BigDecimal left, BigDecimal right)
+        {
+            return Add(left, -right);
+        }
+
+        private static BigDecimal Add(BigDecimal left, BigDecimal right)
+        {
+            return left.Exponent > right.Exponent
+                ? new BigDecimal(AlignExponent(left, right) + right.Mantissa, right.Exponent)
+                : new BigDecimal(AlignExponent(right, left) + left.Mantissa, left.Exponent);
+        }
+
+        public static BigDecimal operator *(BigDecimal left, BigDecimal right)
+        {
+            return new BigDecimal(left.Mantissa * right.Mantissa, left.Exponent + right.Exponent);
+        }
+
+        public static BigDecimal operator /(BigDecimal dividend, BigDecimal divisor)
+        {
+            var exponentChange = Precision - (NumberOfDigits(dividend.Mantissa) - NumberOfDigits(divisor.Mantissa));
+            if (exponentChange < 0)
+            {
+                exponentChange = 0;
+            }
+            dividend.Mantissa *= BigInteger.Pow(10, exponentChange);
+            return new BigDecimal(dividend.Mantissa / divisor.Mantissa, dividend.Exponent - divisor.Exponent - exponentChange);
+        }
+
+        public static BigDecimal operator %(BigDecimal left, BigDecimal right)
+        {
+            return left - right * (left / right).Floor();
+        }
+
+        public static bool operator ==(BigDecimal left, BigDecimal right)
+        {
+            return left.Exponent == right.Exponent && left.Mantissa == right.Mantissa;
+        }
+
+        public static bool operator !=(BigDecimal left, BigDecimal right)
+        {
+            return left.Exponent != right.Exponent || left.Mantissa != right.Mantissa;
+        }
+
+        public static bool operator <(BigDecimal left, BigDecimal right)
+        {
+            return left.Exponent > right.Exponent ? AlignExponent(left, right) < right.Mantissa : left.Mantissa < AlignExponent(right, left);
+        }
+
+        public static bool operator >(BigDecimal left, BigDecimal right)
+        {
+            return left.Exponent > right.Exponent ? AlignExponent(left, right) > right.Mantissa : left.Mantissa > AlignExponent(right, left);
+        }
+
+        public static bool operator <=(BigDecimal left, BigDecimal right)
+        {
+            return left.Exponent > right.Exponent ? AlignExponent(left, right) <= right.Mantissa : left.Mantissa <= AlignExponent(right, left);
+        }
+
+        public static bool operator >=(BigDecimal left, BigDecimal right)
+        {
+            return left.Exponent > right.Exponent ? AlignExponent(left, right) >= right.Mantissa : left.Mantissa >= AlignExponent(right, left);
+        }
+
+        /// <summary>
+        /// Returns the mantissa of value, aligned to the exponent of reference.
+        /// Assumes the exponent of value is larger than of reference.
+        /// </summary>
+        private static BigInteger AlignExponent(BigDecimal value, BigDecimal reference)
+        {
+            return value.Mantissa * BigInteger.Pow(10, value.Exponent - reference.Exponent);
+        }
+
+        #endregion
+
+        #region Additional mathematical functions
+
+        public static BigDecimal Exp(double exponent)
+        {
+            var tmp = (BigDecimal)1;
+            while (Math.Abs(exponent) > 100)
+            {
+                var diff = exponent > 0 ? 100 : -100;
+                tmp *= Math.Exp(diff);
+                exponent -= diff;
+            }
+            return tmp * Math.Exp(exponent);
+        }
+
+        public static BigDecimal Pow(double basis, double exponent)
+        {
+            var tmp = (BigDecimal)1;
+            while (Math.Abs(exponent) > 100)
+            {
+                var diff = exponent > 0 ? 100 : -100;
+                tmp *= Math.Pow(basis, diff);
+                exponent -= diff;
+            }
+            return tmp * Math.Pow(basis, exponent);
+        }
+
+        #endregion
+
+        // AI-generated tostring()
+        public override string ToString()
+        {
+            // If no fractional part, simply return the integer.
+            if (Exponent == 0)
+                return Mantissa.ToString();
+
+            Normalize();
+
+            // Get absolute value’s digits.
+            string digits = BigInteger.Abs(Mantissa).ToString();
+
+            // Ensure the string has at least (_scale + 1) digits.
+            var exp = Math.Abs(Exponent);
+            if (digits.Length <= exp)
+                digits = new string('0', exp - digits.Length + 1) + digits;
+
+            int integerPartLength = digits.Length - exp;
+            string integerPart = digits.Substring(0, integerPartLength);
+            string fractionalPart = digits.Substring(integerPartLength);
+            string result = integerPart + "." + fractionalPart;
+            return (Mantissa.Sign < 0 ? "-" : "") + result;
+        }
+
+        public bool Equals(BigDecimal other)
+        {
+            return other.Mantissa.Equals(Mantissa) && other.Exponent == Exponent;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            return obj is BigDecimal @decimal && Equals(@decimal);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (Mantissa.GetHashCode() * 397) ^ Exponent;
+            }
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (ReferenceEquals(obj, null) || !(obj is BigDecimal))
+            {
+                throw new ArgumentException();
+            }
+
+            return CompareTo((BigDecimal)obj);
+        }
+
+        public int CompareTo(BigDecimal other)
+        {
+            return this < other ? -1 : (this > other ? 1 : 0);
+        }
+    }
 }
