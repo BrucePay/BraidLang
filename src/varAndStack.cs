@@ -90,12 +90,14 @@ namespace BraidLang
 
         public BraidVariable Clone()
         {
-            var psv = new BraidVariable(Name, _value);
-            psv.TypeConstraint = TypeConstraint;
-            psv.Const = Const;
-            psv.Sink = Sink;
-            psv.Setter = Setter;
-            psv.Getter = Getter;
+            var psv = new BraidVariable(Name, _value)
+            {
+                TypeConstraint = TypeConstraint,
+                Const = Const,
+                Sink = Sink,
+                Setter = Setter,
+                Getter = Getter
+            };
             return psv;
         }
 
@@ -278,8 +280,7 @@ namespace BraidLang
         // Returns the local variable corresponding to the sym or creates it if it doesn't exist.
         public BraidVariable GetOrCreateLocalVar(Symbol sym)
         {
-            BraidVariable var;
-            if (_vars != null && _vars.TryGetValue(sym, out var))
+            if (_vars != null && _vars.TryGetValue(sym, out BraidVariable var))
             {
                 return var;
             }
@@ -401,8 +402,7 @@ namespace BraidLang
         // BUGBUGBUG - this code isn't quite right - it should always create a new variable.
         public object Const(Symbol sym, object value)
         {
-            BraidVariable varToSet;
-            if (Vars.TryGetValue(sym, out varToSet))
+            if (Vars.TryGetValue(sym, out BraidVariable varToSet))
             {
                 if (varToSet.Const)
                 {
@@ -647,8 +647,10 @@ namespace BraidLang
         public PSStackFrame GetSnapshot()
         {
             var dict = GetSnapshotInternal();
-            var newFrame = new PSStackFrame(this.File, this.Function, this.Caller, null, dict);
-            newFrame.Types = GetTypes();
+            var newFrame = new PSStackFrame(this.File, this.Function, this.Caller, null, dict)
+            {
+                Types = GetTypes()
+            };
             return newFrame;
         }
 
@@ -661,16 +663,9 @@ namespace BraidLang
 
         public Dictionary<string, Type> GetTypes()
         {
-            Dictionary<string, Type> result = null;
-
-            if (Parent == null)
-            {
-                result = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
-            }
-            else
-            {
-                result = Parent.GetTypes();
-            }
+            Dictionary<string, Type> result = (Parent == null) ?
+                                                new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase) :
+                                                Parent.GetTypes();
 
             if (Types != null)
             {

@@ -733,8 +733,10 @@ namespace BraidLang
         public object Visit(Callable visitor, bool visitLambdas)
         {
             s_Expr result = null;
-            Vector paramvector = new Vector();
-            paramvector.Add(null);
+            Vector paramvector = new Vector
+            {
+                null
+            };
 
             if (_car is s_Expr car)
             {
@@ -1186,8 +1188,10 @@ namespace BraidLang
 
         public Vector Map(Callable callable)
         {
-            Vector args = new Vector();
-            args.Add(null);
+            Vector args = new Vector
+            {
+                null
+            };
             var result = new Vector();
             foreach (object val in this)
             {
@@ -1345,8 +1349,10 @@ namespace BraidLang
                 if (Length == 1)
                     return null;
 
-                var ns = new Slice(Data, Start + 1, Length - 1);
-                ns.wasString = wasString;
+                var ns = new Slice(Data, Start + 1, Length - 1)
+                {
+                    wasString = wasString
+                };
                 return ns;
             }
         }
@@ -2478,8 +2484,10 @@ namespace BraidLang
 
         public void ForEach(Callable callable)
         {
-            Vector args = new Vector();
-            args.Add(null);
+            Vector args = new Vector
+            {
+                null
+            };
             foreach (object val in this)
             {
                 args[0] = val;
@@ -2545,8 +2553,10 @@ namespace BraidLang
 
         public object Visit(Callable func, bool visitLambdas)
         {
-            Vector parameters = new Vector();
-            parameters.Add(this);
+            Vector parameters = new Vector
+            {
+                this
+            };
             return func.Invoke(parameters);
         }
 
@@ -3940,7 +3950,7 @@ namespace BraidLang
         }
 
         /// <summary>
-        /// Takes an operator and an object and returns a curried function.
+        /// Takes a function and an object and returns a curried function.
         /// </summary>
         /// <param name="call">The function to curry</param>
         /// <param name="arg">The second argument to the function</param>
@@ -4150,8 +4160,7 @@ namespace BraidLang
                 BraidRuntimeException("The name argument to GetValue() cannot be null.");
             }
 
-            Symbol varsym = nameObj as Symbol;
-            if (varsym == null)
+            if (!(nameObj is Symbol varsym))
             {
                 varsym = Symbol.FromString(nameObj.ToString());
                 if (varsym == null)
@@ -4997,8 +5006,10 @@ namespace BraidLang
                             scriptBody = (s_Expr)parsedScript.Cdr;
                         }
 
-                        Vector argsAndBody = new Vector();
-                        argsAndBody.Add(scriptArgs);
+                        Vector argsAndBody = new Vector
+                        {
+                            scriptArgs
+                        };
                         argsAndBody.AddRange(scriptBody);
 
                         var scriptLambda = parseFunctionBody(new UserFunction(funcName), funcName, argsAndBody, 0);
@@ -5050,9 +5061,11 @@ namespace BraidLang
 
                     if (parsedScript.IsLambda == false)
                     {
-                        var newPS = new s_Expr(Symbol.sym_lambda, new s_Expr(null, parsedScript));
-                        newPS.File = parsedScript.File;
-                        newPS.LineNo = parsedScript.LineNo;
+                        s_Expr newPS = new s_Expr(Symbol.sym_lambda, new s_Expr(null, parsedScript))
+                        {
+                            File = parsedScript.File,
+                            LineNo = parsedScript.LineNo
+                        };
                         parsedScript = newPS;
                     }
 
@@ -5097,19 +5110,13 @@ namespace BraidLang
 
         public static object GetFunc(PSStackFrame callStack, object funcToGet)
         {
-            FunctionType ftype;
-            string funcName;
-
-            var result = GetFunc(callStack, funcToGet, out ftype, out funcName);
+            var result = GetFunc(callStack, funcToGet, out _, out _);
             return result;
         }
 
         public static object GetFunc(PSStackFrame callStack, object funcToGet, bool noExternals)
         {
-            FunctionType ftype;
-            string funcName;
-
-            var result = GetFunc(callStack, funcToGet, out ftype, out funcName, noExternals);
+            var result = GetFunc(callStack, funcToGet, out _, out _, noExternals);
             return result;
         }
 

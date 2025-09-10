@@ -171,7 +171,7 @@ namespace BraidLang
                     }
                     else
                     {
-                        if (thingToMatch is KeyValuePair<object, object> pair && Names.Count != 2)
+                        if (thingToMatch is KeyValuePair<object, object> && Names.Count != 2)
                         {
                             Braid.BraidRuntimeException("Multiple assignment of a Key/Value pair requires exactly 2 target variables.");
                         }
@@ -349,8 +349,7 @@ namespace BraidLang
             object func = callstack.GetValue(FunctionVariable);
             if (func is PatternFunction pfunc)
             {
-                Vector funcArgs = thingToMatch as Vector;
-                if (funcArgs == null || funcArgs.Count < start)
+                if (!(thingToMatch is Vector funcArgs) || funcArgs.Count < start)
                 {
                     return MatchElementResult.NoMatch;
                 }
@@ -671,8 +670,10 @@ namespace BraidLang
 
             if (_lambda != null)
             {
-                var argvec = new Vector(1);
-                argvec.Add(thingToMatch);
+                var argvec = new Vector(1)
+                {
+                    thingToMatch
+                };
                 Callable funcToCall = _lambda.Value as Callable;
                 if (Braid.IsTrue(funcToCall.Invoke(argvec)))
                 {
@@ -1513,12 +1514,11 @@ namespace BraidLang
                 Braid.BraidRuntimeException($"Invoking pattern function '{Name}': {ie.Message}", ie, this);
             }
 
-            object result;
             PSStackFrame callstack = Braid.CallStack;
             var oldNamedParameters = callstack.NamedParameters;
             try
             {
-                if (Match(argvect, out result, starFunction, ref consumed))
+                if (Match(argvect, out object result, starFunction, ref consumed))
                 {
                     if (IsFunction && result is BraidReturnOperation retop)
                     {

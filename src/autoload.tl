@@ -1951,42 +1951,6 @@ See also: str join
 
 ;--------------------------------------------------------------------------
 ;
-(defn ToHash
-"""
-Convert a list of items into a dictionary where the keys are the items
-and the values are item counts. By default, case-insensitive string
-comparisons are used but you can specify case-sensitive comparisons with
-the '-case' flag.
-
-Examples:
-    ; get the 10 most common words in a file
-    (read-text 'foo.txt | re/split | tohash | sort -descending .value | take 10)
-    ; get the 10 most common words in a file, case-sensitive
-    (read-text 'foo.txt | re/split | tohash -case | sort -descending .value | take 10)
-
-See also: group
-"""
-    [lst :case]
-
-    ; choose case-sensitive dictionary if desired
-    (let hash
-        (if case
-            (new-dict ^object ^object)
-            (new ^hashtable .StringComparer/OrdinalIgnoreCase)
-        )
-    )
-
-    (foreach item lst
-        (hash item
-            (+ 1 (hash item))
-        )
-    )
-
-    hash
-)
-
-;--------------------------------------------------------------------------
-;
 (defn assoc-in
 "
 Update a dictionary given a list of keys and a value to

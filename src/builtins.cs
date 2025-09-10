@@ -191,7 +191,7 @@ namespace BraidLang
                     BraidRuntimeException($"the first argument to loop must be a vector of name/value pairs, not '${args[0]}'");
                 }
 
-                if (loopargs.ValueList.Count() % 2 != 0)
+                if (loopargs.ValueList != null && loopargs.ValueList.Count() % 2 != 0)
                 {
                     BraidRuntimeException($"The argument list for 'loop' must contain an even number of items, "
                         + $"the current list contains ${loopargs.ValueList.Count()} elements.");
@@ -204,25 +204,28 @@ namespace BraidLang
                 {
                     callStack = PushCallStack(new PSStackFrame(_current_file, "loop", CallStack.Caller, CallStack));
 
-                    // Get all of the variables upfront so subsequent binds don't require a lookup.
-                    Symbol argSym = null;
-                    foreach (var e in loopargs.ValueList)
+                    if (loopargs.ValueList != null)
                     {
-                        if (argSym == null && e is Symbol loopsym)
+                        // Get all of the variables upfront so subsequent binds don't require a lookup.
+                        Symbol argSym = null;
+                        foreach (var e in loopargs.ValueList)
                         {
-                            argSym = loopsym;
-                        }
-                        else if (argSym != null)
-                        {
-                            object valToBind = Eval(e);
-                            var loopvar = callStack.GetOrCreateLocalVar(argSym);
-                            loopvar.Value = valToBind;
-                            loopvars.Add(loopvar);
-                            argSym = null;
-                        }
-                        else
-                        {
-                            BraidRuntimeException($"The pattern for loop arguments is [ sym1 val1 sym2 val 2]");
+                            if (argSym == null && e is Symbol loopsym)
+                            {
+                                argSym = loopsym;
+                            }
+                            else if (argSym != null)
+                            {
+                                object valToBind = Eval(e);
+                                var loopvar = callStack.GetOrCreateLocalVar(argSym);
+                                loopvar.Value = valToBind;
+                                loopvars.Add(loopvar);
+                                argSym = null;
+                            }
+                            else
+                            {
+                                BraidRuntimeException($"The pattern for loop arguments is [ sym1 val1 sym2 val 2]");
+                            }
                         }
                     }
 
@@ -3074,8 +3077,7 @@ namespace BraidLang
                 var callStack = CallStack;
                 var namedParameters = callStack.NamedParameters;
                 bool descending = false;
-                NamedParameter keyValue = null;
-                if (namedParameters != null && namedParameters.TryGetValue("Descending", out keyValue))
+                if (namedParameters != null && namedParameters.TryGetValue("Descending", out NamedParameter keyValue))
                 {
                     descending = LanguagePrimitives.IsTrue(keyValue.Value);
                 }
@@ -3154,8 +3156,7 @@ namespace BraidLang
                 var callStack = CallStack;
                 var namedParameters = callStack.NamedParameters;
                 bool descending = false;
-                NamedParameter keyValue = null;
-                if (namedParameters != null && namedParameters.TryGetValue("Descending", out keyValue))
+                if (namedParameters != null && namedParameters.TryGetValue("Descending", out NamedParameter keyValue))
                 {
                     descending = LanguagePrimitives.IsTrue(keyValue.Value);
                 }
@@ -4294,7 +4295,7 @@ namespace BraidLang
                 )
                 {
                     BraidRuntimeException("type-alias: requires either no args to list the existing type aliases, " +
-                                        "of two arguments: a name and a type e.g. (type-alias 'foo ^int) to create a new");
+                                        "or two arguments: a name and a type e.g. (type-alias 'foo ^int) to create a new");
                 }
 
                 string alias = null;
@@ -4715,8 +4716,10 @@ namespace BraidLang
                 }
                 else
                 {
-                    var lambda = new UserFunction(funcsym.Value);
-                    lambda.Name = funcsym.Value;
+                    var lambda = new UserFunction(funcsym.Value)
+                    {
+                        Name = funcsym.Value
+                    };
                     lambda = parseFunctionBody(lambda, funcsym.Value, args, index);
                     signature = lambda.Signature;
                     string returnTypeStr = string.Empty;
@@ -4762,8 +4765,7 @@ namespace BraidLang
                     BraidRuntimeException("undef: requires one argument which is the name of the binding to delete.");
                 }
 
-                Symbol symbol = args[0] as Symbol;
-                if (symbol == null)
+                if (!(args[0] is Symbol symbol))
                 {
                     symbol = Symbol.FromString(args[0].ToString());
                 }
@@ -5057,8 +5059,7 @@ namespace BraidLang
                     while (val != null)
                     {
                         object current = val.Car;
-                        s_Expr pair = current as s_Expr;
-                        if (pair != null)
+                        if (current is s_Expr pair)
                         {
                             if (pair.Count != 2)
                             {
@@ -5104,7 +5105,6 @@ namespace BraidLang
 
                             varsToBind.Add(new BraidVariable(symToBind, vvalue));
                             val = (s_Expr)val.Cdr;
-
                         }
                         else
                         {
@@ -5273,8 +5273,7 @@ namespace BraidLang
                     BraidRuntimeException("upvar: takes exactly 2 arguments e.g. (upvar 'parentSymbol 'localSymbol).");
                 }
 
-                Symbol parentSym = args[0] as Symbol;
-                if (parentSym == null)
+                if (!(args[0] is Symbol parentSym))
                 {
                     string strname = args[0] as string;
                     if (strname == null)
@@ -5316,8 +5315,7 @@ namespace BraidLang
                     BraidRuntimeException("get: takes exactly 1 argument and 1 switch: (get <symbol> [-caller]).");
                 }
 
-                Symbol varsym = args[0] as Symbol;
-                if (varsym == null)
+                if (!(args[0] is Symbol varsym))
                 {
                     varsym = Symbol.FromString(args[0].ToString());
                 }
@@ -5375,8 +5373,7 @@ namespace BraidLang
                     BraidRuntimeException("getvar: takes exactly 1 argument.");
                 }
 
-                Symbol varsym = args[0] as Symbol;
-                if (varsym == null)
+                if (!(args[0] is Symbol varsym))
                 {
                     varsym = Symbol.FromString(args[0].ToString());
                 }
@@ -5609,8 +5606,7 @@ namespace BraidLang
                     BraidRuntimeException("def-in-parent: takes at least 2 arguments: (def-in-parent varname value)");
                 }
 
-                Symbol varsym = args[0] as Symbol;
-                if (varsym == null)
+                if (!(args[0] is Symbol varsym))
                 {
                     varsym = Symbol.FromString(args[0].ToString());
                 }
@@ -5646,8 +5642,7 @@ namespace BraidLang
                     BraidRuntimeException("get-dynamic: the argument to get-dynamic cannot be null.");
                 }
 
-                Symbol varsym = args[0] as Symbol;
-                if (varsym == null)
+                if (!(args[0] is Symbol varsym))
                 {
                     varsym = Symbol.FromString(args[0].ToString());
                 }
@@ -9574,7 +9569,7 @@ namespace BraidLang
                     if (args[0] is ArgIndexLiteral ai)
                     {
                         val = ai.Value;
-                        ai.Value = val = val + increment;
+                        ai.Value = val += increment;
                         return val;
                     }
 
@@ -9644,12 +9639,11 @@ namespace BraidLang
                     if (args[0] is ArgIndexLiteral ai)
                     {
                         origVal = val = ai.Value;
-                        ai.Value = val = val + increment;
+                        ai.Value = val += increment;
                         return origVal;
                     }
 
-                    Symbol varsym = args[0] as Symbol;
-                    if (varsym == null)
+                    if (!(args[0] is Symbol varsym))
                     {
                         varsym = Symbol.FromString(args[0].ToString());
                     }
@@ -9747,8 +9741,7 @@ namespace BraidLang
                     return value;
                 }
 
-                Symbol varsym = args[0] as Symbol;
-                if (varsym == null)
+                if (!(args[0] is Symbol varsym))
                 {
                     varsym = Symbol.FromString(args[0].ToString());
                 }
@@ -9945,9 +9938,9 @@ namespace BraidLang
                 }
 
                 int segSize = 0;
-                if (args[1] is int)
+                if (args[1] is int v)
                 {
-                    segSize = (int)args[1];
+                    segSize = v;
                 }
                 else
                 {
@@ -10727,8 +10720,7 @@ namespace BraidLang
                 // If -foreground or -background was specified, use those colors
                 if (np != null)
                 {
-                    NamedParameter outval;
-                    if (np.TryGetValue("Foreground", out outval))
+                    if (np.TryGetValue("Foreground", out NamedParameter outval))
                     {
                         fg = ConvertToHelper<ConsoleColor>(outval.Value);
                         do_fg = true;
@@ -11178,10 +11170,12 @@ namespace BraidLang
             //
             foreach (var sf in FunctionTable)
             {
-                var func = new Function(sf.Key.Value, sf.Value);
-                func.File = "built-in";
-                func.NameSymbol = sf.Key.Value;
-                func.LineNo = -1;
+                var func = new Function(sf.Key.Value, sf.Value)
+                {
+                    File = "built-in",
+                    NameSymbol = sf.Key.Value,
+                    LineNo = -1
+                };
                 CallStack.Const(sf.Key, func);
             }
 

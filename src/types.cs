@@ -80,10 +80,8 @@ namespace BraidLang
             new ConcurrentDictionary<string, CallSite<Func<CallSite, object, object>>>(StringComparer.OrdinalIgnoreCase);
         static CallSite<Func<CallSite, object, object>> GetSite(Type otype, object dyn, string propName)
         {
-            CallSite<Func<CallSite, object, object>> getterSite;
-
             string key = otype.FullName + "|" + propName;
-            if (_getterSites.TryGetValue(key, out getterSite))
+            if (_getterSites.TryGetValue(key, out CallSite<Func<CallSite, object, object>> getterSite))
             {
                 return getterSite;
             }
@@ -508,8 +506,10 @@ namespace BraidLang
             TypeMethodMap.AddOrUpdate(type,
                 (t) =>
                 {
-                    var d = new Dictionary<Symbol, UserFunction>();
-                    d[name] = body;
+                    var d = new Dictionary<Symbol, UserFunction>
+                    {
+                        [name] = body
+                    };
                     return d;
                 },
                 (t, d) =>
@@ -532,8 +532,7 @@ namespace BraidLang
                 Dictionary<Symbol, UserFunction> methods;
                 if (TypeMethodMap.TryGetValue(type, out methods))
                 {
-                    UserFunction mbody;
-                    if (methods.TryGetValue(name, out mbody))
+                    if (methods.TryGetValue(name, out UserFunction mbody))
                     {
                         return mbody;
                     }
@@ -920,7 +919,6 @@ namespace BraidLang
             return typeof(System.Func<,,,,,>).MakeGenericType(arg1, arg2, arg3, arg4, arg5, rettype);
         }
     }
-
    
     //////////////////////////////////////////////////////////////////////////////////////
     /// <summary>

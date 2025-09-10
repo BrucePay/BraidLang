@@ -848,8 +848,10 @@ namespace BraidLang
                              sf.NameSymbol != Symbol.sym_defspecial && sf.NameSymbol != Symbol.sym_defmacro && sf.NameSymbol != Symbol.sym_deftype))
                     )
                     {
-                        fn = new Function("pipe", pipe_function);
-                        fn.FType = FunctionType.SpecialForm;
+                        fn = new Function("pipe", pipe_function)
+                        {
+                            FType = FunctionType.SpecialForm
+                        };
                         var result = new s_Expr(fn)
                         {
                             File = Braid._current_file,
@@ -1456,8 +1458,7 @@ namespace BraidLang
                 }
 
                 // Finally try BigInteger.
-                BigInteger bresult = 0;
-                if (BigInteger.TryParse(tokenStr, out bresult))
+                if (BigInteger.TryParse(tokenStr, out BigInteger bresult))
                 {
                     if (tokenList != null)
                     {
@@ -1731,10 +1732,12 @@ namespace BraidLang
             }
             else
             {
-                var lambda = new UserFunction("lambda");    // Stub for the function body
-                lambda.File = Braid._current_file;          // but still need context
-                lambda.Name = "lambda";
-                lambda.Environment = CallStack;
+                var lambda = new UserFunction("lambda")
+                {
+                    File = Braid._current_file,          // but still need context
+                    Name = "lambda",
+                    Environment = CallStack
+                };    // Stub for the function body
 
                 lambda = parseFunctionBody(lambda, "lambda", args, 0); // Now create the real lambda
                 lambda.File = Braid._current_file;
@@ -1904,7 +1907,6 @@ namespace BraidLang
                 index++;
             }
 
-            var avect = new Vector();
             Vector patElements = new Vector();
             Vector bodyElements = new Vector();
             Vector patterns = new Vector();

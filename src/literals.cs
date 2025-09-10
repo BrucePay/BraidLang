@@ -1326,7 +1326,7 @@ namespace BraidLang
                                 $"No member matching '.{_member}' with arity {args.Count - 1} on '^{otype}' was found.");
                         }
 
-                        throw new InvalidOperationException($"*** This shouldn't happen! Fell through method lookup for name: '{name}' ***");
+                        throw new InvalidOperationException($"!!! *** This shouldn't happen! Fell through method lookup for name: '{name}' ***");
                     };
                 }
 
@@ -1488,8 +1488,7 @@ namespace BraidLang
                     return new Vector();
                 }
 
-                Dictionary<string, NamedParameter> namedParameters;
-                Braid.EvaluateArgs(Braid.CallStack, false, true, false, ValueList, FunctionType.Function, out Vector result, out namedParameters);
+                Braid.EvaluateArgs(Braid.CallStack, false, true, false, ValueList, FunctionType.Function, out Vector result, out _);
                 return result;
             }
         }
@@ -2148,7 +2147,7 @@ namespace BraidLang
 
                 lastGuess = guess;
                 guess = n / guess;
-                guess = guess + lastGuess;
+                guess += lastGuess;
                 guess /= 2;
 
                 error = n - (guess * guess);
