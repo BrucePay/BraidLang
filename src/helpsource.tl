@@ -3244,6 +3244,21 @@ See also: deftype undeftype
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(bindhelp slice """
+The 'slice' function returns a ^Slice of an indexable collection (e.g a ^Vector or ^Array).
+A ^Slice object is essentially a "window" into the underlying collection. Slice takes two
+arguments - the offset into the collection to index from and the length of the collection.
+Note that slices are immutable which means that you can't change the underlying collection
+using the slice object. On the other hand, changes to the underlying collection will be
+reflected in the slice.
+
+Examples:
+    (range 10 | slice 2 3)          ; returns [3 4 5]
+
+See also: to-vector vector asarray
+""")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp list/split @"
 Syntax: (list/split <list> <value or predicate>)
 

@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
+using Microsoft.PowerShell.Commands;
 
 namespace BraidLang
 {
@@ -188,12 +189,12 @@ namespace BraidLang
                 VectorLiteral loopargs = args[funindex] as VectorLiteral;
                 if (loopargs == null)
                 {
-                    BraidRuntimeException($"the first argument to loop must be a vector of name/value pairs, not '${args[0]}'");
+                    Braid.BraidRuntimeException($"the first argument to loop must be a vector of name/value pairs, not '${args[0]}'");
                 }
 
                 if (loopargs.ValueList != null && loopargs.ValueList.Count() % 2 != 0)
                 {
-                    BraidRuntimeException($"The argument list for 'loop' must contain an even number of items, "
+                    Braid.BraidRuntimeException($"The argument list for 'loop' must contain an even number of items, "
                         + $"the current list contains ${loopargs.ValueList.Count()} elements.");
                 }
 
@@ -10502,6 +10503,92 @@ namespace BraidLang
             };
 
             /////////////////////////////////////////////////////////////////////
+            //
+            // Create a slice from a collection
+            //
+            FunctionTable[Symbol.FromString("slice")] = (Vector args) =>
+            {
+                if (args.Count < 1 || args.Count > 3)
+                {
+                    BraidRuntimeException("slice: the slice function requires 1-3 arguments: a collection to wrap, the offest into the collection to start at and finally, the desired length of the slice.");
+                }
+
+                IEnumerable vec = null;
+                if (!(args[0] is IEnumerable __vec))
+                {
+                     BraidRuntimeException("slice: the first argument must be an IEnumerable collection.");
+                }
+                else
+                {
+                    vec = __vec;
+                }
+
+                IList lstCollection = new List<object>();
+
+                if (vec is IList _vec)
+                {
+                    lstCollection = _vec;
+                }
+                else
+                {
+                    lstCollection = new List<object>();
+                    {
+                        Vector nvec = new Vector(vec);
+                        lstCollection = nvec; ;
+                    }
+                }
+
+                int vecLen = lstCollection.Count;
+                int start = 0;
+                if (args.Count > 1)
+                {
+                    if (!(args[1] is int _start))
+                    {
+                        BraidRuntimeException("slice: the optional second argument must be an integer.");
+                    }
+                    else
+                    {
+                        start = _start;
+                    }
+
+                    if (start > vecLen)
+                    {
+                        BraidRuntimeException("slice: the optional second argument must be an integer less than the length of the collection.");
+                    }
+                }
+
+                int length = 0;
+                if (args.Count == 3)
+                {
+                    if (!(args[2] is int __length))
+                    {
+                        BraidRuntimeException("slice: the optional third argument must be an integer.");
+                    }
+                    else
+                    {
+                        length = __length;
+                    }
+
+                    if (length < 0)
+                    {
+                        length = vecLen - start + length;
+                    }
+
+                    if (start + length > vecLen)
+                    {
+                        BraidRuntimeException("slice: the optional third argument must be an integer less than the length of the collection.");
+                    }
+                }
+
+                if (length == 0)
+                {
+                    length = vecLen - start;
+                }
+
+                return new Slice(lstCollection, start, length);
+            };
+
+            /////////////////////////////////////////////////////////////////////
             ///
             /// Print a string to the console without a newline.
             ///
@@ -10807,6 +10894,7 @@ namespace BraidLang
                 return null;
             };
 
+
             /////////////////////////////////////////////////////////////////////
             ///
             /// Implements pipeline execution semantics.
@@ -11059,6 +11147,7 @@ namespace BraidLang
 
                 return pipeline_data;
             };
+
 
             /////////////////////////////////////////////////////////////////////
             //

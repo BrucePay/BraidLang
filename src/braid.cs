@@ -1258,6 +1258,7 @@ namespace BraidLang
 
         public Slice(IList data)
         {
+
             if (data is Slice s)
                 Data = s.Data;
             else
@@ -1265,6 +1266,14 @@ namespace BraidLang
 
             Start = 0;
             Length = data.Count;
+        }
+
+        public Slice(string data, int start, int length)
+        {
+            wasString = true;
+            Data = data.ToCharArray();
+            Start = start;
+            Length = length;
         }
 
         public Slice(IEnumerable data, int start, int length)
