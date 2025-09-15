@@ -3656,6 +3656,7 @@ lambda [
 (test/exec :head5  #(head "abc def ghi") "abc") ; takes the "head" of a string
 (test/exec :head6  #([10 20 30] | head) 10)     ; takes the head of a vector
 (test/exec :head7  #(head null) null)
+(test/exec :car9  #(head (slice [1 2 3 4])) 1) ; test head of a slice
 
 ;-------------------------------------------------------
 ; The 'cdr' function on lists, vectors, arrays and ienumerables
