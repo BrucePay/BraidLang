@@ -3656,7 +3656,7 @@ lambda [
 (test/exec :head5  #(head "abc def ghi") "abc") ; takes the "head" of a string
 (test/exec :head6  #([10 20 30] | head) 10)     ; takes the head of a vector
 (test/exec :head7  #(head null) null)
-(test/exec :car9  #(head (slice [1 2 3 4])) 1) ; test head of a slice
+(test/exec :head8  #(head (slice [1 2 3 4])) 1) ; test head of a slice
 
 ;-------------------------------------------------------
 ; The 'cdr' function on lists, vectors, arrays and ienumerables
@@ -15552,6 +15552,7 @@ lambda [
     )
     [1]
 )
+; test negative lengths
 (test/exec :slice17
     (fn ->
         (defn qs2
@@ -15562,7 +15563,64 @@ lambda [
     )
     []
 )
+(test/exec :slice18
+    (fn ->
+        (slice [1 2 3 4 5] 1 -1)
+    )
+    [2 3 4]
+)
+(test/exec :slice19
+    (fn ->
+        (slice [1 2 3 4 5] 2 -2)
+    )
+    [3]
+)
+(test/exec :slice20
+    (fn ->
+        (slice [1 2 3 4 5] 1 -1 | slice 1 -1)
+    )
+    [3]
+)
+(test/exec :slice21
+    (\ ->
+        ; reverse a list using slicing
+        (defn rv [data]
+            (when (> (length data) 1)
+                (let f (first data))
+                (let l (last data))
+                (return (append l @(rv (slice data 1 -1)) f))
+            )
+            data
+        )
 
+        (let data [1 2 3 4 5 6]) ; even data count
+        (rv data)
+    )
+    [6 5 4 3 2 1]
+)
+(test/exec :slice22
+    (\ ->
+        ; reverse a list using slicing
+        (defn rv [data]
+            (when (> (length data) 1)
+                (let f (first data))
+                (let l (last data))
+                (return (append l @(rv (slice data 1 -1)) f))
+            )
+            data
+        )
+
+        (let data [1 2 3 4 5]) ; odd data count
+        (rv data)
+    )
+    [5 4 3 2 1]
+)
+(test/exec :slice23
+    (\ ->
+        (slice [5] 1 -1) ; special case - should return []
+    )
+    []
+)
 ;-----------------------------------------------------------
 ; Test group
 (test/exec :group1

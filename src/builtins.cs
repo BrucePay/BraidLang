@@ -10523,7 +10523,7 @@ namespace BraidLang
                     vec = __vec;
                 }
 
-                IList lstCollection = new List<object>();
+                IList lstCollection;
 
                 if (vec is IList _vec)
                 {
@@ -10531,11 +10531,8 @@ namespace BraidLang
                 }
                 else
                 {
-                    lstCollection = new List<object>();
-                    {
-                        Vector nvec = new Vector(vec);
-                        lstCollection = nvec; ;
-                    }
+                    // copy the enumerable into a vector
+                    lstCollection = new Vector(vec);
                 }
 
                 int vecLen = lstCollection.Count;
@@ -10558,6 +10555,7 @@ namespace BraidLang
                 }
 
                 int length = 0;
+                bool neg_len = false;
                 if (args.Count == 3)
                 {
                     if (!(args[2] is int __length))
@@ -10571,6 +10569,7 @@ namespace BraidLang
 
                     if (length < 0)
                     {
+                        neg_len = true;
                         length = vecLen - start + length;
                     }
 
@@ -10580,12 +10579,23 @@ namespace BraidLang
                     }
                 }
 
-                if (length == 0)
+                if (length == 0 && ! neg_len)
                 {
                     length = vecLen - start;
                 }
 
-                return new Slice(lstCollection, start, length);
+                if (vec is string str)
+                {
+                    vecLen = str.Length;
+                    if (vecLen == 1 && start + length == 0)
+                        return new Slice("", start, 0);
+                    else
+                        return new Slice(str, start, length);
+                }
+                if (vecLen == 1 && start + length == 0)
+                    return new Slice(lstCollection, start, 0);
+                else
+                    return new Slice(lstCollection, start, length);
             };
 
             /////////////////////////////////////////////////////////////////////
