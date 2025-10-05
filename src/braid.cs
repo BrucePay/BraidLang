@@ -2357,10 +2357,11 @@ namespace BraidLang
         int Upper;
         int Lower;
         int Increment;
+        bool Empty = false;
 
         public bool Equals(RangeList rl)
         {
-            return rl.Upper == Upper && rl.Lower == Lower && rl.Increment == Increment;
+            return rl.Upper == Upper && rl.Lower == Lower && rl.Increment == Increment && rl.Empty == Empty;
         }
 
         public override bool Equals(object obj)
@@ -2424,6 +2425,11 @@ namespace BraidLang
 
         public bool Contains(object obj)
         {
+            if (Empty)
+            {
+                return false;
+            }
+
             if (obj is int valToCheck)
             {
                 if (valToCheck >= Lower && valToCheck <= Upper && valToCheck % Increment == 0)
@@ -2525,7 +2531,7 @@ namespace BraidLang
 
         public IEnumerator<object> GetEnumerator()
         {
-            return new RangeListEnumerator(Lower, Upper, Increment);
+            return new RangeListEnumerator(Lower, Upper, Increment, Empty);
         }
 
         public object this[int index]
@@ -2541,7 +2547,7 @@ namespace BraidLang
             }
         }
 
-        public RangeList(int lower, int upper, int increment = 1)
+        public RangeList(int lower, int upper, int increment = 1, bool empty = false)
         {
             if (increment == 0)
             {
@@ -2558,6 +2564,7 @@ namespace BraidLang
             {
                 Increment = increment < 0 ? -increment : increment;
             }
+            Empty = empty;
         }
 
         public object Visit(Callable func, bool visitLambdas)
@@ -2571,7 +2578,7 @@ namespace BraidLang
 
         public override string ToString()
         {
-            return $"(Range :low {Lower} :hi {Upper} :incr {Increment})";
+            return $"(Range :low {Lower} :hi {Upper} :incr {Increment} :empty {Empty})";
         }
     }
 
@@ -2584,17 +2591,24 @@ namespace BraidLang
         int Lower;
         int Increment;
         int _current;
+        private bool _empty;
         bool first = true;
 
-        public RangeListEnumerator(int lower, int upper, int increment)
+        public RangeListEnumerator(int lower, int upper, int increment, bool empty = false)
         {
             Upper = upper;
             _current = Lower = lower;
             Increment = increment;
+            _empty = empty;
         }
 
         public bool MoveNext()
         {
+            if (_empty)
+            {
+                return false;
+            }
+
             if ((Increment > 0 && (_current + Increment) <= Upper) || (Increment < 0 && (_current + Increment) >= Upper))
             {
                 if (first)

@@ -9144,37 +9144,76 @@ namespace BraidLang
 
             /////////////////////////////////////////////////////////////////////
             ///
-            /// Generate a sequence of integers with option bounds and increment
+            /// Return an enumerable of integers with optional bounds and increment.
+            /// If there is only one argument and it's a collection, return an
+            /// enumerable that covers the range of the collection.
             /// 
             FunctionTable[Symbol.FromString("range")] = (Vector args) =>
             {
                 int lower = 0;
                 int upper = 0;
                 int step = 1;
+                bool empty = false;  // used with empty collections
 
-                if (args.Count == 1)
+                switch (args.Count)
                 {
-                    lower = 1;
-                    upper = ConvertToHelper<int>(args[0]);
-                }
-                else if (args.Count == 2)
-                {
-                    lower = ConvertToHelper<int>(args[0]);
-                    upper = ConvertToHelper<int>(args[1]);
-                }
-                else if (args.Count == 3)
-                {
-                    lower = ConvertToHelper<int>(args[0]);
-                    upper = ConvertToHelper<int>(args[1]);
-                    step = Math.Abs(ConvertToHelper<int>(args[2]));
-                }
-                else
-                {
-                    BraidRuntimeException(
-                        $"range: invalid number of arguments; this function takes 1-3 arguments, not {args.Count}. e.g. (range [<lower>] <upper> [<increment>]");
+                    case 1:
+                        switch (args[0])
+                        {
+                            case IDictionary _dict:
+                                BraidRuntimeException("range: the 'range' function cannot be applied to a dictionary.");
+                                break;
+
+                            //BUGBUGBUG - consider (range "123") will iterate 3 times instead of converting the string to integer 123. Is this right?
+                            case string str:
+                                lower = 0;
+                                if ((upper = str.Length - 1) < 0)
+                                {
+                                    upper = 0;
+                                }
+                                if (lower == upper)
+                                {
+                                    empty = true;
+                                }
+                                break;
+
+                            case ICollection col:
+                                lower = 0;
+                                if ((upper = col.Count - 1) < 0)
+                                {
+                                    upper = 0;
+                                }
+                                if (lower == upper)
+                                {
+                                    empty = true;
+                                }
+                                break;
+
+                            default:
+                                lower = 1;
+                                upper = ConvertToHelper<int>(args[0]);
+                                break;
+                        }
+                        break;
+
+                    case 2:
+                        lower = ConvertToHelper<int>(args[0]);
+                        upper = ConvertToHelper<int>(args[1]);
+                        break;
+
+                    case 3:
+                        lower = ConvertToHelper<int>(args[0]);
+                        upper = ConvertToHelper<int>(args[1]);
+                        step = Math.Abs(ConvertToHelper<int>(args[2]));
+                        break;
+
+                    default:
+                        BraidRuntimeException(
+                            $"range: invalid number of arguments; this function takes 1-3 arguments, not {args.Count}. e.g. (range [<lower>] <upper> [<increment>]");
+                        break;
                 }
 
-                return new RangeList(lower, upper, step);
+                return new RangeList(lower, upper, step, empty);
             };
 
             /////////////////////////////////////////////////////////////////////
@@ -10548,9 +10587,9 @@ namespace BraidLang
                         start = _start;
                     }
 
-                    if (start > vecLen)
+                    if (start > vecLen || start < 0)
                     {
-                        BraidRuntimeException("slice: the optional second argument must be an integer less than the length of the collection.");
+                        BraidRuntimeException("slice: the optional second argument must be an integer greater than 0 and less than the length of the collection.");
                     }
                 }
 

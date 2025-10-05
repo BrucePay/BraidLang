@@ -4772,7 +4772,35 @@ lambda [
 (test/exec :range5  #(range 5 0 2 | to-vector)   [5 3 1])
 (test/exec :range6  #(range -5 -1)               [-5 -4 -3 -2 -1])
 (test/exec :range7  #(range -3 3)                [-3 -2 -1 0 1 2 3])
+; test character code point ranges
 (test/exec :range8  #(range (^int? \a) (^int? \z) | map ^char? | join "") "abcdefghijklmnopqrstuvwxyz")
+; test collection ranges
+(test/exec :range9  #(range "abcde" | to-vector) [0 1 2 3 4])
+(test/exec :range10 #(range [1 2 3] | to-vector) [0 1 2])
+(test/exec :range11
+    (\ ->
+        (let col1 [1 3 5 7])
+        (let col2 [10 4 6 2])
+        ; find the collection members that sum to 9 and return their indexes
+        (foreach n1 (range col1)
+            (foreach n2 (range col2)
+                (if (+ (!! col1 n1) (!! col2 n2) | == 9)
+                    (return n1 n2)
+                )
+            )
+        )
+    )
+    [ 1 2 ]
+)
+(test/exec :range12 #(range "" | to-vector) [])
+(test/exec :range13 #(range [] | to-vector) [])
+; test error conditions
+(test/exec :range14 #(try (range (\ -> )) | is? ^Exception) true)
+(test/exec :range15 #(try (range "abc" 13) | is? ^Exception) true)
+(test/exec :range16 #(try (range [1 2 3] 13) | is? ^Exception) true)
+(test/exec :range17 #(try (range {}) | is? ^Exception) true)
+(test/exec :range18 #(try (range {1 2 3 4}) | is? ^Exception) true)
+(test/exec :range19 #(try (range) | is? ^Exception) true)
 
 ;-------------------------------------------------------
 ; basic test of the filter function - get even numbers
@@ -15620,6 +15648,12 @@ lambda [
         (slice [5] 1 -1) ; special case - should return []
     )
     []
+)
+(test/exec :slice24
+    (\ ->
+        (try (slice [5] -1) | is? ^Exception) ; should throw an exception
+    )
+    true
 )
 ;-----------------------------------------------------------
 ; Test group

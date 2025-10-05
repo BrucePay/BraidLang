@@ -2082,13 +2082,16 @@ return you to the parent session.
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp range  "
-Syntax: (range upper) or (range lower upper) or (range lower upper increment)
+(bindhelp range  """
+Syntax: (range collection) (range upper) (range lower upper) (range lower upper increment)
 
-Generates a range of numbers. If omly one number is provided, the range will
-be from 1 to that number. If two numbers are provided, they represent the bounds
-of the range. If the first number is larger than the second, the range will be
-counted down.  You can also specify a third argument  the increment, which sets
+The 'range' function returns an enumerator over a range of numbers. If only one
+argument is provided and that argument is a string or collection, the enumerator
+will span the length of that collection. If there is only one argument and it is an
+integer the range will be from 1 to that number. If two numbers are provided, they
+represent the upper and lower bounds for the range. If the first number is larger
+than the second, the range will be counted from largest to smallest.
+You can also specify a third argument  the increment, which sets
 the step count.  Note - stepping is always done so the larger number will converge
 with the smaller.
 
@@ -2096,7 +2099,9 @@ Examples:
     (range 10)      ; returns 1-10.
     (range 10 1)    ; returns 10-1
     (range 0 10 2)  ; returns [0 2 4 6 8 10]
-")
+    (range "hello") ; returns 0-4
+    (range [1 2 3]) ; returns 0-2
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp smaller "
