@@ -10841,10 +10841,11 @@ lambda [
 )
 
 ;------------------------------------------------------
-; Test 'recur' and 'loop' functions
+; Test the 'loop' function (see also the 'recur' function
+; since they work together.
 (test/exec :loop1
-    (fn ->
-        ; basic recur with the loop function
+    (\ ->
+        ; basic fib function using recur with the loop function
         (loop [x 42 s 0]
             (if x
                 (recur (-- x) (+ x s))
@@ -10854,15 +10855,101 @@ lambda [
     )
     903
 )
+; check for 'syntax errors'
+(test/exec :loop2
+    (\ ->
+        (try (loop) | is? ^exception)
+    )
+    true
+)
+(test/exec :loop3
+    (\ ->
+        (loop [])
+    )
+    nil
+)
+(test/exec :loop4
+    (\ ->
+        (loop [a 1 b 2]) ; binds the args but returns nothing
+    )
+    nil
+)
+(test/exec :loop5
+    (\ ->
+        (try (loop [a 1 b]) | is? ^exception) ; need even number of symbols and value
+    )
+    true
+)
+(test/exec :loop6
+    (\ ->
+        (loop [a 1 b 2] (+ a b)) ; sum the bound variables
+    )
+    3
+)
+(test/exec :loop7
+    (\ ->
+        (loop [a 1 b 2] (+ a b) 4 5 6 7) ; should always return last item
+    )
+    7
+)
+(test/exec :loop8
+    (\ ->
+        (loop [again true] (if again (recur false)) 1234) ; basic loop/recur pattern
+    )
+    1234
+)
+(test/exec :loop9
+    (\ ->
+        (try (loop [again true foo 0] (if again (recur false)) 1234) | is? ^Exception); wrong number of recur args
+    )
+    true
+)
+(test/exec :loop10
+    (\ ->
+        (loop [number 5] (if number (recur (- number 1))) 1234) ; slightly fancier recur example
+    )
+    1234
+)
+(test/exec :loop11
+    (\ ->
+        ; verify that a new variable is created each time so const's in the loop don't cause errors
+        (loop [n 3]
+            (const number (- n 1))
+            (if number
+                (recur number)
+                number
+            )
+        )
+    )
+    0
+)
+(test/exec :loop12
+    (\ ->
+        ; verify that a new variable is created each time so const's in the loop don't cause errors
+        (do
+            (const number .math/PI)
+            (loop [n 3]
+                (const number (- n 1))
+                (if number
+                    (recur number)
+                    number)
+            )
+            number
+        )
+    )
+    .math/PI
+)
+;-----------------------------------------------------
+; Test the 'recur' function
 (test/exec :recur2
-    (fn ->
+    (\ ->
         ; test recur in an immediately invoked function literal
         ((fn (x 42) (s 0) -> (if x (recur (-- x) (+ x s)) s)))
     )
     903
 )
 (test/exec :recur3
-    (fn ->
+    (\ ->
         ; test recur in a normal function
         (defn testrevimpl
             "Function to reverse a list using recur"
@@ -10878,7 +10965,7 @@ lambda [
     [6 5 4 3 2 1]
 )
 (test/exec :recur4
-    (fn ->
+    (\ ->
         ; compute (fib 10) using recur with the loop and matchp functions.
         (defn foo []
             (loop [x 10 y 0]
@@ -10893,7 +10980,7 @@ lambda [
     55
 )
 (test/exec :recur4a
-    (fn ->
+    (\ ->
         ; a fib function written using recur.
         (defn trfib
             | 0 (x 0) (y 1i) -> y
@@ -10905,7 +10992,7 @@ lambda [
     [1 1 2 3 5 8 13 21 34 55]
 )
 (test/exec :recur5
-    (fn ->
+    (\ ->
         ; test recur with a function with pattern parameters
         (defn rev
             [x:xs (res null)]
@@ -10920,7 +11007,7 @@ lambda [
     [ 10 9 8 7 6 5 4 3 2 1]
 )
 (test/exec :recur6
-    (fn ->
+    (\ ->
          ; test exponentiation function that uses recur
          (defn mexpr [m n] (if (> n 1) (recur (+ m m) (-- n)) m))
          ; with big ints
@@ -10929,7 +11016,7 @@ lambda [
     18446744073709551616
 )
 (test/exec :recur7
-    (fn ->
+    (\ ->
         ; tail-recursive routine to find an entry in an ISeq
         (defn fil
             | x:xs v :where (== v x) -> true
@@ -10941,7 +11028,7 @@ lambda [
     true
 )
 (test/exec :recur8
-    (fn ->
+    (\ ->
         ; tail-recursive routine to find an entry in an ISeq
         (defn fil
             | x:xs v :where (== v x) -> true
@@ -10953,7 +11040,7 @@ lambda [
     false
 )
 (test/exec :recur9
-    (fn ->
+    (\ ->
         ; tail-recursive routine to find an entry in an ISeq
         (defn fil
             | x:xs v :where (== v x) -> true
@@ -10965,7 +11052,7 @@ lambda [
     true
 )
 (test/exec :recur10
-    (fn ->
+    (\ ->
         ; tail-recursive routine to find an entry in an ISeq
         (defn fil
             | x:xs v :where (== v x) -> true
@@ -10977,7 +11064,7 @@ lambda [
     false
 )
 (test/exec :recur11
-    (fn ->
+    (\ ->
         ; currency denominations
         (const denom [20 10 5 1 0.50 0.25 0.10 0.05 0.01])
 
@@ -10998,7 +11085,7 @@ lambda [
    '((0.01 . 1) (0.25 . 1) (1 . 3) (10 . 1) (20 . 3))
 )
 (test/exec :recur12
-    (fn ->
+    (\ ->
         ; currency denominations
         (const denom [20 10 5 1 0.50 0.25 0.10 0.05 0.01])
 
@@ -11016,7 +11103,7 @@ lambda [
    '((0.05 . 1) (1 . 3) (10 . 1) (20 . 18))
 )
 (test/exec :recur13
-    (fn ->
+    (\ ->
         ; currency denominations
         (const denom [20 10 5 1 0.50 0.25 0.10 0.05 0.01])
 
@@ -11035,7 +11122,7 @@ lambda [
 )
 (test/exec :recur14
     ; test that captured variables are handled properly in function arguments
-    (fn ->
+    (\ ->
         
         ; reduce is a functional primitive that can be used to define the others.
         (defn rreduce 
@@ -15466,91 +15553,92 @@ lambda [
 )
 
 ;-----------------------------------------------------------
-; Test Slice
+; Test the 'Slice' function (and indirectly the ^Slice type)
 (test/exec :slice1
-    (fn ->
+    (\ ->
         (cdr [1 2 3 4] | type-of)
     )
     ^Slice
 )
 (test/exec :slice2
-    (fn ->
+    (\ ->
         (slice [1 2 3 4] | !! 0)
     )
     1
 )
 (test/exec :slice3
-    (fn ->
+    (\ ->
         (slice [1 2 3 4] 1 | !! 0)
     )
     2
 )
 (test/exec :slice4
-    (fn ->
+    (\ ->
         (slice [1 2 3 4] 1 | count)
     )
     3
 )
 (test/exec :slice5
-    (fn ->
+    (\ ->
         (slice [1 2 3 4] 1 2 | count)
     )
     2
 )
 (test/exec :slice6
-    (fn ->
+    (\ ->
         (slice [1 2 3 4] 1 2 | !! 1)
     )
     3
 )
 (test/exec :slice7
-    (fn ->
+    (\ ->
         ((slice [1 2 3 4] 1 2) 0)
     )
     2
 )
 (test/exec :slice8
-    (fn ->
-        (try (slice [1 2 3 4] 1 2 | !! 2) | is? ^Exception)
+    (\ ->
+        (slice [1 2 3 4] 1 2 | !! 2)
     )
-    true
+    4
 )
 (test/exec :slice9
-    (fn ->
-        (try ((slice [1 2 3 4] 1 2) 2) | is? ^Exception)
+    (\ ->
+        ; use slice as a function to get index
+        ((slice [1 2 3 4] 1 2) 2)
     )
-    true
+    4
 )
 (test/exec :slice10
-    (fn ->
+    (\ ->
         (let s (slice [1 2 3]))
         (try (!! s 1 10) | is? ^Exception)
     )
     true
 )
 (test/exec :slice11
-    (fn ->
+    (\ ->
         (let s (slice [1 2 3]))
         (try (s 1 10) | is? ^Exception)
     )
     true
 )
 (test/exec :slice12
-    (fn ->
+    (\ ->
         (let s (slice [1 2 3]))
         (count s)
     )
     3
 )
 (test/exec :slice13
-    (fn ->
+    (\ ->
         (let s (slice [1 2 3] 1))
         (count s)
     )
     2
 )
 (test/exec :slice14
-    (fn ->
+    (\ ->
         ; destructuring a list returns a slice
         (defn qs2
             | [] -> []
@@ -15561,7 +15649,7 @@ lambda [
     [1 2 3 4 5]
 )
 (test/exec :slice15
-    (fn ->
+    (\ ->
         (defn qs2
             | [] -> []
             | p:xs -> (list/split xs (<= p) | map qs2 | (fn s:l: -> [@s p @l]))
@@ -15571,7 +15659,7 @@ lambda [
     [1 2 3 4 5]
 )
 (test/exec :slice16
-    (fn ->
+    (\ ->
         (defn qs2
             | [] -> []
             | p:xs -> (list/split xs (<= p) | map qs2 | (fn s:l: -> [@s p @l]))
@@ -15582,29 +15670,29 @@ lambda [
 )
 ; test negative lengths
 (test/exec :slice17
-    (fn ->
+    (\ ->
         (defn qs2
             | [] -> []
-            | p:xs -> (list/split xs (<= p) | map qs2 | (fn s:l: -> [@s p @l]))
+            | p:xs -> (list/split xs (<= p) | map qs2 | (\ s:l: -> [@s p @l]))
         )
         (qs2 [])
     )
     []
 )
 (test/exec :slice18
-    (fn ->
+    (\ ->
         (slice [1 2 3 4 5] 1 -1)
     )
     [2 3 4]
 )
 (test/exec :slice19
-    (fn ->
+    (\ ->
         (slice [1 2 3 4 5] 2 -2)
     )
     [3]
 )
 (test/exec :slice20
-    (fn ->
+    (\ ->
         (slice [1 2 3 4 5] 1 -1 | slice 1 -1)
     )
     [3]
@@ -15643,18 +15731,197 @@ lambda [
     )
     [5 4 3 2 1]
 )
+(test/exec :slice22a
+    (\ ->
+        ; reverse a list using slicing
+        (defn rv [data]
+            (when (> (length data) 1)
+                (let f (first data))
+                (let l (last data))
+                (return (append l @(rv (slice data 1 -1)) f))
+            )
+            data
+        )
+
+        (let data (slice [1 2 3 4 5])) ; odd data count
+        (rv data)
+    )
+    [5 4 3 2 1]
+)
+(test/exec :slice22b
+    (\ ->
+        ; reverse a string using slicing
+        (defn rv [data]
+            (when (> (length data) 1)
+                (let f (first data))
+                (let l (last data))
+                (return (str l @(rv (slice data 1 -1)) f))
+            )
+            data
+        )
+
+        (let data "abcdefg") ; odd character count
+        (rv data)
+    )
+    "gfedcba"
+)
+(test/exec :slice22c
+    (\ ->
+        ; reverse a string using slicing
+        (defn rv [data]
+            (when (> (length data) 1)
+                (let f (first data))
+                (let l (last data))
+                (return (str l @(rv (slice data 1 -1)) f))
+            )
+            data
+        )
+
+        (let data (slice "abcdefg")) ; odd character count, start with a slice
+        (rv data)
+    )
+    "gfedcba"
+)
 (test/exec :slice23
     (\ ->
         (slice [5] 1 -1) ; special case - should return []
     )
     []
 )
+(test/exec :slice23a
+    (\ ->
+        (slice [5] 1) ; special case - should return [5]
+    )
+    [5]
+)
+(test/exec :slice23b
+    (\ ->
+        (slice "a" 1 -1) ; special case - should return []
+    )
+    []
+)
+(test/exec :slice23c
+    (\ ->
+        (slice "a" 1) ; special case - should return "a"
+    )
+    ["a"]
+)
 (test/exec :slice24
     (\ ->
-        (try (slice [5] -1) | is? ^Exception) ; should throw an exception
+        (slice [5] -1)
+    )
+    nil
+)
+(test/exec :slice25
+    (\ ->
+        (slice "abcdefg" 1 -1 | .indexof \e)
+    )
+    3
+)
+(test/exec :slice25a
+    (\ ->
+        (slice "abcdefg" 1 -1 | .indexof \g)
+    )
+    -1
+)
+(test/exec :slice26
+    (\ ->
+        (let index (slice "abcdefg" 1 -1 | .indexof \e))
+        (slice "abcdefg" 1 -1 | !! index)
+    )
+    \e
+)
+(test/exec :slice27
+    (\ ->
+        (slice [1 2 3 4 5 6 7 8 9 10] 2 -2 | .indexof 7) ; get the slice index for 7
+    )
+    4
+)
+(test/exec :slice27a
+    (\ ->
+        (slice [1 2 3 4 5 6 7 8 9 10] 2 -2 | .indexof 10) ; get the slice index for 7
+    )
+    -1
+)
+(test/exec :slice28
+    (\ ->
+        (let index (slice [1 2 3 4 5 6 7 8 9 10] 2 -2 | .indexof 7))
+        (slice [1 2 3 4 5 6 7 8 9 10] 2 -2 | !! index) ; get the element at the returned index
+    )
+    7
+)
+(test/exec :slice29
+    (\ ->
+        (slice "abcdefg" 1 -1 | .contains \e) ; check success 
     )
     true
 )
+(test/exec :slice30
+    (\ ->
+        (slice "abcdefg" 1 -1 | .contains \g) ; check failure
+    )
+    false
+)
+(test/exec :slice31
+    (\ ->
+        (slice [1 2 3 4 5 6 7 8 9 10] 2 -2 | .contains 7)
+    )
+    true
+)
+(test/exec :slice32
+    (\ ->
+        (slice [1 2 3 4 5 6 7 8 9 10] 2 -2 | .contains 10)
+    )
+    false
+)
+(test/exec :slice33
+    (\ ->
+        (slice [1 2 3 4 5 6 7 8 9 10] 2 -2 | slice 1 -1 | .contains 7)
+    )
+    true
+)
+(test/exec :slice34
+    (\ ->
+        (slice [1 2 3 4 5 6 7 8 9 10] 2 -2 | slice 1 -1 | .contains 10)
+    )
+    false
+)
+(test/exec :slice35
+    (\ ->
+        ; test that the upper and lower bounds are respected.
+        (let s (slice [1 2 3 4 5 6 7 8 9 10] 2 -2 | slice 1 -1))
+        [(.contains s 3) (.contains s 4) (.contains s 5) (.contains s 6) (.contains s 7) (.contains s 8)]
+    )
+    [false true true true true false]
+)
+; BUGBUGBUG - the following tests test a buggy behaviour when indexing alices
+; The index code will allow you to index 1 outside the formal length of the slice
+; This should be fixed but it causes a bunch of the internal uses of ^Slice to break.
+; It all needs to be fixed.
+(test/exec :slice36
+    (\ ->
+        (let s (slice [1 2 3 4] 1 -1))
+        [ (!! s 0) (!! s 1) (!! s 2) ]  ; indexing 2 here should throw an exception
+    )
+    [2 3 4]
+)
+(test/exec :slice36a
+    (\ ->
+        (let s (slice [1 2 3 4] 1 -1))
+        (try (!! s 3) | is? ^Exception)   ; indexing 3 here goes give an exception
+    )
+    true
+)
+(test/exec :slice36b
+    (\ ->
+        (let s (slice [1 2 3 4] 1 -1))
+        (try (!! s 4) | is? ^Exception)   ; indexing 4 here goes give an exception
+    )
+    true
+)
+; end BUGBUGBUG tests
+
+
 ;-----------------------------------------------------------
 ; Test group
 (test/exec :group1

@@ -180,34 +180,37 @@ namespace BraidLang
             /// 
             SpecialForms[Symbol.sym_loop] = (Vector args) =>
             {
-                object userFuncResult = null;
-                int funindex = 0;
-                int funcount = args.Count;
-                Vector newArgs = null;
-                List<BraidVariable> loopvars = new List<BraidVariable>();
+                if (args == null || args.Count == 0)
+                {
+                    BraidRuntimeException($"The syntax for the 'loop' function is: (loop [ symbol1 value1 symbol2 value2] (println symbol1 symbol2)); see 'doc loop'");
+                }
 
-                VectorLiteral loopargs = args[funindex] as VectorLiteral;
+                object userFuncResult = null;
+                int bodyFunctionIndex = 0;
+                int funcount = args.Count;
+                Vector newArgs = null;   // actual values to bind from recur
+                List<Symbol> loopvars = new List<Symbol>();  // list of variable names to bind from arguments
+
+                VectorLiteral loopargs = args[bodyFunctionIndex] as VectorLiteral;
                 if (loopargs == null)
                 {
-                    Braid.BraidRuntimeException($"the first argument to loop must be a vector of name/value pairs, not '${args[0]}'");
+                    Braid.BraidRuntimeException($"the first argument to loop must be a vector literal of name/value pairs, not '${args[0]}'; see 'doc loop'");
                 }
 
                 if (loopargs.ValueList != null && loopargs.ValueList.Count() % 2 != 0)
                 {
                     Braid.BraidRuntimeException($"The argument list for 'loop' must contain an even number of items, "
-                        + $"the current list contains ${loopargs.ValueList.Count()} elements.");
+                        + $"the current list contains ${loopargs.ValueList.Count()} elements; see 'doc loop'");
                 }
 
                 // Set up a new stack frame for the loop execution.
-                PSStackFrame callStack = null;
+                PSStackFrame callStack = PushCallStack(new PSStackFrame(_current_file, "loop", CallStack.Caller, CallStack));
 
                 try
                 {
-                    callStack = PushCallStack(new PSStackFrame(_current_file, "loop", CallStack.Caller, CallStack));
-
+                    // load the initial values for the variables
                     if (loopargs.ValueList != null)
                     {
-                        // Get all of the variables upfront so subsequent binds don't require a lookup.
                         Symbol argSym = null;
                         foreach (var e in loopargs.ValueList)
                         {
@@ -217,20 +220,24 @@ namespace BraidLang
                             }
                             else if (argSym != null)
                             {
-                                object valToBind = Eval(e);
-                                var loopvar = callStack.GetOrCreateLocalVar(argSym);
-                                loopvar.Value = valToBind;
-                                loopvars.Add(loopvar);
+                                loopvars.Add(argSym);
+                                callStack.SetLocal(argSym, Eval(e));
                                 argSym = null;
                             }
                             else
                             {
-                                BraidRuntimeException($"The pattern for loop arguments is [ sym1 val1 sym2 val 2]");
+                                BraidRuntimeException($"The syntax for the 'loop' function is: (loop [ symbol1 value1 symbol2 value2] (println symbol1 symbol2)); see 'doc loop'");
                             }
                         }
                     }
 
                 loop:
+
+                    if (newArgs != null)
+                    {
+                        callStack.Reset();    // reset the variables instead of creating a new scope each time.
+                    }
+
                     if (_stop)
                     {
                         return null;
@@ -240,26 +247,26 @@ namespace BraidLang
                     {
                         if (newArgs.Count != loopvars.Count)
                         {
-                            BraidRuntimeException("wrong number of args in loop. Calls to recur must pass the same number "
-                                + "of args that are defined at the top of the 'loop'.");
+                            BraidRuntimeException("wrong number of args to 'recur' in loop. Calls to 'recur' must pass the same number "
+                                + "of args that are defined at the top of the 'loop'; see 'doc loop'");
                         }
 
                         int naoffset = 0;
-                        for (var index = 0; index < loopvars.Count; index++)
+                        foreach (Symbol symbol in loopvars)
                         {
-                            loopvars[index].Value = newArgs[naoffset++];
+                            callStack.SetLocal(symbol, newArgs[naoffset++]);
                         }
                     }
 
-                    funindex = 1;
-                    while (funindex < funcount)
+                    bodyFunctionIndex = 1;
+                    while (bodyFunctionIndex < funcount)
                     {
                         if (_stop)
                         {
                             break;
                         }
 
-                        userFuncResult = Eval(args[funindex++]);
+                        userFuncResult = Eval(args[bodyFunctionIndex++]);
                         if (userFuncResult is BraidRecurOperation re)
                         {
                             if (re.Target == null)
@@ -10559,10 +10566,15 @@ namespace BraidLang
                 }
                 else
                 {
-                    vec = __vec;
+                    if (__vec is string _str)
+                    {
+                        vec = _str.ToCharArray();
+                    }
+                    else
+                        vec = __vec;
                 }
 
-                IList lstCollection;
+                IList lstCollection = null;
 
                 if (vec is IList _vec)
                 {
@@ -10574,7 +10586,24 @@ namespace BraidLang
                     lstCollection = new Vector(vec);
                 }
 
-                int vecLen = lstCollection.Count;
+                bool wasString = false;
+                int vecLen = 0;
+                if (lstCollection is char[] ca)
+                {
+                    wasString = true;
+                    vecLen = ca.Length;
+                }
+                else
+                {
+                    vecLen = lstCollection.Count;
+                }
+
+                if (vecLen == 0)
+                {
+                    return null;
+                }
+
+                // Figure out the second and third arguments
                 int start = 0;
                 if (args.Count > 1)
                 {
@@ -10586,24 +10615,20 @@ namespace BraidLang
                     {
                         start = _start;
                     }
-
-                    if (start > vecLen || start < 0)
-                    {
-                        BraidRuntimeException("slice: the optional second argument must be an integer greater than 0 and less than the length of the collection.");
-                    }
                 }
 
                 int length = 0;
                 bool neg_len = false;
+                int orig_length = 0;
                 if (args.Count == 3)
                 {
-                    if (!(args[2] is int __length))
+                    if (!(args[2] is int _length))
                     {
                         BraidRuntimeException("slice: the optional third argument must be an integer.");
                     }
                     else
                     {
-                        length = __length;
+                        orig_length = length = _length;
                     }
 
                     if (length < 0)
@@ -10611,11 +10636,33 @@ namespace BraidLang
                         neg_len = true;
                         length = vecLen - start + length;
                     }
+                }
 
-                    if (start + length > vecLen)
+                // BUGBUGBUG - are the following two cases correct?
+                // These are really hacks and should be reviewed for sanity
+                if (vecLen == 1 && start == 1)
+                {
+                    if (orig_length == -1)
                     {
-                        BraidRuntimeException("slice: the optional third argument must be an integer less than the length of the collection.");
+                        return new Vector();
                     }
+                    return new Vector { lstCollection[0] };
+                }
+
+                if (start >= vecLen || start < 0)
+                {
+                    return null;
+                    /*
+                    if (vecLen == 0)
+                        return null; //BUGBUGBUG
+
+                    BraidRuntimeException($"slice: the optional second argument '{args[1]}' must be an integer greater than 0 and less than the length of the collection which is {vecLen}.");
+                    */               
+                }
+
+                if (start + length > vecLen)
+                {
+                    BraidRuntimeException("slice: the optional third argument must be an integer less than the length of the collection.");
                 }
 
                 if (length == 0 && ! neg_len)
@@ -10623,18 +10670,50 @@ namespace BraidLang
                     length = vecLen - start;
                 }
 
-                if (vec is string str)
+                /*
+                    Rational:
+
+                        (let s (slice "abcdefghi" 2 4)) => "cdef"
+
+                    0 1 2 3 4 5 6 7 8
+                    a b c d e f g h i  (internally)
+                        ^     ^
+                        |     |
+                        2     2+4-1 (start+len-1)
+
+                    effectively "cdef"
+
+                    Now try:
+
+                        (slice s 1 3) => "def"
+
+                    0 1 2 3 4 5 6 7 8
+                    a b c d e f g h i     (internally
+                          ^    ^
+                          |    |
+                          2+1  2+4-1 (start+len-1)
+                 */
+
+                if (lstCollection is Slice s)
                 {
-                    vecLen = str.Length;
-                    if (vecLen == 1 && start + length == 0)
-                        return new Slice("", start, 0);
-                    else
-                        return new Slice(str, start, length);
+                    Slice ns = new Slice();
+                    ns.Data = s.Data;
+                    ns.WasString = s.WasString;
+                    ns.Start += s.Start + start;
+                    ns.Length += length;
+
+                    return ns;
                 }
+
+                Slice result;
+
                 if (vecLen == 1 && start + length == 0)
-                    return new Slice(lstCollection, start, 0);
+                    result = new Slice(lstCollection, start, 0);
                 else
-                    return new Slice(lstCollection, start, length);
+                    result = new Slice(lstCollection, start, length);
+
+                result.WasString = wasString;
+                return result;
             };
 
             /////////////////////////////////////////////////////////////////////

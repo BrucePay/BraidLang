@@ -7,23 +7,24 @@
 ////////////////////////////////////////////////////////////////////////////
 
 using System;
-using System.Runtime.CompilerServices;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Numerics;
-using System.Collections;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.Management.Automation;
 using System.Management.Automation.Internal; // needed for AutomationNull 
 using System.Management.Automation.Runspaces;
-using System.Threading.Tasks;
-using System.IO;
+using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace BraidLang
 {
@@ -1226,10 +1227,10 @@ namespace BraidLang
     /// </summary>
     public sealed class Slice : ISeq, IList, ICollection, IEnumerable
     {
-        IList Data;
-        int Start;
-        int Length;
-        bool wasString;
+        internal IList Data;
+        internal int Start;
+        internal int Length;
+        internal bool WasString;
 
         public Slice(IList data, int start) : this(data, start, data.Count - start)
         {
@@ -1237,6 +1238,11 @@ namespace BraidLang
 
         public Slice(IList data, int start, int length)
         {
+            if (data == null)
+            {
+                Braid.BraidRuntimeException($"The first argument to slice must not be null.");
+            }
+
             if (data is Slice s)
             {
                 Data = s.Data;
@@ -1268,10 +1274,17 @@ namespace BraidLang
             Length = data.Count;
         }
 
+        public Slice()
+        {
+            Data = Array.Empty<object>();
+            Start = 0;
+            Length = 0;
+        }
+
         public Slice(string data, int start, int length)
         {
-            wasString = true;
-            Data = data.ToCharArray();
+            WasString = true;
+            Data = data.ToCharArray();  //BUGBUGBUG - arghh - this is too wasteful - need to be able to create a string slice without copying. yuk.
             Start = start;
             Length = length;
         }
@@ -1283,7 +1296,7 @@ namespace BraidLang
 
             if (data is string dstr)
             {
-                wasString = true;
+                WasString = true;
                 Data = dstr.ToCharArray();
             }
             else
@@ -1301,7 +1314,7 @@ namespace BraidLang
         {
             if (data is string dstr)
             {
-                wasString = true;
+                WasString = true;
                 Data = dstr.Substring(start).ToCharArray();
                 Length = Data.Count;
             }
@@ -1324,7 +1337,7 @@ namespace BraidLang
         {
             if (data is string dstr)
             {
-                wasString = true;
+                WasString = true;
                 Data = dstr.ToCharArray();
             }
             else
@@ -1360,7 +1373,7 @@ namespace BraidLang
 
                 var ns = new Slice(Data, Start + 1, Length - 1)
                 {
-                    wasString = wasString
+                    WasString = WasString
                 };
                 return ns;
             }
@@ -1382,13 +1395,16 @@ namespace BraidLang
         {
             get
             {
-                if (index >= Length)
+                int offset = index + Start;
+                // BUGBUGBUG - this should be "Data.Count-1" but it breaks internal use of slices
+                // this means that when indexing into a slice you can actually get the next element instead of an exception.
+                if (offset >= Data.Count)
                 {
                     Braid.BraidRuntimeException($"Error indexing into a slice: the specified index ({index}) is greater than " +
                                              $"or equal to the length of the slice ({Length}).");
                 }
 
-                return Data[index + Start];
+                return Data[offset];
             }
 
             set
@@ -1449,8 +1465,15 @@ namespace BraidLang
 
         public bool Contains(object elementToFind)
         {
-            Braid.BraidRuntimeException("The 'Contains' operation is not supported on slices.");
-            return Data.Contains(elementToFind);
+            // Only check the 'visible' part of the data
+            for (int i = Start; i < Start + Length && i < Data.Count; i++)
+            {
+                if (BraidComparer.Equals(elementToFind, Data[i]))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void Clear()
@@ -1458,10 +1481,17 @@ namespace BraidLang
             Braid.BraidRuntimeException("The 'Clear' operation is not supported on slices.");
         }
 
-        public int IndexOf(object objToFind)
+        public int IndexOf(object elementToFind)
         {
-            Braid.BraidRuntimeException("The 'IndexOf' operation is not supported on slices.");
-            return Data.IndexOf(objToFind);
+            // Only check the 'visible' part of the data
+            for (int i = Start; i < Start + Length - 1; i++)
+            {
+                if (BraidComparer.Equals(elementToFind, Data[i]))
+                {
+                    return i-Start;
+                }
+            }
+            return -1;
         }
 
         public void Insert(int index, object value)
@@ -1525,7 +1555,7 @@ namespace BraidLang
 
             var end = Start + Length;
 
-            if (wasString)
+            if (WasString)
             {
                 for (int i = Start; i < end; i++)
                 {

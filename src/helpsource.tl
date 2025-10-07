@@ -3365,7 +3365,39 @@ Examples:
     ; count the number of times a word appears in a file
     (read-data words.txt | re/split | group echo count)
 ")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(bindhelp loop @"
+Syntax: (loop [ sym1 expr1 sym2 expr2 ... ] (println \"hello\") (+ sym1 sym2))
 
+This function allows a loop to be executed with 'recur'. The 'loop'
+function creates a new scope, binds the symbols sym1, sym2, etc. to the results
+of evaluating expr1, expr2, etc. Once that is done, the remaining statements (the
+'loop body') are executed one after the other with the result of the last statement
+being returned. If there is a call to 'recur' in the body with the same number of
+values as in the initialization vector, control will be passed back to the top of
+the loop, the listed symbols will be rebound to the new values and execution will
+proceed from the top of the loop.
+
+Examples:
+    (loop [])                   ; executes but returns nil
+    (loop [a 1 b 2] (+a b))     ; returns 4
+    (loop [n 10] (println n) (if n (recur (- n 1)))) ; uses recur to loop, prints 10 thru 0
+    ; as above but a new const 'cn' created and set each time
+    (loop [n 10]
+        (const cn n)
+        (println cn)
+        (if n
+            (recur (- cn 1))
+        )
+    )
+    ; calculate the Fibonacci number for 10 using loop/recur
+    (loop [n 10 r1 0 r2 1]
+        (if n
+            (recur (- n 1) r2 (+ r1 r2))
+        )
+        r2
+    )
+")
 
 ;-------------------------------------------------------------------------------
 ;

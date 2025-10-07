@@ -210,6 +210,17 @@ namespace BraidLang
             Function = name;
         }
 
+        /// <summary>
+        /// Resets the variables in the scope
+        /// </summary>
+        public void Reset()
+        {
+            if (_vars != null)
+            {
+                _vars.Clear();
+            }
+        }
+
         public PSStackFrame(string file, string name, ISourceContext caller, PSStackFrame parent, Dictionary<Symbol, BraidVariable> environment)
         {
             if (caller == null)
