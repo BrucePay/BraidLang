@@ -973,21 +973,43 @@ namespace BraidLang
             SetText(this._history.Previous());
         }
 
-        // Edit the current cmdlet in Vim
-        // BUGBUGBUG - this shouldn't be hardcoded to vim or '.tl'.
+        // Edits the current command line in the program specified by the EDITOR environment
+        // variable. If EDITOR is not set, then it defaults to 'notepad' on Windows and 'nano'
+        // on UNIX systems.
         private void CmdVisualEdit()
         {
-            string tempFile = System.IO.Path.GetTempFileName() + ".tl";
-            System.IO.File.WriteAllText(tempFile, this._text.ToString());
+            string editor = Environment.GetEnvironmentVariable("EDITOR");
+            if (editor == null || editor.Length == 0)
+            {
+                Console.WriteLine("\n*** 'EDITOR' environment variable is not set, using default editor.");
+#if UNIX
+                editor = "nano";
+#else
+                string path = Path.Combine(Environment.GetEnvironmentVariable("SystemRoot"), "System32");
+                editor = Path.Combine(path, "notepad.exe");
+#endif
+            }
+
+            if (File.Exists(editor) == false)
+            {
+                Console.WriteLine($"\n*** Unable to find editor program '{editor}'; giving up.\n");
+                CmdDone();
+                return;
+            }
+
+            string tempFile = Path.GetTempFileName() + ".tl"; // Add '.tl' so we get syntax highlighting if available.
+            File.WriteAllText(tempFile, this._text.ToString());
+
             var process = new System.Diagnostics.Process();
-            process.StartInfo.FileName = "vim";
+            process.StartInfo.FileName = editor;
             process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
-            process.StartInfo.Arguments = " -n " + tempFile;
-            // process.StartInfo.CreateNoWindow = true;
+            process.StartInfo.Arguments = tempFile;
+            // process.StartInfo.CreateNoWindow = true; // Setting this causes the editor to hang on startup
             process.StartInfo.UseShellExecute = false;
+            Console.WriteLine($"*** Starting editor '{editor}' on file '{tempFile}'\n");
             process.Start();
             process.WaitForExit();
-            string newText = System.IO.File.ReadAllText(tempFile).Trim('\n');
+            string newText = System.IO.File.ReadAllText(tempFile).Trim('\n').Trim('\r');
             System.IO.File.Delete(tempFile);
             SetText(newText);
             CmdDone();
