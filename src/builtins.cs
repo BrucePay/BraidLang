@@ -1230,91 +1230,19 @@ namespace BraidLang
             /////////////////////////////////////////////////////////////////////
             FunctionTable[Symbol.sym_subtract] = (Vector args) =>
             {
-                if (args.Count < 1 || args.Count > 2)
-                {
-                    BraidRuntimeException("The '-' function takes exactly 2 arguments");
-                    return null;
-                }
-
                 if (args.Count == 1)
                 {
                     return curryFunction(Symbol.sym_subtract, args[0]);
                 }
 
-                switch (args[0])
+                object result = args[0];
+                int argsLength = args.Count;
+                for (int idx = 1; idx < argsLength; idx++)
                 {
-                    case DateTime dt:
-                        if (args.Count == 1)
-                        {
-                            BraidRuntimeException("Can't return a negative DateTime.");
-                            return dt;
-                        }
-
-                        if (args[1] is DateTime dt2)
-                        {
-                            return dt - dt2;
-                        }
-
-                        if (args[1] is TimeSpan tspn)
-                        {
-                            return dt - tspn;
-                        }
-
-                        if (args[1] is int intval)
-                        {
-                            var ts = new TimeSpan(0, 0, intval);
-                            return dt - ts;
-                        }
-
-                        BraidRuntimeException("You can only subtract a DateTime, TimeSpan or integer value from a DateTime value.");
-                        return null;
-
-                    case int ival1 when args.Count == 2 && args[1] is int ival2:
-                        try
-                        {
-                            // checked operation will throw on overflow
-                            return BoxInt(checked(ival1 - ival2));
-                        }
-                        catch
-                        {
-                            goto default;
-                        }
-
-                    case BigDecimal bd:
-                        if (args[1] is BigDecimal bd2)
-                        {
-                            return bd - bd2;
-                        }
-                        switch (args[1])
-                        {
-                            case int ival:
-                                return bd - (BigDecimal)ival;
-                            case long lval:
-                                return bd - (BigDecimal)lval;
-                            case float fval:
-                                return bd - (BigDecimal)fval;
-                            case double dval:
-                                return bd - (BigDecimal)dval;
-                            case decimal dval:
-                                return bd - (BigDecimal)dval;
-                            default:
-                                return bd - (BigDecimal)(args[1].ToString());
-                        }
-
-                    default:
-                        dynamic first;
-                        if (args[0] == null)
-                        {
-                            first = 0;
-                        }
-                        else
-                        {
-                            first = args[0];
-                        }
-
-                        dynamic second = args[1];
-                        return first - second;
+                    result = MinusStep(result, args[idx]);
                 }
+
+                return result;
             };
 
             /////////////////////////////////////////////////////////////////////
@@ -11430,6 +11358,144 @@ namespace BraidLang
                     }
                 }
             };
+        }
+
+        /// <summary>
+        /// Helper function for doing subtraction with 2 values. The "-" subtract
+        /// function uses this routine to handle vararg subtraction.
+        /// </summary>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <returns></returns>
+        private static object MinusStep(object arg1, object arg2)
+        {
+            switch (arg1)
+            {
+                case DateTime dt:
+
+                    switch (arg2)
+                    {
+                        case DateTime dt2:
+                            return dt - dt2;
+
+                        case TimeSpan tspn:
+                            return dt - tspn;
+
+                        case int intval:
+                            var ts = new TimeSpan(0, 0, intval);
+                            return dt - ts;
+
+                        default:
+                            BraidRuntimeException("You can only subtract a DateTime, TimeSpan or integer value from a DateTime value.");
+                            return null; ;
+                    }
+
+                case int ival1 when arg2 is int ival2:
+                    try
+                    {
+                        // checked operation will throw on overflow
+                        return BoxInt(checked(ival1 - ival2));
+                    }
+                    catch
+                    {
+                        goto default;
+                    }
+
+                case decimal d:
+                    if (arg2 is decimal d2)
+                    {
+                        return d - d2;
+                    }
+
+                    switch (arg2)
+                    {
+                        case int ival:
+                            return d - (decimal) ival;
+                        case long lval:
+                            return d - (decimal) lval;
+                        case float fval:
+                            return d - (decimal) fval;
+                        case double dval:
+                            return d - (decimal) dval;
+                        case decimal dval:
+                            return d - (decimal) dval;
+                        default:
+                            return d - ConvertToHelper<decimal>(arg2);
+                    }
+
+                case BigInteger bi:
+                    if (arg2 is BigInteger bi2)
+                    {
+                        return bi - bi2;
+                    }
+
+                    switch (arg2)
+                    {
+                        case int ival:
+                            return bi - (BigInteger)ival;
+                        case long lval:
+                            return bi - (BigInteger)lval;
+                        case float fval:
+                            return bi - (BigInteger)fval;
+                        case double dval:
+                            return bi - (BigInteger)dval;
+                        case decimal dval:
+                            return bi - (BigInteger)dval;
+                        default:
+                            return bi - BigInteger.Parse(arg2.ToString());
+                    }
+                case BigDecimal bd:
+                    if (arg2 is BigDecimal bd2)
+                    {
+                        return bd - bd2;
+                    }
+
+                    switch (arg2)
+                    {
+                        case int ival:
+                            return bd - (BigDecimal)ival;
+                        case long lval:
+                            return bd - (BigDecimal)lval;
+                        case float fval:
+                            return bd - (BigDecimal)fval;
+                        case double dval:
+                            return bd - (BigDecimal)dval;
+                        case decimal dval:
+                            return bd - (BigDecimal)dval;
+                        default:
+                            return bd - (BigDecimal)(arg2.ToString());
+                    }
+
+                case string s:
+                    if (arg2 == null)
+                    {
+                        return s;
+                    }
+
+                    switch (arg2)
+                    { 
+                        case string s2:
+                            // BUGBUGBUG .net framework 4.8.1 doesn't have the case overloads - update to NET 9
+                            return s.Replace(s2, string.Empty);
+                            //BUGBUGBUG return s.Replace(s2, String.Empty, true, System.Globalization.CultureInfo.InvariantCulture);
+                        case char chr:
+                            return s.Replace(chr.ToString(), "");
+                        //BUGBUGBUG return s.Replace(chr.ToString(), String.Empty, true, System.Globalization.CultureInfo.InvariantCulture);
+
+                        case Regex re:
+                            return re.Replace(s, String.Empty);
+
+                        default:
+                            BraidRuntimeException($"'-': only strings and characters can be subtracted from a string.");
+                            return null;
+                    }
+
+                default:
+                    // use C# dynamic bindings as a fallback.
+                    dynamic first = arg1;
+                    dynamic second = arg2;
+                    return first - second;
+            }
         }
     }
 }

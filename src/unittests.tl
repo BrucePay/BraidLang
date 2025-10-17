@@ -1082,24 +1082,75 @@ lambda [
 (test/exec :-1j #(- 1 2m) -1)
 (test/exec :-1k #(- 1 2.0) -1)
 (test/exec :-1l #(- 1 2.0d) -1)
-; subtracting strings should be an error
-(test/exec :-2
-    #(is? (try (- "abc" "a")) ^exception)
-    true
-)
-; more than two arguments should be an error
+; subtracting more than two values
 (test/exec :-3
-    #(is? (try (- 5 4 3)) ^Exception)
-    true
+    #(- 5 4 3) 
+    -2
+)
+(test/exec :-4
+    #(- 10 4 3 1) 
+    2
+)
+(test/exec :-5
+    #(- 10 4 3 -1 -2) 
+    6
 )
 ; test result type
-(test/exec :-4 #(type-of (- 6 3)) ^int)
-(test/exec :-5 #(type-of (- 6 3.0)) ^double)
-(test/exec :-6 #(type-of (- 6.0 3)) ^double)
-(test/exec :-7 #(type-of (- 6i 3)) ^bigint)
-(test/exec :-8 #(is? (- 2) ^Lambda) true)
-(test/exec :-9 #(is? 2m ^BigDecimal) true)
-(test/exec :-10 #(type-of 2m) ^BigDecimal)
+(test/exec :-6 #(type-of (- 6 3)) ^int)
+(test/exec :-7 #(type-of (- 6 3.0)) ^double)
+(test/exec :-8 #(type-of (- 6.0 3)) ^double)
+(test/exec :-9 #(type-of (- 6i 3)) ^bigint)
+(test/exec :-9a #(type-of (- 6d 3)) ^decimal)
+(test/exec :-9b #(type-of (- 6m 3)) ^BigDecimal)
+(test/exec :-9c #(type-of (- 6.0m 3.1)) ^BigDecimal)
+(test/exec :-10 #(is? (- 2) ^Lambda) true)
+(test/exec :-11 #(is? 2m ^BigDecimal) true)
+(test/exec :-12 #(is? 2m ^BigDecimal) true)
+(test/exec :-13 #(type-of 2m) ^BigDecimal)
+(test/exec :-14 #(- 1d 5 | type-of)   ^decimal)
+(test/exec :-15 #(- 1 5 | type-of)    ^int)
+(test/exec :-16 #(- 6d 5 | type-of)   ^decimal)
+(test/exec :-17 #(- 6.0 5 | type-of)  ^double)
+(test/exec :-19 #(- 6.0m 5 | type-of) ^BigDecimal)
+(test/exec :-20 #(- 6n 5 | type-of)   ^BigInteger)
+(test/exec :-21 #(- 6n 5 | type-of)   ^BigInteger)
+(test/exec :-22 #(- 6n 5.0 | type-of) ^BigInteger)
+(test/exec :-23 #(- 6n 5 | type-of)   ^BigInteger)
+(test/exec :-24 #(- 6m 5.0 | type-of) ^BigDecimal)
+(test/exec :-25 #(- 6m 5 | type-of)   ^BigDecimal)
+(test/exec :-26 #(- 6m 5d | type-of)  ^BigDecimal)
+(test/exec :-27 #(- 6m 5n | type-of)  ^BigDecimal)
+; test result types with multi arguments to '-'
+(test/exec :-31 #(- 1d 5 1 | type-of)   ^decimal)
+(test/exec :-32 #(- 1 5 2 | type-of)    ^int)
+(test/exec :-33 #(- 6d 5 1d | type-of)   ^decimal)
+(test/exec :-34 #(- 6.0 5 6 7 | type-of)  ^double)
+(test/exec :-35 #(- 6.0m 5 6n | type-of) ^BigDecimal)
+(test/exec :-36 #(- 6n 5 3.14 | type-of)   ^BigInteger)
+(test/exec :-37 #(- 6n 5 5 6 | type-of)   ^BigInteger)
+(test/exec :-38 #(- 6n 5.0 6.0 7d | type-of) ^BigInteger)
+(test/exec :-39 #(- 6m 5.0 4 | type-of) ^BigDecimal)
+(test/exec :-40 #(- 6m 5 6d | type-of)   ^BigDecimal)
+(test/exec :-41 #(- 6m 5.0d 6.0 | type-of)  ^BigDecimal)
+(test/exec :-42 #(- 6m 5n 6 7.0d | type-of)  ^BigDecimal)
+; test subtraction with strings
+(test/exec :-50 #(- "abcabcabc" "c") "ababab")
+(test/exec :-51 #(- "abcabcabc" "c" "a") "bbb")
+(test/exec :-51a #(- "abcabcabc" "ab") "ccc")
+(test/exec :-52 #(- "abcabcabc" \c ) "ababab")
+(test/exec :-53 #(- "abcabcabc" \c "a") "bbb")
+(test/exec :-54 #(- "abcabcabc" "c" \a) "bbb")
+(test/exec :-54a #(- "This is a test so there" "This" "so") " is a test  there")
+(test/exec :-54c #(- "Hello world" #"^hello ") "world")
+; regex tests
+(test/exec :-54d #(- "Hello there world" #"^hello" " " ) "thereworld")
+(test/exec :-54e #(- "Hello there world" #"^hello" " " #"[er]") "thwold")
+; string subtraction fails on other types
+(test/exec :-55 #(try (- "abc" 13) | is? ^Exception) true) 
+(test/exec :-56 #(try (- "abc" 13.0) | is? ^Exception) true) 
+(test/exec :-57 #(try (- "abc" {}) | is? ^Exception) true) 
+(test/exec :-58 #(try (- "abc" []) | is? ^Exception) true)
+
 
 ;-------------------------------------------------------
 ; Test times (*) function
@@ -4426,6 +4477,18 @@ lambda [
         ([2 4 1 6 5 8 7 9 3] | sort (fn n -> (- 0 n)))
     )
     [9 8 7 6 5 4 3 2 1]
+)
+(test/exec :sort3a
+    (fn ->
+        ([2d 4d 1d 6d 5d 8d 7d 9d 3d] | sort (\ n -> (- 0d n)))
+    )
+    [9 8 7 6 5 4 3 2 1]
+)
+(test/exec :sort3b
+    (fn ->
+        ([2d 4d 1d 6d 5d 8d 7d 9d 3d] | sort (\ n -> (- 0d n)) | first | type-of)
+    )
+    ^decimal
 )
 (test/exec :sort4
     (fn ->
