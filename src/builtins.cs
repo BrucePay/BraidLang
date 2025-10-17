@@ -11381,6 +11381,9 @@ namespace BraidLang
                         case TimeSpan tspn:
                             return dt - tspn;
 
+                        case Int64 i64:
+                            return dt - new TimeSpan(i64);
+
                         case int intval:
                             var ts = new TimeSpan(0, 0, intval);
                             return dt - ts;

@@ -188,19 +188,26 @@ See also: - * / % -- ++ incr decr
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp -  "
+(bindhelp -  """
 Syntax: (- arg1 [arg2])
 
-The subtraction function (-) allows you to subtract numbers
-or DateTime and TimeSpan objects. All .NET numeric formats are supported.
-If only a single argument is passed, a curried function is returned.
+The subtraction function (-) allows you to subtract numbers,
+DateTime, TimeSpan and string objects. All .NET numeric formats are supported.
+Subtracting from a string replaces the characters that match the remaining operands.
+If only a single argument is passed, a curried function is returned. If more than
+one additional argument is provided, those additional arguments are also subtracted
+in order.
 
 Examples:
     (- 10 5)                ; returns 5
+    (- 10 5 1)              ; returns 4
+    (- "Hello" "lo")        ; returns "He"
+    (- "Hello" #"^Hel")     ; returns "lo"
     (range 10 | map (- 2))  ; Subtract 2 from each member of the collection
+    (ls | map .name | map (- #"\.[a-z]+$") ; strip the extension from each file name
 
 See also: + * / % -- ++ incr decr
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp ++  "
