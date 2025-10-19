@@ -3474,34 +3474,70 @@ lambda [
 ;-------------------------------------------------------
 ; Test the 'list/split' function.
 (test/exec :list/split1
-    (fn ->
-        ([1 2 3 4] | list/split (< 3))
+    (\ ->
+        ([1 2 3 4] | list/split (< 3)) ; predicate split
     )
     [[1 2][3 4]]
 )
+(test/exec :list/split1a
+    (\ ->
+        ([1 2 3 4] | list/split 3) ; literal split; ignores the matching element
+    )
+    [[1 2][4]]
+)
 (test/exec :list/split2
-    (fn ->
-        ([1 2 3 4] | list/split (% 2))
+    (\ ->
+        ([1 2 3 4] | list/split (% 2)) ; predicate split on value
     )
     [[1 3][2 4]]
 )
+(test/exec :list/split2a
+    (\ ->
+        ([1 2 3 4] | list/split even?)
+    )
+    [[2 4][1 3]]
+)
 (test/exec :list/split3
-    (fn ->
-        ([] | list/split (% 2))
+    (\ ->
+        ([] | list/split (% 2)) ; predicate split on empty list
+    )
+    [[][]]
+)
+(test/exec :list/split3a
+    (\ ->
+        ([] | list/split 2) ; literal split on empty list
     )
     [[][]]
 )
 (test/exec :list/split4
-    (fn ->
+    (\ ->
         (1 | list/split (% 2))
     )
     [[1][]]
 )
 (test/exec :list/split5
-    (fn ->
+    (\ ->
         ([1] | list/split (% 2))
     )
     [[1][]]
+)
+(test/exec :list/split6
+    (\ ->
+        (list/split [1 true] 1) 
+    )
+    [[][true]]
+)
+(test/exec :list/split7
+    (\ ->
+        (list/split [:foo 1 :bar 1 true ] 1) ; Should only split on the first match
+    )
+    [[:foo] [:bar 1 true]]
+)
+(test/exec :list/split8
+    (\ ->
+        (list/split [:foo 1 :bar true true ] true) ; make sure bools are considered == to other objects 
+    )
+    [[:foo 1 :bar] [true]]
 )
 
 ;-------------------------------------------------------
@@ -15978,11 +16014,61 @@ lambda [
 (test/exec :slice36b
     (\ ->
         (let s (slice [1 2 3 4] 1 -1))
-        (try (!! s 4) | is? ^Exception)   ; indexing 4 here goes give an exception
+        (try (!! s 4) | is? ^Exception)   ; indexing 4 here does give an exception
     )
     true
 )
 ; end BUGBUGBUG tests
+(test/exec :slice37
+    #(slice '(7 9) 0 0) []
+)
+(test/exec :slice37a
+    #(slice '(7 9) 0) [7 9] 
+)
+(test/exec :slice38  ; a longer scenario test
+    (\ ->
+
+        ; implements binary search of an ordered vector of numbers
+        (defn binsrch2
+            | nil          _ -> false
+            | []           _ -> false
+            | x:           val -> (== x val)
+            | (^IList xs)  val ->
+                (let ll (- (length xs) 1))
+                (let mp (^int? (/ ll 2)))
+        
+                (matchp (!! xs mp)
+                | n :where (== val n) -> true
+                | n :where (< val n)  -> (recur (slice xs 0 mp) val)
+                | n                   -> (recur (slice xs (++ mp) (- ll mp)) val)
+                )
+        )
+
+        ; test the function
+        (let reps 10)  ; number of iterations to run
+        (let num  100) ; length of vector to search
+
+        (repeat reps
+            ; number to find
+            (let val (random 1 1 num))
+        
+            ; vector of numbers to search
+            (let data (random num | sort | distinct))
+        
+            ; try it out
+            (let result (binsrch2 data val))
+        
+            ; verity the result and throw an exception if it fails
+            (when (and result (not (contains? data val)))
+                (return (str "binsrch2 error: data: " (aslist data) "val:" val))
+            )
+        )
+
+        true
+    )
+
+    true
+)
 
 
 ;-----------------------------------------------------------

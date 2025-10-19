@@ -123,8 +123,8 @@ namespace BraidLang
             CallStack.Const(Symbol.sym_nil, null);
             CallStack.Const(Symbol.sym_null, null);
             CallStack.Sink(Symbol.sym_underbar);
-            CallStack.Const("true", BoxedTrue);
-            CallStack.Const("false", BoxedFalse);
+            CallStack.Const("True", BoxedTrue);
+            CallStack.Const("False", BoxedFalse);
             CallStack.Const("BraidHome", BraidHome); // The directory containing the braid binaries
             CallStack.Const("PI", Math.PI);
 
@@ -9870,12 +9870,21 @@ namespace BraidLang
                 else
                 {
                     bool hitSplitVal = false;
+                    bool matchValIsBool = matchValue is bool;
                     foreach (object item in GetNonGenericEnumerableFrom(args[0]))
                     {
-                        if (Braid.CompareItems(item, matchValue))
+                        if (!hitSplitVal)
                         {
-                            hitSplitVal = true;
-                            continue;
+                            // Don't treat bools and other values as being identical
+                            bool wasBool =
+                                ((item is bool) && ! matchValIsBool) ||
+                                (! (item is bool) && matchValIsBool);
+
+                            if (!wasBool && Braid.CompareItems(item, matchValue))
+                            {
+                                hitSplitVal = true;
+                                continue;
+                            }
                         }
 
                         if (hitSplitVal)
@@ -10547,6 +10556,7 @@ namespace BraidLang
 
                 int length = 0;
                 bool neg_len = false;
+                bool length_specified = false;
                 int orig_length = 0;
                 if (args.Count == 3)
                 {
@@ -10559,6 +10569,7 @@ namespace BraidLang
                         orig_length = length = _length;
                     }
 
+                    length_specified = true;
                     if (length < 0)
                     {
                         neg_len = true;
@@ -10593,7 +10604,7 @@ namespace BraidLang
                     BraidRuntimeException("slice: the optional third argument must be an integer less than the length of the collection.");
                 }
 
-                if (length == 0 && ! neg_len)
+                if (length == 0 && ! neg_len && ! length_specified)
                 {
                     length = vecLen - start;
                 }

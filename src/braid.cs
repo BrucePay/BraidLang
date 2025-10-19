@@ -3233,7 +3233,7 @@ namespace BraidLang
 
         /// <summary>
         /// Compare two items with truthy semantics. It tries a lot of things first then
-        /// falls back to PowerShells comparisons.
+        /// falls back to PowerShell's comparisons.
         /// </summary>
         /// <param name="item1"></param>
         /// <param name="item2"></param>

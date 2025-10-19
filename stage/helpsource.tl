@@ -5,8 +5,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; First validate the contents of the file:
-; - every call to bindhelp should correspond to an actual function
-; - user-defined functions should not appear in this list
+; - every call to bindhelp should correspond to a built-in function
+; - user-defined functions should not appear in this file.
 (let helpnames {})
 
 (foreach e (file/parse (file/join-path braidhome "helpsource.tl"))
@@ -75,24 +75,30 @@ Examples:
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp ==  "
-Syntax: (== arg1 arg2 ...)
+(bindhelp ==  """
+Syntax: (== arg1 arg2 ... argN1 argN2)
 
 This is the polymorphic comparison function (==) which works on any types that
-support comparisons (IComparable). If more than one pair of values is provided,
-they will all be compared pairwise.
+support comparisons (IComparable). Arguments must be specified in pairs. If more
+than one pair of values is provided, they will all be compared pairwise.
 
 Examples:
-    (== 5 5)     ; returns true
-    (== 5 6)     ; returns false
-    (== 1 2 3 4) ; returns false
-    (== :a :a 3 3.0) ; returns true
+    (== 5 5)            ; returns true
+    (== 5 6)            ; returns false
+    (== 1 2 3 4)        ; returns false
+    (== 1 1 2 2)        ; returns true
+    (== :a :a 3 3.0)    ; returns true
+    (== "ab" "ab" 2 2)  ; returns true
+    (== "ab" "a" 2 2)   ; returns false
+    (== [1 2] [1 2])    ; returns true
+    (== [1] [1 2])      ; returns false
+    (== [1 2] [1 3])    ; returns false
 
 See also: != === !==
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp !=  "
+(bindhelp !=  """
 Syntax: (!= arg1 arg2)
 
 The '!=' function compares two objects to see if they are not equal.
@@ -102,41 +108,41 @@ Examples:
     (!= 3 3)    ; returns false as the values are equal.
 
 See also: == === !==
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp %  "
+(bindhelp %  """
 Syntax: (% arg1 arg2)
 
-The '%' function computes the modulus of the its argument values. Syntax:
-(% <numVal1> <numVal2>)
+The mod function '%' computes the modulus of the its argument values.
 The function is only defined for numeric values.
 
 Examples:
-    (% 9 4)  ; returns 1
+    (% 9 4)                     ; returns 1
+    (range 10 | filter (% 2))   ; return all the odd numbers
 
 See also: + - * / -- ++ incr decr
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp *  """
-Syntax: (* arg1 arg2 arg3 ... argn)
+Syntax: (* arg1 arg2 arg3 ... argN)
 
 The '*' multiplication function computes the product of
 it's arguments if the arguments are numeric. If the first argument
 is a string or sequence, that sequence will be replicated the specified
-number of times. Syntax
-    (* <arg1> <arg2> <argn>
+number of times. If only one argument is passed, then a curried function
+is returned
+
 You can compute factorials using multiply, splatting and the range function as
-    (* @(range 10)) ; compute factorial of 10
 
 Examples:
-    (* 1 2 3)       ; Compute the product of the argument values
-    (* "hi" 10)     ; Repeat the string argument 10 times
-    (* [1 2 3] 10)  : Repeat the sequence argument 10 times
-
-If only one argument is passed, then a curried function is returned
+    (* 1 2 3)              ; Compute the product of the argument values
+    (* "hi" 10)            ; Repeat the string argument 10 times
+    (* [1 2 3] 10)         : Repeat the sequence argument 10 times
     (range 10 | map (* 2)) ; return the numbers from 1-10 multiplied by 2
+    (* @(range 10))        ; compute factorial of 10
+    (apply * (range 10))   ; compute factorial of 10
 
 See also: + - / % -- ++ incr decr
 """)
@@ -152,13 +158,13 @@ or field, if only the member name is specified, the operation will be a get.
 If an additional argument is provided, the operation will be a set.
 
 Examples:
-    (. "hello" :length)       ; gets the 'length' property from the string
+    (. "hello" :length)         ; gets the 'length' property from the string
     (. ^math :pi)               ; gets the value of the static member 'pi
-    (. "hello" :substring 1 2) ; Applies the method 'substring with 2 arguments
+    (. "hello" :substring 1 2)  ; Applies the method 'substring with 2 arguments
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp /  "
+(bindhelp /  """
 Syntax (/ arg1 arg2)
 
 The division function (/) divides its first operand by it's second.
@@ -169,42 +175,47 @@ Examples:
     (/ 5 2) ; returns 2.5
 
 See also: + - * % -- ++ incr decr
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp +  """
-Syntax: (+ arg1 arg2 arg3 ... argn)
+Syntax: (+ arg1 arg2 arg3 ... argN)
 
-The addition function (+)  sums all of its arguments together. It
+The addition function (+) sums all of its arguments together. It
 works on numbers, strings and datetime objects. The type of the first
 argument (number, string or datetime) will determine the type of the
 overall operation.
 
 Examples:
-    (+ 1 2 3)       ; Compute the sum of the argument values
-    (+ "ab" "cd")    ; Add 'ab' and 'cd' to get 'abcd'
+    (+ 1 2 3)          ; Compute the sum of the argument values
+    (+ 10 "23")         ; Conver "24" into a number and add it to give 33
+    (+ "ab" "cd")      ; Add 'ab' and 'cd' to get 'abcd'
+    (+ "ab" "cd" 123)  ; 123 is turned into a string and appended
 
 See also: - * / % -- ++ incr decr
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp -  """
-Syntax: (- arg1 [arg2])
+Syntax: (- arg1 arg2 ... argN)
 
-The subtraction function (-) allows you to subtract numbers,
-DateTime, TimeSpan and string objects. All .NET numeric formats are supported.
-Subtracting from a string replaces the characters that match the remaining operands.
+The subtraction function (-) allows you to subtract numbers, DateTimes,
+TimeSpans and string objects. For numeric subtraction, all .NET
+numeric formats are supported. Timespans and DateTime objects can subtract
+integer and TimeSpan values. Subtracting from a string removes the characters
+that match the remaining string, character and Regex arguments.
 If only a single argument is passed, a curried function is returned. If more than
 one additional argument is provided, those additional arguments are also subtracted
 in order.
 
 Examples:
-    (- 10 5)                ; returns 5
-    (- 10 5 1)              ; returns 4
-    (- "Hello" "lo")        ; returns "He"
-    (- "Hello" #"^Hel")     ; returns "lo"
-    (range 10 | map (- 2))  ; Subtract 2 from each member of the collection
-    (ls | map .name | map (- #"\.[a-z]+$") ; strip the extension from each file name
+    (- 10 5)                                    ; returns 5
+    (- 10 5 1)                                  ; returns 4
+    (- "Hello" "lo")                            ; removes all 'l' and 'o' characters.
+    (- "Hello" #"^Hel")                         ; Regex subtraction, returns "lo"
+    (- (.DateTime/Now) (.timespan/TicksPerDay)) ; subtract one day from now
+    (range 10 | map (- 2))                      ; Subtract 2 from each member of the collection
+    (ls | map .name | map (- #"\.[a-z]+$"))     ; strip the extension from each file name
 
 See also: + * / % -- ++ incr decr
 """)
@@ -240,10 +251,12 @@ See also: ++ + - incr pincr decr
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp <  """
-Syntax: (< arg1 arg2)
+Syntax: (< arg1 arg2 ... argN)
 
 This is the polymorphic less than function (<) which works on any types
-that support ordered comparisons.
+that support ordered comparisons. If more than 2 objects are
+provided as arguments, the function will return true if all of the
+arguments are in order.
 
 Examples:
     (< 1 5)               ; returns true
@@ -254,20 +267,24 @@ See also: <= > >= == != === !==
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp <=  "
-Syntax: (<= arg1 arg2)
+Syntax: (<= arg1 arg2 ... argN)
 
 This is the polymorphic less than or equals function which works on
-any types that support ordered comparisons.
+any types that support ordered comparisons. If more than 2 objects are
+provided as arguments, the function will return true if all of the
+arguments are in order.
 
 Examples:
     (<= 5 5)    ; returns true
+    (<= 4 5 6)  ; returns true
+    (<= 7 4 5)  ; returns true
 
 See also: < > >= == != === !==
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp ===  """
-Syntax: (=== arg1 arg2 ...)
+Syntax: (=== arg1 arg2 ... argN)
 
 This is the reference equals function (===). If the arguments provided refer to the
 same object, the function will return true. If more than one pair of values is provided,
@@ -286,7 +303,7 @@ See also: !== == !=
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp !==  """
-Syntax: (!== arg1 arg2 ...)
+Syntax: (!== arg1 arg2 ... argN)
 
 This is the negative reference equals function (!==). If the arguments provided refer to the
 same object, the function will return false. If more than one pair of values is provided,
@@ -1200,15 +1217,19 @@ See also: eval
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp except "
-Syntax: (except <list1> <list2>)
+Syntax: (except <coll1> <coll2>)
 
-Computes the difference between two list. All of the items in
-list 1 that aren't in list 2 are returned.
+Computes the difference between two collections. All of the items in
+collection 1 that aren't in collection 2 are returned.
+BUGBUGBUG - the dictionary and set semantics aren't right - they
+should return dictionaries and sets respectively.
 
 Examples:
-    (except [1 2 3 4] [2 4]) ; returns [1 3]
+    (except [1 2 3 4] [2 4])      ; 2 lists returns [1 3]
+    (except {:a 1 :b 2} {:a 1})   ; 2 dictionaries returns [ {:b 2} ]
+    (except #{:a 1 :b 2} #{:a 1}) ; 2 sets returns [ :b, 2 ]
 
-See also: union intercection distinct
+See also: union intersect distinct
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1226,6 +1247,7 @@ Examples:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp [lazy-filter filter where]  """
 Syntax: (@fn@ [-not] <list> <predicate>)
+
 Filters the input collection based on the results of evaluating the predicate
 function on each item. The predicate can be a lambda literal, a named function,
 a member accessor, a type literal, a regular expression or a dictionary literal.
@@ -1238,7 +1260,7 @@ the search at the current item. You can also use 'continue' to skip over the cur
 item in the list and keep searching.
 
 Examples:
-    (range 10 | @fn@ (fn n -> (== (% n 2) 0))) ; returns [2 4 6 8 10]
+    (range 10 | @fn@ (\ n -> (== (% n 2) 0)))  ; returns [2 4 6 8 10]
     (range 10 | @fn@ even?)                    ; returns [2 4 6 8 10]
     (range 10 | @fn@ -not even?)               ; returns [1 3 5 7 9]
     (range 20 | @fn@ #"2")                     ; returns [2 12 20]
@@ -1246,25 +1268,24 @@ Examples:
     ; use property patterns to find Error entries whose message matches the regex #"timeout"
     (get-eventlog -log: "system" -newest: 1000 | @fn@ {entrytype "error" message #"timeout"})
     ; find element '99' in the input collection, stopping the search when it's found
-    (range 100000 | @fn@ (fn n -> (if (== n 99) (break))))
+    (range 100000 | @fn@ (\ n -> (if (== n 99) (break))))
 
 See also: filter lazy-filter map lazy-map each 
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [flatmap lazy-flatmap] "
+(bindhelp [flatmap lazy-flatmap] """
 Syntax: (@fn@ list function)
 
 The '@fn@' function is usually used in pipelines to process items in
-the pipeline.It takes a list of values and a function to apply to each value
-as in:
-- (@fn@ <list> <function>) or (<list> | @fn@ <function>)
-Functions can either be predefined functions, property functions or lambdas.
-As opposed to the map function, '@fn@' flattens its result so if the
-function returns a list, that list will be stiched into the result list rather
-than appearing as a discrete list. The distinction between 'flatmap' and 'lazy-flatmap'
-is that 'flatmap' returns the entire result collection whereas 'lazy-flatmap'
-returns an enumerable immediately and te values can be pulled out as needed.
+the pipeline. It takes a list of values and a function to apply to each value
+as is showen in the examples. Functions can either be predefined functions,
+property functions or lambdas. As opposed to the map function, '@fn@' flattens
+its result so if the function returns a list, then that list will be stiched
+into the result list rather than appearing as a discrete list. The distinction
+between 'flatmap' and 'lazy-flatmap' is that 'flatmap' returns the entire result
+collection whereas 'lazy-flatmap' returns an enumerable immediately and the values
+can be pulled out 1 at a time, as needed.
 
 Examples:
     (range 10 | @fn@ sqr)                  ; maps 'sqr' onto each number from the range
@@ -1273,10 +1294,10 @@ Examples:
     (range 10 | @fn@ (fn x -> [x x]))      ; returns [1 1 2 2 3 3 ...]
 
 See also: map filter flatten
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp flatten  "
+(bindhelp flatten """
 Syntax: (flatten args...)
 
 The 'flatten' function recursively flattens all of its arguments into a single collection.
@@ -1286,11 +1307,11 @@ Example:
     (flatten '(1 2 3) [4 [5 6]] 7)  ; returns '(1 2 3 4 5 6 7)
 
 See also: flatmap
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp lazy-flatten  "
-Syntax: (lazy-flatten args...)
+(bindhelp lazy-flatten """
+Syntax: (lazy-flatten arg1 arg2 ... argN)
 
 The 'lazy-flatten' function lazily flattens all of its arguments into a single collection.
 On execution, it returns an ^IEnumerable immediately. Individual values can then be read
@@ -1301,10 +1322,10 @@ Example:
     (lazy-flatten '(1 2 3) [4 [5 6]] 7)  ; returns '(1 2 3 4 5 6 7)
 
 See also: flatmap
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [id echo]  "
+(bindhelp [id echo]  """
 Syntax: (@fn@ args...)
 
 The '@fn@' is the 'identity function' and simply returns it's arguments unmodified. If multiple
@@ -1316,10 +1337,10 @@ Examples:
     (@fn@ 1 2 3 4)          ; returns [1 2 3 4]
 
 See also: id echo
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp forall  "
+(bindhelp forall """
 Syntax: (forall var <list> <expr1> <expr2> ... <exprn>)
 
 The 'forall' function iterates over the argument list, binding
@@ -1328,13 +1349,13 @@ body expressions. The 'forall' function returns the value of evaluating
 the last body expression for all iterations.
 
 Examples:
-    (let x (foreach i (range 5) (* i i))) ; x is set to (1 2 9 16 250
+    (let x (forall i (range 5) (* i i))) ; x is set to [ 1, 4, 9, 16, 25 ] 
 
-See also: foreach map filter
-")
+See also: foreach map lazy-map filter lazy-filter each
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp foreach  "
+(bindhelp foreach  """
 Syntax: (foreach var <list> <expr1> <expr2> ... <exprn>)
 
 The 'foreach' function iterates over the argument list, binding
@@ -1346,34 +1367,35 @@ case multiple items will be pulled from the list. Lite the pipeline 'each'
 function, the standalone 'foreach' function returns no value (null).
 
 Examples:
-    (foreach i (range 1) (println i)) ; print numbers from 1 to 10
-    (foreach x:y: [[1 2] [3 4]] (println (+ x y)))
-    (foreach [a b] [1 2 3 4] (println (+ a b)))
-    (foreach [a:b: c:d:] [[1 2] [3 4]] (println [(+ a b) (+ c d)))
+    (foreach i (range 1) (println i))              ; print numbers from 1 to 10
+    (foreach x:y: [[1 2] [3 4]] (println (+ x y))) ; print sum of pairs
+    (foreach [a b] [1 2 3 4] (println (+ a b)))    ; traverse two elements at a time
+    (foreach [a:b: c:d:] [[1 2] [3 4]] (println [(+ a b) (+ c d))) ; pattern matching
 
-See also: forall map filter each
-")
+See also: forall map lazy-map filter lazy-filter each
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp function?  """
 Syntax: (function? <expression>)
 
-Returns true if the argument expression resolves to a function.
+Returns true if the argument expression resolves to a executable object..
 
 Examples:
-    (function? sqr)     ; returns true
-    (function? "sqr")   ; returns false
+    (function? sqr )     ; returns true
+    (function? 123 )     ; returns false
+    (function? [1] )     ; returns true - indexables can be used as functions
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp functions  "
+(bindhelp functions  """
 Syntax: (functions [<filter-regex>])
 
-Return a list of all defined functions, special forms and macros. An optional
+Return a list of all symbols bound to functions, special forms and macros. An optional
 regex can be used to filter the names that are returned. Functions are returned
 as key/value pairs where the .key is the function name and the .value is the
 function definition.
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp gen-symbol  "
@@ -1384,13 +1406,13 @@ to create unique symbols for the generated code.
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp get "
+(bindhelp get """
 Syntax: (get <expression>)
 
 Retrieves the value of the symbol identified by the argument expression.
 
 See also: global globalq
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp get-args """
@@ -1424,7 +1446,7 @@ See also: set-assoc
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp if  "
+(bindhelp if  """
 Syntax: (if condExpr ifExpr [ elseExpr ])
 
 The 'if' function does branching, taking one (if clause) or
@@ -1433,9 +1455,11 @@ two (if and else) clauses.
 Examples:
     (if cond if-clause)
     (if cond if-clause else-clause)
-")
+    (let word (if (% x 2) "odd" "true"))    ; 'if' returns a value
+""")
 
-(bindhelp getvar  "
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(bindhelp getvar  """
 Syntax: (getvar <varname>)
 
 Get the variable object corresponding to the argument symbol.
@@ -1444,13 +1468,13 @@ Examples:
     (getvar 'braidhome)
 
 See also: get
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp incr  "
+(bindhelp incr  """
 Syntax: (incr variable [increment])
 
-Increment a variable by the desired amount and returns the result. If no increment
+Post-increment a variable by the desired amount and returns the result. If no increment
 is specified, then 1 is used. This function can only be used for variables containing
 integral values (e.g. ^int or ^long)
 
@@ -1461,13 +1485,13 @@ Examples:
     (for (let i 0) (< i 10) (incr i) (println i))
 
 See also: pincr decr pdecr ++ --
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp pincr  "
+(bindhelp pincr  """
 Syntax: (pincr variable [increment])
 
-Increment a variable by the desired amount, returning the original un-incremented value.
+Pre-increment a variable by the desired amount, returning the original un-incremented value.
 If no increment is specified, the 1 is used. This function can only be used for variables
 containing integral values (e.g. ^int or ^long)
 
@@ -1478,7 +1502,7 @@ Examples:
     (let i 0) (while (pincr i | < 10) (println i))
 
 See also: incr decr pdecr ++ --
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp info  """
@@ -1497,7 +1521,7 @@ See also: warn error println
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp intersect  "
+(bindhelp intersect """
 Syntax: (intersect <collection1> <collection2>)
 
 Computes the intersection of two collections and returns the result
@@ -1506,46 +1530,54 @@ as a vector.
 Examples:
     (intersect [1 2 3] [2 3 4]; returns [2 3]
 
-See also: distinct union
-")
+See also: distinct union except
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp is?  """
 Syntax: (is? <object> <type>)
 
-Checks to see if the argument object is of the specified type.
+Checks to see if the argument object is of the specified type. If only
+a single argument is specified, a new "curried" function is returned.
 
 Examples:
-    (is? 123 ^int)          ; returns true
-    (is? 123 ^string)       ; returns false
-    (is? "abc" ^string)   ; true
+    (is? 123 ^int)              ; returns true
+    (is? 123 ^string)           ; returns false
+    (is? "abc" ^string)         ; returns true
+    (filter coll1 (is? ^int))   ; returns the integers in 'coll1'
 
 See also: isnot?
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp isnot?  "
+(bindhelp isnot?  """
 Syntax: (isnot? <object> <type>)
 
-Checks to see if the argument object is not of the specified type.
+Checks to see if the argument object is not of the specified type. If only
+a single argument is specified, a new "curried" function is returned.
 
 Examples:
-    (isnot? 123 ^int)       ; returns false
-    (isnot? 123 ^string)    ; returns true
+    (isnot? 123 ^int)               ; returns false
+    (isnot? 123 ^string)            ; returns true
+    (filter coll1 (isnot? ^int))    ; returns the non-integers from 'coll1'
 
 See also: is?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp lambda  """
 Syntax: (lambda [args...] body...) or (lambda | pattern -> action | ...)
 
-Returns a new lambda function (closure). Can be specified with conventional\
-syntax or with patterns.
+Lambda is not a function pe se. If 'lambda' is the first token in a list,
+then that list is marked as a 'lambda function' or 'closure'. Lambda can be used
+to specify both conventional and pattern functions. Lambda is rarely used
+directly in Braid code. You usually use '\' as in (\ a b -> (+ a b)) or
+the 'defn' macro to define a function.
+
 
 Examples:
-    (range 10 | map (lambda [x] (* x x)))   ; squares the number from 1 to 10
-    (range 3  | map (lambda | 1 -> "one" | -> "not one")
+    (range 10 | map (lambda [x] (* x x)))                ; squares the number from 1 to 10
+    (range 3  | map (lambda | 1 -> "one" | -> "not one") ; prints matching string
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1559,29 +1591,29 @@ Examples:
     (lambda? (lambda[] 1))  ; returns true
     (lambda? 1)             ; returns false
 
-See also: lambda fn
+See also: lambda fn function?
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp last  "
+(bindhelp last  """
 Syntax: (last <list> [<number>])
 
 The 'last' function returns a number of items from the end of a list or
 vector. The number of items specified is optional and, if not specified,
 defaults to 1. If more items are request than are available in the collecion,
 as many items as available are returned. If the argument is not an enumerable
-(i.e. not a scalar), then 'last' will simply return the iten as is.
+(i.e. not a scalar), then 'last' will simply return the item as is.
 If a single item is to be returned, it is returned as a scalar rather
 than as a vector of 1 element.
 
 Examples:
     (range 10 | last)               ; returns 10
-    (range 10 | last 1)             ; returns 10 (not [ 10 ])
+    (range 10 | last 1)             ; returns 10, not [ 10 ]
     (range 10 | last 3)             ; returns [8 9 10]
     (range 5  | last 10)            ; returns [1 2 3 4 5]
 
-See also: first take
-")
+See also: first take !! slice
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp str  """
@@ -1621,18 +1653,23 @@ Syntax: (let name value)
 
 Sets the value of a variable in the current scope if a variable
 with that name exists or creates a new variable in the current scope
-if it doesn't. If the name takes the form of v1:v2:v3 then destructuring will
-be done and the parts assigned.
+if it doesn't. If the name takes the form of v1:v2:v3 then destructuring
+will be done and the parts assigned. If the assignment target is a Vector
+or Dictionary literal, then pattern matching is done.
 
 Examples:
     (let foo 123)               ; returns 123
-    (let x:y:z [1 2 3 4 5])     ; returns [1 2 3 4 5]
+    (let x:y:z [1 2 3 4 5])     ; x is bound to 1, y to 2 and z to [3 4 5]
+    (let [x y z] [1 2 3])       ; returns true
+    (let [x y z] [1 2 3 4 5]    ; returns false - too many values
+    (let [x y &z] [1 2 3 4 5]   ; x is bound to 1, y to 2 and z to [3 4 5]
+    (let [x 2 z] [1 2 3])       ; x is bound to 2, z to 3 and true is returned
 
-See also: vlet def setq
+See also: vlet def setq defn const
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp vlet  "
+(bindhelp vlet """
 Syntax: (vlet name value)
 
 Sets the value of a variable in the current scope if a variable
@@ -1647,10 +1684,10 @@ Examples:
     (let x:y:z [1 2 3 4 5])
 
 See also: let def setq
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp let?  "
+(bindhelp let? """
 Syntax: (let? name value)
 
 Returns true if a destructuring assignment was successful, false otherwise.
@@ -1658,12 +1695,12 @@ Returns true if a destructuring assignment was successful, false otherwise.
 Examples:
     (vlet xs [1 2 3]) (while (let? x:xs xs) (println x)) ; print a list
 
-See also: let vlet def setq
-")
+See also: let vlet def setq defn
+""")
 ;)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp list  "
+(bindhelp list """
 Syntax: (list arg1 arg2 arg3 ... argN)
 
 Returns a list composed of its evaluated arguments.
@@ -1672,10 +1709,10 @@ Examples:
     (list 1 (+ 2 3) 4) ; returns (1 5 4)
 
 See also: list? append
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp list?  "
+(bindhelp list?  """
 Syntax: (list? <object>)
 
 Returns true if the argument object is a list.
@@ -1684,7 +1721,7 @@ Examples:
     (list? '(1 2 3))        ; returns true
     (list? (list 1 2 3))    ; returns true
     (list? [1 2 3])         ; returns false
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp load  """
@@ -1703,21 +1740,7 @@ See also: using-module using-assembly
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp let  "
-Syntax: (let name value)
-
-Sets the value of a variable in the current scope if a variable
-with that name exists or creates a new variable in the current scope
-if it doesn't. If the name takes the form of v1:v2:v3 then destructuring will
-be done and the parts assigned.
-    (let foo 123)
-    (let x:y:z [1 2 3 4 5])
-
-See also: def setq vlet
-")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp map  "
+(bindhelp map  """
 Syntax: (map <collection> <function>)
 
 The 'map' function is usually used in pipelines to process items in the
@@ -1735,7 +1758,7 @@ Examples:
     (range 10 | map (fn x -> (* x x)))  ; same thing but using function literal notation.
 
 See also: map-parallel lazy-map each filter where lazy-filter
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp lazy-map  """
@@ -1760,7 +1783,7 @@ See also: map map-parallel each filter where lazy-filter
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp each  "
+(bindhelp each  """
 Syntax: (each list function)
 
 Like 'map', the 'each' function is usually used in pipelines to process items from
@@ -1775,7 +1798,7 @@ Examples:
                                 ; then returns null.
 
 See also: map flatmap lazy-map filter reduce
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp map-parallel  "
@@ -1806,7 +1829,7 @@ See also: map flatmap each
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp new  "
+(bindhelp new  """
 Syntax: (new <type> [args...] [-properties: <dictionary>])
 
 Create a new instance of a class passing arguments as appropriate. If
@@ -1820,7 +1843,7 @@ Examples:
     (new ^foo -properties: {:a 1 :b 2} ; sets the properties 'a' and 'b'.
 
 See also: defmethod definterface
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp new-dict  """
@@ -1837,34 +1860,34 @@ See also: dict?
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp symbol  "
+(bindhelp symbol  """
 Syntax: (symbol <symname>)
 
 Gets or creates the named symbol. If the symbol exists, it
 is simply returned otherwise a new symbol is created atomically.
 
 See also: symbol get-symbol gen-symbol show-symbols
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp keyword  "
+(bindhelp keyword  """
 Syntax: (keyword <name>)
 
 Gets or creates a keyword object using the name string. If the keyword already
 exists, the existing object is returned otherwise a new keyword is created atomically.
 
 See also: symbol 
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [null? nil?]  "
+(bindhelp [null? nil?]  """
 Syntax: (@fn@ <object>)
 
 Returns true if the argument object is null. 'null?' and 'nil?' are
 aliases.
 
 See also: nil? null? nil null notnull? notnil?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp [notnull? notnil?]  "
@@ -1877,14 +1900,14 @@ See also: nil? null? nil null
 ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp not  "
+(bindhelp not """
 Syntax: (not <object>)
 
 Is the boolean complement function. If the argument object
 is interpreted as true, then the function returns false and
 vise versa. Since all objects have a boolean interpretation
 this function can be applied to anything.
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp number? """
@@ -1900,7 +1923,7 @@ Examples:
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp or "
+(bindhelp or """
 Syntax: (or arg1 arg2 arg3 ... argn)
 
 The 'or' function returns a true value if any of its arguments
@@ -1916,10 +1939,10 @@ Examples:
 
 See also: and not xor
 AutoCurry: true
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp xor "
+(bindhelp xor """
 Syntax: (xor arg1 arg2)
 The 'xor' function, which takes exactly 2 arguments, converts it's arguments
 into boolean values then computes the boolean xor of those values.
@@ -1931,28 +1954,28 @@ Examples:
     (xor true true)     ; returns false
 See Also: or not and
 AutoCurry: true
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp pair?  "
+(bindhelp pair?  """
 Syntax: (pair? <object>)
 
 Returns true if the argument is a list (dotted-pair).
 
 See also: list? atom?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp ilist?  "
+(bindhelp ilist?  """
 Syntax: (ilist? <object>)
 
 Returns true if the argument is of type ^System.Collections.IList.
 
 See also: list? atom? pair?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [pipe ->>]  "
+(bindhelp [pipe ->>] """
 Syntax: (@fn@ <value> (expr1) (expr2) ... (exprN))
 
 This function implements the logic for the form (a | b | c) which
@@ -1961,10 +1984,10 @@ There's not a lot of reason to use this function directly.
 
 Examples:
     (@fn@ (range 10) (where (% 2)) (sum))   ; same as  (range 10 | where (% 2) | sum)
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp add-watch "
+(bindhelp add-watch """
 Syntax: (add-watch <filename>)
 
 This function sets up a file watcher that will cause a script module to be reloaded
@@ -1974,7 +1997,7 @@ Examples:
     (add-watch 'my-module.tl)
 
 See also: get-watch remove-watch
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp get-watch """
@@ -1989,7 +2012,7 @@ See also: add-watch remove-watch
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp remove-watch "
+(bindhelp remove-watch """
 Syntax: (remove-watch)
 
 Removes a script watch that was set up with 'add-watch'.
@@ -1998,10 +2021,10 @@ Examples:
     (get-watch)
 
 See also: add-watch get-watch
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp pos?  "
+(bindhelp pos? """
 Syntax: (pos? <number>)
 
 Returns true if the argument number is positive.
@@ -2010,10 +2033,10 @@ Examples:
     (pos? 1)                ; returns true
     (pos? -1)               ; returns false
     (numbers | filter pos?) ; returns only the positive numbers from 'numbers'
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp neg?  "
+(bindhelp neg? """
 Syntax: (neg? <number>)
 
 Returns true if the argument number is negative.
@@ -2022,10 +2045,10 @@ Examples:
     (neg? 1)                ; returns false
     (neg? -1)               ; returns true
     (numbers | filter neg?) ; returns only the negative numbers from 'numbers'
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp neg  "
+(bindhelp neg """
 Syntax: (neg <number>)
 
 Inverts the sign on a number.
@@ -2033,17 +2056,17 @@ Inverts the sign on a number.
 Examples:
     (neg 2)     ; returns -2
     (neg -3)    ; returns 3
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp print  "
+(bindhelp print """
 Syntax: (print arg1 arg2 arg3 ... argN)
 
 Print a string made out of the tostring's of each of the argument
 to the console without adding a newline at the end.
 
 See also: println alert info error
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp printat  """
@@ -2057,14 +2080,14 @@ Examples:
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp println  "
+(bindhelp println  """
 Syntax: (println arg1 arg2 arg3 ... argN)
 
 Print a string made out of the tostring's of each of the argument
 to the console adding a newline at the end.
 
 See also: print alert info error
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp println-color  """
@@ -2081,12 +2104,15 @@ Examples:
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp quit  "
+(bindhelp quit """
 Syntax: (quit)
 
 Quits the current braid session. If in a nested (debug) session, this will
 return you to the parent session.
-")
+
+Examples:
+    (quit)      ; exit the braid session
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp range  """
@@ -2111,24 +2137,24 @@ Examples:
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp smaller "
+(bindhelp smaller """
 Syntax: (smaller args...)
 
 This function returns the smallest member of its argument list.
 
 Examples:
     (smaller 3 1 4 2)   ; returns 1
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp bigger "
+(bindhelp bigger """
 Syntax: (bigger args...)
 
 This function returns the largest member of its argument list.
 
 Examples:
     (bigger 3 1 4 2)   ; returns 4
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp [read-file read-lines]  """
@@ -2158,7 +2184,7 @@ See also: read-text read-data
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [reduce foldl]  "
+(bindhelp [reduce foldl] """
 Syntax: (@fn@ <list> <function> [seed])
 
 This function iterates through a list applying the function
@@ -2172,10 +2198,10 @@ Examples:
     (ls '*.tl | @fn@ (fn x y -> (+ x (.length y))) 0)   ; sums the length of the *.tl files
 
 See also: reduce foldl foldr unfold
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp foldr  "
+(bindhelp foldr """
 Syntax: (foldr <list> <function> [seed])
 
 This function iterates through a list applying the function
@@ -2190,11 +2216,11 @@ Examples:
     (range 10 | foldr (fn x y -> (- x y)))              ; returns -5
 
 See also: reduce foldl foldr unfold
-")
+""")
 
 (;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [iterator unfold]  """
+(bindhelp [iterator unfold] """
 Syntax: (@fn@ <function> <initialValue> [<max>]
 
 The @fn@ function is a way to produce a (possibly) infinite sequence
@@ -2217,7 +2243,7 @@ See also: reduce foldl roldr
 ;)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp reduce-with-seed  "
+(bindhelp reduce-with-seed """
 Syntax: (reduce-with-seed <list> <function> <seedValue>)
 
 This function iterates through a list applying the function
@@ -2229,10 +2255,10 @@ Examples:
    (ls '*.tl | reduce-with-seed (fn x y -> (+ x (.length y))) 0)
 
 See also: reduce foldl foldr unfold
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp repeat  "
+(bindhelp repeat """
 Syntax: (repeat <number> clause1 clause2 clause3 ... clauseN)
 
 Evaluates each of the clause arguments in sequence, repeating the
@@ -2242,10 +2268,10 @@ Examples:
     (repeat 10 (println 'Hi)) ; print hi 10 times
 
 See also: repeat-all do
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp repeat-all  "
+(bindhelp repeat-all """
 Syntax: (repeat-all <number> clause1 clause2 clause3 ... clauseN)
 
 Evaluates each of the clause arguments in sequence, repeating the
@@ -2256,10 +2282,10 @@ Examples:
     (repeat-all 10 (.datetime/now)) ; get the date 10 times, returning 10 values
 
 See also: repeat-all do
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [await resolve]  "
+(bindhelp [await resolve] """
 Syntax: (@fn@ <listOfTasks>)
 
 The @fn@ function waits for all argument tasks to complete and
@@ -2269,13 +2295,13 @@ the result will still be returned as a collection of one
 element. 'resolve' is an alias for 'await'.
 
 See also: async task map-parallel
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp return  """
 Syntax: (return [value])
 
-Returns from a function returning a value.
+Returns immediately from a function returning a value.
 Null is returned if the value is not specified.
 
 Examples:
@@ -2297,7 +2323,7 @@ Examples:
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindHelp [get-dynamic gdv] "
+(bindHelp [get-dynamic gdv] """
 Syntax: (@fn@ <symbol>)
 
 This function retrieves the ^BraidVariable object associated with the argument symbol
@@ -2305,10 +2331,10 @@ looking up the dynamic (runtime) callstack. This is particularly useful in the
 debugger.
 
 See also: get def let
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp seq?  "
+(bindhelp seq? """
 Syntax: (seq? object)
 
 The 'seq?' function returns true if it's argument is a sequence type (list or vector).
@@ -2317,10 +2343,10 @@ Examples:
     (seq? '(1 2 3)) ; returns true
     (seq? [1 2 3])  ; returns true
     (seq? 123)      ; returns false
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp set  "
+(bindhelp set """
 Syntax: (set <varNameExpr> <value>)
 
 Sets the value of the variable named by the result of evaluating <varNameExpression>.
@@ -2330,8 +2356,8 @@ Examples:
     (def n 'x) (set n 123)  ; sets the variable 'x' to 123
     (set 'foo 123)          ; equivalent to (setq foo 123)
 
-See also: setq def let get
-")
+See also: setq def let get defn
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp set-assoc  """
@@ -2348,7 +2374,7 @@ See also: get-assoc
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp show-callstack  "
+(bindhelp show-callstack """
 Syntax: (@fn@)
 
 This function dumps all of the current bindings in the variable
@@ -2358,18 +2384,18 @@ show-callstack.
 
 Examples:
     (@fn@)
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp show-symbols  "
+(bindhelp show-symbols """
 Syntax: (show-symbols)
 
 This function returns all of the symbols currently in the symbol table.
 It takes no arguments and any provided arguments will be ignored.
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp skip  "
+(bindhelp skip """
 Syntax: (skip <coll> <number)
 
 This function skips the first <number> items in collection <coll>. If the
@@ -2382,10 +2408,10 @@ Examples:
     (skip [1 2 3 4 5] 3) ; returns (4 5)
 
 See also: skip-while
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp skip-while  "
+(bindhelp skip-while """
 Syntax: (skip-while <list> <predicate>)
 
 The 'skip-while' function skips items in a list while the provided predicate
@@ -2396,10 +2422,10 @@ Examples:
     (range 10 | skip-while (< 8))   ; returns [8 9 10]
 
 See also: skip
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [sort lazy-sort]  "
+(bindhelp [sort lazy-sort] """
 Syntax: @fn@ [-Descending] listToSort [keyFunction])
 
 This function sorts a sequence of values. By default, it sorts in ascending order
@@ -2412,10 +2438,10 @@ Examples:
     (random 10 | sort -descending)          ; sorts 10 random numbers in descending order
     (ls -file | sort .length)               ; sort files by length
     (ls '* | sort (fn e -> (.extension e))) ; sort files by extensions
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp thenSort "
+(bindhelp thenSort """
 Syntax: (thenSort <output-of-sort> [<accessor>])
 
 This function performs a secondary sort on the enumerator returned by 'sort'. It can
@@ -2426,10 +2452,10 @@ Examples:
     (sort [[2 :a] [1 :a] [2 :b]] car | thenSort second) ; returns [[1 :a] [2 :a] [2 :b]]
 
 See also: sort
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp splice  "
+(bindhelp splice """
 Syntax: (splice <list1> <list2>)
 
 Splices two lists together so that list2 becomes the 'cdr' of list1, mutating list 1.
@@ -2437,7 +2463,7 @@ Splices two lists together so that list2 becomes the 'cdr' of list1, mutating li
 Examples:
     (splice '(1 2 3) '(4 5 6)) ; returns (1 2 3 4 5 6)
     (do (let a '(1 2 3)) (splice a '(4 5 6)) a) ; returns (1 2 3 4 5 6)
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp string?  """
@@ -2451,7 +2477,7 @@ Examples:
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp swap  "
+(bindhelp swap """
 Syntax: (swap var1 var2 [function]) or (swap var1 index1 var2 index2 [function])
 
 This function swaps the values in variables or alternately, the values of
@@ -2465,10 +2491,10 @@ Examples:
     (swap a 0 a 1)    ; swaps the first and second elements in the vector stored in 'a'.
     (swap a 0 a 1 > ) ; swaps if the first element is greated that the second element
     (swap a b (fn x y -> (> x y))) ; swap with user function
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp symbol?  "
+(bindhelp symbol? """
 Syntax: (symbol? <object>)
 
 Returns true if the argument object is a symbol.
@@ -2476,10 +2502,10 @@ Returns true if the argument object is a symbol.
 Examples:
     (symbol? 'foo)  ; returns true.
     (symbol? 123)   ; returns false.
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp take  "
+(bindhelp take  """
 Syntax: (take <list> <count>)
 
 Takes <count> objects from the front of the argument list. If the
@@ -2496,10 +2522,10 @@ Examples:
     (take [1 2 3] -1)  ; returns [1 2]
 
 See also: take-after take-until skip
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp take-after  "
+(bindhelp take-after """
 Syntax: (take-after <list> <item>) or (take-after <list> <function>)
 
 Takes items from a list after the specified item is found or the specified
@@ -2510,10 +2536,10 @@ Examples:
     (range 4 | take-after (fn n -> (== (% n 2) 0))))  ; returns [3 4]
 
 See also: take take-until skip
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp take-until  "
+(bindhelp take-until """
 Syntax: (take-until <list> <item>) or (take-until <list> <function>)
 
 Takes items from a list untils the specified item is found or the specified
@@ -2524,10 +2550,10 @@ Examples:
     (range 4 | take-until (fn n -> (== (% n 2) 0))))  ; returns [1]
 
 See also: take take-after skip
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [task async]  "
+(bindhelp [task async] """
 Syntax: (@fn@ <lambda> [<argToLambda>])
 
 Starts a new background task using the .NET Task Parallel Library with the lambda
@@ -2541,7 +2567,7 @@ Examples:
     (@fn@ (fn -> 2) | @fn@ (fn n -> (* n 2)) | await) ; returns [4]
 
 See also: resolve map-parallel await
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp throw  """
@@ -2556,7 +2582,7 @@ See also: try error
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp time  "
+(bindhelp time """
 Syntax: (time [<count>] <expression>)
 
 Times the duration of the execution of an expression. If the optional count is
@@ -2567,7 +2593,7 @@ Examples:
     (time (fib 25))     ; times how long it takes to compute the factorial of 25
     (time 100 (range 100 | !! 50))  ; times indexing into a range 100 times
 
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp tostring  """
@@ -2583,7 +2609,7 @@ ee also: str
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp trace  "
+(bindhelp trace """
 Syntax: (trace true/false) or (trace [-Exceptions] <expression>)
 
 Trace the execution of the interpreter. Tracing can be enabled globaly with (trace true)
@@ -2595,7 +2621,7 @@ functions like 'show-callstack' and 'get-dynamic'.
 Examples:
     (trace true) (+ 2 3) (trace false)  ; try global tracing
     (trace -exceptions (+ 2 3))         ; trace a specific expression.
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp try  """
@@ -2609,6 +2635,8 @@ was a -catch: expressions specified, it will be executed.
 
 Examples:
     (try -catch: (echo "caught it")  (nosuchcommand))  ; returns "caught it"
+    (try (/ 1 0))                                      ; returns an exception
+    (matchp (/ 1 0) | ^exception -> "bad" | -> "good") ; pattern match on the exception
 
 See also: throw
 """)
@@ -2621,12 +2649,12 @@ Create and return an immutable tuple using the values of the arguments.
 A maximum of 5 arguments is supported.
 
 Examples:
-    (let tup (tuple 1 2 "Hello" (.datetime/now))  ; returns a tuple (1 2 "hello" <datetime>)
+    (let tup (tuple 1 2 "Hello" (.datetime/now))    ; returns a tuple (1 2 "hello" <datetime>)
     (.item1 tup)                                    ; returns 1
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp type-alias  "
+(bindhelp type-alias """
 Syntax: (type-alias <alias> [<type>])
 
 If no arguments are provided, returns the current list of type aliases.
@@ -2640,10 +2668,10 @@ Examples:
     (type-alias :foo ^int)  ; establish that ^foo is a type alias for ^int
 
 See also: deftype
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp type-of  "
+(bindhelp type-of """
 Syntax: (type-of <object>)
 Returns the type of the argument object.
 
@@ -2651,10 +2679,10 @@ Examples:
     (type-of 123) ; returns ^int
 
 See also: members-of
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp undef  "
+(bindhelp undef """
 Syntax: (undef symbolToUnbind)
 Removes the binding to the specified symbol from the variable table.
 
@@ -2662,10 +2690,10 @@ Examples:
     (undef foo)
 
 See also: let def global
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp union  "
+(bindhelp union """
 Syntax: (union <list1> <list2>)
 Computes the union of the two argument sets.
 
@@ -2673,10 +2701,10 @@ Examples:
     (union [1 2 3] [2 3 4]) ; returns [1 2 3 4]
 
 See also: except intersect
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp unless  "
+(bindhelp unless """
 Syntax: (unless <cond> <expr1> <expr2> ... <exprn>)
 
 A control structure that evaluates all of the body exprs if the cond expr
@@ -2684,10 +2712,10 @@ evaluates to false. This is a macro that is implemented in terms of the
 'if' and 'do' functions.
 
 See also: when if do
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp vcons  "
+(bindhelp vcons """
 Syntax: (vcons <object> <vector>)
 
 Inserts the first argument at the start of the second argument vector
@@ -2703,10 +2731,10 @@ Examples:
     (vcons [1 2 3] null)    ; returns [[1 2 3]]
 
 See also: concat nconc
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp vector?  "
+(bindhelp vector? """
 Syntax: (vector? <object>)
 
 Returns true if the argument object is a vector.
@@ -2716,7 +2744,7 @@ Examples:
     (vector? '(1 2 3))  ; returns false becuase a list is not a vector
 
 See also: vector to-vector
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp vector  """
@@ -2752,7 +2780,7 @@ See also: to-vector vector? vector
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp to-vector  "
+(bindhelp to-vector """
 Syntax: (to-vector <IEnumerable>)
 
 The 'to-vector' function takes an enumerable value as an argument.
@@ -2763,10 +2791,10 @@ Examples:
     (list 1 2 3 4 | to-vector)
 
 See also: vector vector? ^vector
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp void  "
+(bindhelp void """
 Syntax: (void <object> ...)
 
 This function ignores its arguments and simply returns null. Casting
@@ -2776,10 +2804,10 @@ Examples:
     (range 10 | map (fn x -> (* x x)) | void) ; returns null
 
 See also: drain
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp drain  "
+(bindhelp drain """
 Syntax: (drain <enumerable> ...)
 
 This function ignores any non-enumerable arguments and returns null.
@@ -2794,8 +2822,8 @@ Examples:
     ; in contrast, the same expression but with void will print nothing
     (range 10 | lazy-map (fn x -> (info x) (* x x)) | void)
 
-See also: void lazy-map lazy-filter
-")
+See also: void lazy-map lazy-filter to-vector
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp warn  """
@@ -2814,7 +2842,7 @@ See also: alert info error println
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp when  "
+(bindhelp when """
 Syntax: (when <cond> <expr1> <expr2> ... <exprn>)
 
 A control structure that evaluates all of the body exprs if the cond expr
@@ -2822,10 +2850,10 @@ evaluates to true. This is a macro that is implemented in terms of the
 'if' and 'do' functions.
 
 See also: unless if do
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp while  "
+(bindhelp while """
 Syntax: (while condExpr bodyExprs...)
 
 The basic while loop. It loops evaluating the bodyExprs in sequence until the
@@ -2844,10 +2872,10 @@ Examples:
     )
 
 See also: foreach forall map each
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp zip  "
+(bindhelp zip """
 Syntax (zip <list1> <list2> [<zipFunction>])
 
 This function zips two lists together so
@@ -2869,14 +2897,14 @@ Examples:
                                                  ; product of 2 lists.
 
 See also: map filter break
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp defmethod """
 Syntax: (defmethod <targetType> <methodName> <lambda>)
 
 Add a method to an existing type definition. Methods require
-at least one parameter: the this pointer. This must be
+at least one parameter: the 'this' pointer. This must be
 specified even if it is not used in the method body. Note
 that the method name must be a raw symbol, not a keyword i.e. it
 must be "foo" not ":foo".
@@ -2890,7 +2918,7 @@ See also: deftype definterface
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp random "
+(bindhelp random """
 Syntax: (random <number>) or (random <min> <max>) or (random <number> <min> <max>)
 
 This function generates a sequence of random numbers. If a single argument
@@ -2907,26 +2935,26 @@ Examples:
     (random 100 | qsort) ; generates 100 numbers then sorts them
 
 See also: range
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp get-symbol "
+(bindhelp get-symbol """
 Syntax: (get-symbol <string>)
 
 Gets the symbol associated with the argument string. This function is
 most useful in macros.
 
 See also: gen-symbol show-symbols
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp get-symbols "
+(bindhelp get-symbols """
 Syntax: (get-symbols)
 
 Returns all of the symbols in the symbol table.
 
 See also: gen-symbol show-symbols get-symbol
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp global """
@@ -2943,7 +2971,7 @@ See also: let def globalq
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp getfunc "
+(bindhelp getfunc """
 Syntax: (getfunc <object> [-caller])
 
 The 'getfunc' function will return a function object corresponding to the object
@@ -2956,19 +2984,19 @@ Examples:
     (getfunc {:a 1 :b 2}    ; return a function to look up items in the dictionary.
 
 See also: compose partial compliment
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp globalq "
+(bindhelp globalq """
 Syntax: (globalq <symbol> <value>)
 
 Binds the variable identified by the symbol to the specified value in the global
 scope.
 
 See also: let def global
-")
+""")
 
-(; is now a computed variable
+(; is now a computed variable   BUGBUGBUG
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp h "
 Syntax: (h) or (h <number>) or (h <pattern>)
@@ -2983,25 +3011,25 @@ that string.
 ;)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp shiftl "
+(bindhelp shiftl """
 Syntax: (shiftl value numberOfBitsToShift)
 
 Shifts a value the specified number of bits to the left.
 
 See also: shiftr band bor bxor
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp shiftr "
+(bindhelp shiftr """
 Syntax: (shiftr value numberOfBitsToShift)
 
 Shifts a value the specified number of bits to the right.
 
 See also: shiftl band bor bxor
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp recur "
+(bindhelp recur """
 Syntax: (recur arglist...)
 
 The 'recur' function allows you to write tail-recursive programs in braid.
@@ -3013,10 +3041,10 @@ Examples:
     (loop [x 10] (if x (do (println x) (recur (-- x))) 'done))
     (defn sum | x:xs -> (println x) (recur xs) | -> 'done)
 See also: loop recur-to defn fn lambda
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp recur-to "
+(bindhelp recur-to """
 Syntax: (recur-to targetFunc arglist...)
 
 The 'recur-to' function allows you to write tail-recursive programs in Braid
@@ -3029,11 +3057,11 @@ Examples:
     (defn outer [x y] (if (== x 1) (recur-to outer 0 10) y)     ; (outer 1 0) returns 10
     (defn outer [x y] ((fn -> (if (== x 1) (recur-to outer 0 10) y)))) ; recur to outer function
 
-See also: loop recur defn fn lambda
-")
+See also: loop recur defn fn lambda \
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp dict/accessor  "
+(bindhelp dict/accessor """
 Syntax: (dict/accessor dictKey)
 
 The 'dict/accessor' function takes a dictionary key (typically a string) and generates
@@ -3051,7 +3079,7 @@ Examples:
     (afunc [{:foo 1} {:foo 2}])         ; returns [1 2]
 
 See also: !!
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp shell """
@@ -3068,7 +3096,7 @@ See also: psvar
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp quote? "
+(bindhelp quote? """
 Syntax: (quote? argument)
 
 The 'quote?' function returns true if its argument is quoted.
@@ -3076,24 +3104,24 @@ The 'quote?' function returns true if its argument is quoted.
 Examples:
 
 See also: quote
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp zero? "
+(bindhelp zero? """
 Syntax: (zero? argument)
 
 The 'zero?' function returns true if its argument is zero.
 
 Examples:
-    (zero? 0)                       ; returns true
-    (zero? 1)                       ; returns false
+    (zero? 0)                                      ; returns true
+    (zero? 1)                                      ; returns false
     (defn f [n] (if (zero? n) 1 (* n (f (-- n)))))
 
 See also: none? some? number? null?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp even? "
+(bindhelp even? """
 Syntax: (even? argument)
 
 The 'even?' function returns true if its argument is an even number.
@@ -3103,10 +3131,10 @@ Examples:
     (even? 5)                       ; returns false
 
 See also: none? some? number? number? odd?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp odd? "
+(bindhelp odd? """
 Syntax: (odd? argument)
 
 The 'odd?' function returns true if its argument is an odd number.
@@ -3116,7 +3144,7 @@ Examples:
     (odd? 5)                       ; returns true
 
 See also: none? some? number? number? even?
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp keyword? """
@@ -3168,7 +3196,7 @@ See also: some? null?
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp deftype "
+(bindhelp deftype """
 Syntax: (deftype ^typeToDefine [^type] <memberVar> ... [ :defm <methodName> (fn this <vars..> -> <actions...) ]
 
 The 'deftype' function allows you to define types in Braid. Data members can be specified
@@ -3186,20 +3214,20 @@ Examples:
     (deftype ^bax x y :defm sum (fn this -> (+ (.this x) (.this y))))
 
 See also: defmethod defobject definterface
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp undeftype "
+(bindhelp undeftype """
 Syntax: (undeftype ^typeToUndefine)
 
 The 'undeftype' removes a typename from the type lookup table.
 
 Examples:
     (undeftype ^sometype)  ; returns true if the type was undefined, if the type didn't exist.
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp definterface "
+(bindhelp definterface """
 Syntax: (definterface ^interfaceToDefine [[^type] <memberVar> ...]* [ :defm <methodName> (fn this <vars..> -> <actions...) ]*
 
 The 'definterface' function allows you to define .NET interfaces in Braid. Data members can be specified
@@ -3217,7 +3245,7 @@ Examples:
     (deftype ^concretebax -implementsbax x y :defm sum (fn this -> (+ (.this x) (.this y))))
 
 See also: defmethod defobject definterface
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp join """
@@ -3236,7 +3264,7 @@ See also: str tostring
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp defenum @"""
+(bindhelp defenum """
 Syntax: (defenum <typeToCreate> <names...>)
 
 A function for defining Braid enum types with a base type of integer. The enum
@@ -3271,7 +3299,7 @@ See also: to-vector vector asarray
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp list/split @"
+(bindhelp list/split """
 Syntax: (list/split <list> <value or predicate>)
 
 The 'list/split' function splits a list into two pieces based on a either a provided
@@ -3288,10 +3316,10 @@ Examples:
     (list/split [1 2 3 4 5] odd?)   ; returns [[1 3 5] [2 4]]
     (list/split [1 2 3 4 5] (< 4)   ; returns [[1 2 3] [4 5]]
     (list/split [1 2 3 4 5] 3)      ; returns [[1 2] [4 5]]
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp breadth-search @"
+(bindhelp breadth-search """
 Syntax: (breadth-search <start> <goalValue|goalFn> <moveGeneratorFunction>)
 
 This function will perform a breadth-first search through a set of
@@ -3310,10 +3338,10 @@ Examples:
     ; Starting at 5, search for the number 35 using the next move fn.
     (breadth-search 5 35
         (fn x -> [(+ x 3) (* x 2) (- x 7)]))
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp upvar @"
+(bindhelp upvar """
 Syntax: (upvar <parentSymbol> <localSymbol>)
 
 The 'upvar' function allows you to bind a variable from the caller's
@@ -3335,10 +3363,10 @@ Examples:
     foo                 ; returns 2
 
 See also: defspecial upDo
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp upDo @"
+(bindhelp upDo """
 Syntax: (upDo <expression>)
 
 The 'upDo' function is similar to the 'eval' function except it evaluates
@@ -3353,10 +3381,10 @@ Examples:
     x               ; returns 1
 
 See also: defspecial upvar upDo
-")
+""")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp group @"
+(bindhelp group """
 Syntax: (group <collection> <byFunction> <processGroupFn>)
 
 The 'group' function groups members of a collection together in a dictionary by
@@ -3371,9 +3399,10 @@ Examples:
     (ls -file | group .extension (fn files -> (sum files .length)))
     ; count the number of times a word appears in a file
     (read-data words.txt | re/split | group echo count)
-")
+""")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp loop @"
+(bindhelp loop """
 Syntax: (loop [ sym1 expr1 sym2 expr2 ... ] (println \"hello\") (+ sym1 sym2))
 
 This function allows a loop to be executed with 'recur'. The 'loop'
@@ -3404,7 +3433,7 @@ Examples:
         )
         r2
     )
-")
+""")
 
 ;-------------------------------------------------------------------------------
 ;

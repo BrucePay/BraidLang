@@ -1,12 +1,32 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; The help content for Braid built-in functions.
+; helpsource.tl
 ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; This file contains documentation for Braid's built-in
+; functions. The script is loaded by the interpreter at startup
+; time and must be present in the distribution.
+; On load, content is stored in memory using 'Set-Assoc'
+; which sets up weak references to the doc content for each
+; function under the ":helptext" key. This means that
+; the documentation can be accessed using:
+;       '(get-assoc <funcObject> :helptext)'
+; (though 'doc' and 'help' provide a better user experience.)
+; The 'bindhelp' function simplifies this process. To attach help
+; content to a function you do
+;       '(bindhelp myCommand helpText)'
+; 'helptext' should be a string formatted as shown below.
+; This script is idempotent so you can reload it at any time
+; to see changes in the text for a command.
+;
+; See also: doc help set-assoc get-assoc
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;
 ; First validate the contents of the file:
-; - every call to bindhelp should correspond to a built-in function
-; - user-defined functions should not appear in this file.
+; - every call to 'bindhelp' should correspond to a built-in function
+; - user-defined functions should not appear in this file.a
+;
 (let helpnames {})
 
 (foreach e (file/parse (file/join-path braidhome "helpsource.tl"))
@@ -39,7 +59,9 @@
 )
 
 ;
-; Function to associate the help text with the function
+; Function to associate help text with the function. The 'bindhelp' function
+; allows multiple functions to be bound to a single topic which is how "command aliases"
+; work.
 ;
 (defn bindhelp
     "Creates a :helptext association between one or more functions and their help text"
@@ -1429,27 +1451,7 @@ Examples:
     | (^int x) -> (+ x 2)
     | -> (throw "Expected one integer argument, not <<${(join (get-args))}>>")
     )
-""")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp get-assoc  """
-Syntax: (get-assoc object [key])
-
-This function allows you to retrieve tagged data from an
-arbitrary object. For example, if you tagged the number 1 with
-a message as follows:
-    (set-assoc 1 :message "Hi there")
-you could then retrieve it with
-    (get-assoc 1 :message)
-
-See also: set-assoc
-""")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp if  """
-Syntax: (if condExpr ifExpr [ elseExpr ])
-
-The 'if' function does branching, taking one (if clause) or
+"""one (if clause) or
 two (if and else) clauses.
 
 Examples:
