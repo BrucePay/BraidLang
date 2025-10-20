@@ -3035,7 +3035,7 @@ namespace BraidLang
                         {
                             data[0] = val;
                             return func.Invoke(data);
-                        }, new PSComparer());
+                        }, PSComparer.GetComparer());
                     }
                     else
                     {
@@ -3043,17 +3043,17 @@ namespace BraidLang
                         {
                             data[0] = val;
                             return func.Invoke(data);
-                        }, new PSComparer());
+                        }, PSComparer.GetComparer());
                     }
                 }
 
                 if (descending)
                 {
-                    return enumerable.OrderByDescending((n) => n, new PSComparer());
+                    return enumerable.OrderByDescending((n) => n, PSComparer.GetComparer());
                 }
                 else
                 {
-                    return enumerable.OrderBy((n) => n, new PSComparer());
+                    return enumerable.OrderBy((n) => n, PSComparer.GetComparer());
                 }
             };
 
@@ -3114,7 +3114,7 @@ namespace BraidLang
                         {
                             data[0] = val;
                             return func.Invoke(data);
-                        }, new PSComparer());
+                        }, PSComparer.GetComparer());
                     }
                     else
                     {
@@ -3122,17 +3122,17 @@ namespace BraidLang
                         {
                             data[0] = val;
                             return func.Invoke(data);
-                        }, new PSComparer());
+                        }, PSComparer.GetComparer());
                     }
                 }
 
                 if (descending)
                 {
-                    return enumerable.ThenBy((n) => n, new PSComparer());
+                    return enumerable.ThenBy((n) => n, PSComparer.GetComparer());
                 }
                 else
                 {
-                    return enumerable.ThenByDescending((n) => n, new PSComparer());
+                    return enumerable.ThenByDescending((n) => n, PSComparer.GetComparer());
                 }
             };
 
@@ -3206,7 +3206,7 @@ namespace BraidLang
                             {
                                 data.Car = val;
                                 return Braid.Eval(exprToCall, true, true);
-                            }, new PSComparer());
+                            }, PSComparer.GetComparer());
                         }
                         else
                         {
@@ -3214,7 +3214,7 @@ namespace BraidLang
                             {
                                 data.Car = val;
                                 return Braid.Eval(exprToCall, true, true);
-                            }, new PSComparer());
+                            }, PSComparer.GetComparer());
                         }
                     }
                     else
@@ -3227,7 +3227,7 @@ namespace BraidLang
                             {
                                 PSObject pso = PSObject.AsPSObject(val);
                                 return pso.Members[propertyName].Value;
-                            }, new PSComparer());
+                            }, PSComparer.GetComparer());
                         }
                         else
                         {
@@ -3237,18 +3237,18 @@ namespace BraidLang
                             {
                                 PSObject pso = PSObject.AsPSObject(val);
                                 return pso.Members[propertyName].Value;
-                            }, new PSComparer());
+                            }, PSComparer.GetComparer());
                         }
                     }
                 }
 
                 if (descending)
                 {
-                    return enumerable.OrderByDescending((n) => n, new PSComparer());
+                    return enumerable.OrderByDescending((n) => n, PSComparer.GetComparer());
                 }
                 else
                 {
-                    return enumerable.OrderBy((n) => n, new PSComparer());
+                    return enumerable.OrderBy((n) => n, PSComparer.GetComparer());
                 }
             };
 

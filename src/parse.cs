@@ -1208,7 +1208,7 @@ namespace BraidLang
             {
                 throw new IncompleteParseException(
                     BraidCompilerException.Annotate(text, offset, Braid._current_file, lineno,
-                        $"Missing close square bracket ']': ({inVector}) more square brackets " +
+                        $"Missing close square bracket ']': {inVector} more square brackets " +
                         "are required to complete the vector " +
                         $"literal."));
             }
@@ -1217,7 +1217,7 @@ namespace BraidLang
             {
                 throw new IncompleteParseException(
                     BraidCompilerException.Annotate(text, offset, Braid._current_file, lineno,
-                        $"Missing close brace '}}': ({inDict}) more braces " +
+                        $"Missing close brace '}}': {inDict} more braces " +
                         $"are required to complete the dictionary literal."));
             }
 

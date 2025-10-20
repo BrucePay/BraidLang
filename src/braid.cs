@@ -261,6 +261,16 @@ namespace BraidLang
         {
             return LanguagePrimitives.Compare(x, y, true);
         }
+
+        static PSComparer comparer = null;
+
+        public static PSComparer GetComparer()
+        {
+            if (comparer == null)
+                comparer = new PSComparer();
+            return comparer;
+        }
+
     }
 
     /// <summary>
@@ -1349,7 +1359,28 @@ namespace BraidLang
             Length = Data.Count;
         }
 
-        public int PhysicalIndex(int index) => Start + index;
+        /// <summary>
+        /// Translates the logical index in a slice
+        /// into the physical index in the underlying collection.
+        /// If the requested index is outside the range of
+        /// the underlying collection, return -1
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>The physical index in the underlying collection</returns>
+        public int PhysicalIndex(int index)
+        {
+            if (index < 0)
+            {
+                return -1;
+            }
+
+            int pi = Start + index;
+            if (pi >= Data.Count)
+            {
+                return -1;
+            }
+            return pi;
+        }
 
         public object Car
         {
@@ -1484,7 +1515,7 @@ namespace BraidLang
         public int IndexOf(object elementToFind)
         {
             // Only check the 'visible' part of the data
-            for (int i = Start; i < Start + Length - 1; i++)
+            for (int i = Start; i < Start + Length && i < Data.Count; i++)
             {
                 if (BraidComparer.Equals(elementToFind, Data[i]))
                 {

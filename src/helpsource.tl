@@ -1451,7 +1451,29 @@ Examples:
     | (^int x) -> (+ x 2)
     | -> (throw "Expected one integer argument, not <<${(join (get-args))}>>")
     )
-"""one (if clause) or
+"""
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(bindhelp get-assoc  """
+Syntax: (get-assoc object [key])
+
+This function allows you to retrieve tagged data from an
+arbitrary object. For example, if you tagged the number 1 with
+a message as follows:
+    (set-assoc 1 :message "Hi there")
+you could then retrieve it with
+    (get-assoc 1 :message)
+
+See also: set-assoc
+""")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(bindhelp if  """
+Syntax: (if condExpr ifExpr [ elseExpr ])
+
+The 'if' function does branching, taking one (if clause) or
+une (if clause) or
 two (if and else) clauses.
 
 Examples:
@@ -3316,7 +3338,7 @@ list.
 
 Examples:
     (list/split [1 2 3 4 5] odd?)   ; returns [[1 3 5] [2 4]]
-    (list/split [1 2 3 4 5] (< 4)   ; returns [[1 2 3] [4 5]]
+    (list/split [1 2 3 4 5] (< 4))  ; returns [[1 2 3] [4 5]]
     (list/split [1 2 3 4 5] 3)      ; returns [[1 2] [4 5]]
 """)
 
@@ -3386,24 +3408,6 @@ See also: defspecial upvar upDo
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp group """
-Syntax: (group <collection> <byFunction> <processGroupFn>)
-
-The 'group' function groups members of a collection together in a dictionary by
-the value returned by the <byFunction>. Once the groups have been created, the
-<processGroupFn> is applied to each group. This function can be used to do things
-like rrplace the group with the count of group elements or compute the sum of
-a property on an element.
-
-Examples:
-    (ls -file | group .extension count)   ; counts the number of files per extension
-    ; get the total length of each type of file
-    (ls -file | group .extension (fn files -> (sum files .length)))
-    ; count the number of times a word appears in a file
-    (read-data words.txt | re/split | group echo count)
-""")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp loop """
 Syntax: (loop [ sym1 expr1 sym2 expr2 ... ] (println \"hello\") (+ sym1 sym2))
 
@@ -3435,6 +3439,24 @@ Examples:
         )
         r2
     )
+""")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(bindhelp group """
+Syntax: (group <collection> <byFunction> <processGroupFn>)
+
+The 'group' function groups members of a collection together in a dictionary by
+the value returned by the <byFunction>. Once the groups have been created, the
+<processGroupFn> is applied to each group. This function can be used to do things
+like replace the group with the count of group elements or compute the sum of
+a property on an element.
+
+Examples:
+    (ls -file | group .extension count)   ; counts the number of files per extension
+    ; get the total length of each type of file
+    (ls -file | group .extension (fn files -> (sum files .length)))
+    ; count the number of times a word appears in a file
+    (read-data words.txt | re/split | group echo count)
 """)
 
 ;-------------------------------------------------------------------------------

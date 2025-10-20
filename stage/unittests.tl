@@ -15919,9 +15919,52 @@ lambda [
 )
 (test/exec :slice25a
     (\ ->
+        (slice "abcdef" 1 -1 | .indexof \e) ; check for when the last character is the target
+    )
+    3
+)
+(test/exec :slice25b
+    (\ ->
         (slice "abcdefg" 1 -1 | .indexof \g)
     )
     -1
+)
+; test translating the logical index in the slice into the physical index in the underlying collection
+(test/exec :slice25c
+    (\ ->
+        (slice "abcdefg" 1 -1 | .physicalindex 3)
+    )
+    4
+)
+(test/exec :slice25d
+    (\ ->
+        [
+            (slice "abcdefg" 1 -1 | .physicalindex -1)
+            (slice "abcdefg" 1 -1 | .physicalindex 3)
+            (slice "abcdefg" 1 -1 | .physicalindex 5)
+            (slice "abcdefg" 1 -1 | .physicalindex 7)
+        ]
+    )
+    [-1 4 6 -1]
+)
+(test/exec :slice25e ; when physical and logical indexes match
+    (\ ->
+        [
+            (slice "abcdefg" 0 | .physicalindex -1)
+            (slice "abcdefg" 0 | .physicalindex 0)
+            (slice "abcdefg" 0 | .physicalindex 3)
+            (slice "abcdefg" 0 | .physicalindex 5)
+            (slice "abcdefg" 0 | .physicalindex 7)
+            (slice "abcdefg" 0 | .physicalindex 20)
+        ]
+    )
+    [-1 0 3 5 -1 -1]
+)
+(test/exec :slice25f
+    (\ ->
+        (slice "abcdefg" 1 -1 | .physicalindex 0)
+    )
+    1
 )
 (test/exec :slice26
     (\ ->
@@ -15952,6 +15995,12 @@ lambda [
 (test/exec :slice29
     (\ ->
         (slice "abcdefg" 1 -1 | .contains \e) ; check success 
+    )
+    true
+)
+(test/exec :slice29a
+    (\ ->
+        (slice "abcdef" 1 -1 | .contains \e) ; check when the last valid char is the target 
     )
     true
 )
@@ -16069,7 +16118,49 @@ lambda [
 
     true
 )
+(test/exec :slice39
+    (\ ->
+        ; another binary search example; returns
+        ; the physical index and the value found
+        (defn binsrch ^vector
+            [lst target (func echo)]
+        
+            (if (not lst)
+                (return [-1 null]))
+        
+            (when (length lst | == 1)
+                (let cv (func (!! lst 0)))
+                (if (== target cv)
+                    [0 cv]
+                    ; otherwise
+                    [-1 null]
+                )
+            )
+        
+            (let idx (^int? (/ (length lst) 2)))
+            (let val (!! lst idx))
+            
+            (matchp (func val)
+            | (== target)    -> (if (is? lst ^Slice)
+                                    [(.physicalindex lst idx) (!! lst idx)]
+                                        [idx (!! lst idx)])
+            | (> target)     -> (binsrch (take lst idx) target func)
+            |                -> (binsrch (skip lst (++ idx)) target func)
+            )
+        )
 
+        [
+            (binsrch [1 3 4 6 8 9] 4)
+            (binsrch [1 3 4 6 8 9] 5)
+            (binsrch [1 3 4 6 8 9] 2)
+            (binsrch [1 3 4 6 8 9] 1)
+            (binsrch [1 3 4 6 8 9] 9)
+        ]
+    )
+
+    [[ 2, 4 ], [ -1, nil ], [ -1, nil ], [ 0, 1 ], [ 5, 9 ]]
+
+)
 
 ;-----------------------------------------------------------
 ; Test group

@@ -1,12 +1,32 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; The help content for Braid built-in functions.
+; helpsource.tl
 ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; This file contains documentation for Braid's built-in
+; functions. The script is loaded by the interpreter at startup
+; time and must be present in the distribution.
+; On load, content is stored in memory using 'Set-Assoc'
+; which sets up weak references to the doc content for each
+; function under the ":helptext" key. This means that
+; the documentation can be accessed using:
+;       '(get-assoc <funcObject> :helptext)'
+; (though 'doc' and 'help' provide a better user experience.)
+; The 'bindhelp' function simplifies this process. To attach help
+; content to a function you do
+;       '(bindhelp myCommand helpText)'
+; 'helptext' should be a string formatted as shown below.
+; This script is idempotent so you can reload it at any time
+; to see changes in the text for a command.
+;
+; See also: doc help set-assoc get-assoc
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;
 ; First validate the contents of the file:
-; - every call to bindhelp should correspond to a built-in function
-; - user-defined functions should not appear in this file.
+; - every call to 'bindhelp' should correspond to a built-in function
+; - user-defined functions should not appear in this file.a
+;
 (let helpnames {})
 
 (foreach e (file/parse (file/join-path braidhome "helpsource.tl"))
@@ -39,7 +59,9 @@
 )
 
 ;
-; Function to associate the help text with the function
+; Function to associate help text with the function. The 'bindhelp' function
+; allows multiple functions to be bound to a single topic which is how "command aliases"
+; work.
 ;
 (defn bindhelp
     "Creates a :helptext association between one or more functions and their help text"
@@ -1429,7 +1451,8 @@ Examples:
     | (^int x) -> (+ x 2)
     | -> (throw "Expected one integer argument, not <<${(join (get-args))}>>")
     )
-""")
+"""
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp get-assoc  """
@@ -1450,6 +1473,7 @@ See also: set-assoc
 Syntax: (if condExpr ifExpr [ elseExpr ])
 
 The 'if' function does branching, taking one (if clause) or
+une (if clause) or
 two (if and else) clauses.
 
 Examples:
@@ -3314,7 +3338,7 @@ list.
 
 Examples:
     (list/split [1 2 3 4 5] odd?)   ; returns [[1 3 5] [2 4]]
-    (list/split [1 2 3 4 5] (< 4)   ; returns [[1 2 3] [4 5]]
+    (list/split [1 2 3 4 5] (< 4))  ; returns [[1 2 3] [4 5]]
     (list/split [1 2 3 4 5] 3)      ; returns [[1 2] [4 5]]
 """)
 
@@ -3384,24 +3408,6 @@ See also: defspecial upvar upDo
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp group """
-Syntax: (group <collection> <byFunction> <processGroupFn>)
-
-The 'group' function groups members of a collection together in a dictionary by
-the value returned by the <byFunction>. Once the groups have been created, the
-<processGroupFn> is applied to each group. This function can be used to do things
-like rrplace the group with the count of group elements or compute the sum of
-a property on an element.
-
-Examples:
-    (ls -file | group .extension count)   ; counts the number of files per extension
-    ; get the total length of each type of file
-    (ls -file | group .extension (fn files -> (sum files .length)))
-    ; count the number of times a word appears in a file
-    (read-data words.txt | re/split | group echo count)
-""")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (bindhelp loop """
 Syntax: (loop [ sym1 expr1 sym2 expr2 ... ] (println \"hello\") (+ sym1 sym2))
 
@@ -3433,6 +3439,24 @@ Examples:
         )
         r2
     )
+""")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(bindhelp group """
+Syntax: (group <collection> <byFunction> <processGroupFn>)
+
+The 'group' function groups members of a collection together in a dictionary by
+the value returned by the <byFunction>. Once the groups have been created, the
+<processGroupFn> is applied to each group. This function can be used to do things
+like replace the group with the count of group elements or compute the sum of
+a property on an element.
+
+Examples:
+    (ls -file | group .extension count)   ; counts the number of files per extension
+    ; get the total length of each type of file
+    (ls -file | group .extension (fn files -> (sum files .length)))
+    ; count the number of times a word appears in a file
+    (read-data words.txt | re/split | group echo count)
 """)
 
 ;-------------------------------------------------------------------------------
