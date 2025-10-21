@@ -18072,7 +18072,10 @@ lambda [
 )
 
 ;--------------------------------------------------------------------
-; Test a macro implementing the "loop" function
+; Test a macro implementing the "loop" function. This macro
+; simulates 'loop' by inserting an anonymous function where the looop
+; is. In Clojure this is how 'loop' is actually implemented but
+; braid has a specialized function for the scenario.
 (test/exec :macro_looop1
     (\ ->
         (defmacro looop [(^vectorliteral bindings) &body]

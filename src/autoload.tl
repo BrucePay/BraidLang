@@ -164,17 +164,22 @@ Examples:
 ;
 (defmacro case
 """
-A macro for the 'case' expression. A case expression looks like:
-  (case (+ 2 3) 1 "One" 2 "Two" 3 "three")
-which will generate a cond statement that looks like:
-  (do
-    (def sym_140875202 (+ 2 3))
-    (cond (== sym_140875202 1)
-        "One" (== sym_140875202 2)
-        "Two" (== sym_140875202 3)
-        "three"
+A macro for the 'case' expression. A case expression looks like
+'(case (+ 2 3) 1 "One" 2 "Two" 3 "three")' which will generate
+a 'cond' statement as shown in the example.
+
+Examples:
+    ; a case statement:
+    (case (+ 2 3) 1 "One" 2 "Two" 3 "three")
+    ; after macro expansion, becomes;
+    (do
+      (def sym_140875202 (+ 2 3))
+      (cond (== sym_140875202 1)
+          "One" (== sym_140875202 2)
+          "Two" (== sym_140875202 3)
+          "three"
+      )
     )
-  )
 
 See also: if cond matchp
 """

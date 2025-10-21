@@ -18,11 +18,10 @@ lambda [:quiet]
     (get-assoc func :helptext | tostring | .trim)
 )
 
-
 (let ofile "helptext.html")
 
 ; Delete the old output file if there was one...
-(remove-item -ea: :ignore ofile)
+(remove-item -ea: "ignore" ofile)
 
 ; Create the output HTML file...
 (let htmltext
@@ -50,9 +49,11 @@ lambda [:quiet]
                     tr:nth-child(even) {background-color: #f2f2f2;}
             """)
         )
+
         ; Document body.
         (list
             (html/h2 "Braid Function Documentation")
+
             ; generate a table of the functions and their help content
             (html/p
                 """
@@ -64,6 +65,7 @@ lambda [:quiet]
                 <br>
                 """
             )
+
             (html/table
                 ; the table header
                 (html/tr
@@ -75,7 +77,7 @@ lambda [:quiet]
 
                 ; generate the table data for all of the functions.
                 (vlet cnt 0)
-                ((functions) | map (fn f ->
+                ((functions) | map (\ f ->
                         (let syntax     "")
                         (let body       "")
                         (let example    "")
@@ -84,18 +86,19 @@ lambda [:quiet]
                         (let helpinfo   (get-help-text (.value f)))
 
                         ( html/encode helpinfo
-                        | re/split #"\n"
-                        | each (fn
-                            | (#"^ *Syntax[: ].*$" syn) -> (def syntax (str "" (car syn) ""))
-                            | (#"^Examples:.*$" exp)    -> (def example "${(car exp)}")
-                            | (#"^See also:.*$" also)   -> (def see-also "<i>${(car also)}</i>")
-                            | (#"^    .*$" ex)          -> (def examples (str examples "\n" (car ex)))
-                            | line                      -> (def body (str body " " line)) 
+                        | re/split #"[\r\n]+"       ; split into lines to simplify parsing.
+                        | each (\
+                            | #"^Syntax[: ]"  -> (let syntax %0)
+                            | #"^Examples:"   -> (let example (str "<br>" %0 ))
+                            | #"^See also:"   -> (let see-also (str "<i>" %0 "</i>"))
+                            | #"^  "          -> (let examples (str examples "<br>" %0))
+                            | line            -> (let body (str body "<br>" line))
                             )
                         )
 
-                        (let body (re/replace body #"[\n\r] *[\n\r]" "<br><br>"))
-                        (let formatted (str syntax "<br/><br/>" body "<pre>"  example examples "</pre><br/>" see-also))
+                        (if (not syntax) (let syntax "<i>Currently undocumented.</i>"))
+
+                        (let formatted (str syntax "<br>" body "<br>" example "<pre>" examples "</pre>" see-also))
 
                         (html/tr
                             (html/td (incr cnt))
