@@ -55,7 +55,7 @@ lambda [(^int numItems 500)]
     ; test numItems items; throw if it fails
     (alert "Testing ${numItems} items:")
     (let data (random numItems))
-    (if (== (merge-sort data) (sort data))
+    (if (== (time (merge-sort data)) (sort data))
         (alert "\tpassed.")
         (throw "merge-sort failed!")
     )
