@@ -24,8 +24,10 @@
 
 ;
 ; First validate the contents of the file:
-; - every call to bindhelp should correspond to a built-in function
+; - every call to 'bindhelp' should correspond to a built-in function
 ; - user-defined functions should not appear in this file.
+;
+
 (let helpnames {})
 
 (foreach e (file/parse (file/join-path braidhome "helpsource.tl"))
@@ -3438,8 +3440,8 @@ the loop, the listed symbols will be rebound to the new values and execution wil
 proceed from the top of the loop.
 
 Examples:
-    (loop [])                   ; executes but returns nil
-    (loop [a 1 b 2] (+a b))     ; returns 4
+    (loop [])                    ; executes but returns nil
+    (loop [a 1 b 2] (+ a b))     ; returns 4
     (loop [n 10] (println n) (if n (recur (- n 1)))) ; uses recur to loop, prints 10 thru 0
     ; as above but a new const 'cn' created and set each time
     (loop [n 10]
