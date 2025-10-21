@@ -1500,14 +1500,20 @@ See also: get
 Syntax: (incr variable [increment])
 
 Post-increment a variable by the desired amount and returns the result. If no increment
-is specified, then 1 is used. This function can only be used for variables containing
-integral values (e.g. ^int or ^long)
+is specified, then 1 is used. This function can be used for variables containing
+integral values (e.g. ^int or ^long), strings or collections. In the case of strings
+and collections, the "increment" will be appended to the end of the current value.
 
 Examples:
     (let a 0)
     (println (incr a))  ; prints 0 on the screen
     (println a)         ; prints 1 on the screen
     (for (let i 0) (< i 10) (incr i) (println i))
+    (let a [1 2 3])
+    (incr a 4)          ; a now contains [1 2 3 4]
+    (incr a)            ; a now contains [1 2 3 4 1]
+    (let a "abc")
+    (incr a "ef")       ; a now contains "abcdef
 
 See also: pincr decr pdecr ++ --
 """)
@@ -1516,9 +1522,12 @@ See also: pincr decr pdecr ++ --
 (bindhelp pincr  """
 Syntax: (pincr variable [increment])
 
-Pre-increment a variable by the desired amount, returning the original un-incremented value.
-If no increment is specified, the 1 is used. This function can only be used for variables
-containing integral values (e.g. ^int or ^long)
+Pre-increment a variable by the desired amount, returning the original un-incremented
+value. If no increment is specified, then 1 is used. This function can be used for variables
+containing integral values (e.g. ^int or ^long), strings or collections. In the case of strings
+and collections, the "increment" will be appended to the end of the current value. Note that
+in the collection case, because the collection is actually mutated, calling pincr returns the
+updated value.
 
 Examples:
     (let a 0)
