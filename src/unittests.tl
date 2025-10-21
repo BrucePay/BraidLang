@@ -6085,7 +6085,7 @@ lambda [
 ; Test the incr function
 (test/exec :incr1 #(do (let s 0) (incr s) (incr s) (incr s) s) 3)
 (test/exec :incr1a
-    (fn ->
+    (\ ->
         (undef zzz)
         (incr zzz)
         (incr zzz)
@@ -6096,7 +6096,7 @@ lambda [
 (test/exec :incr2 #(do (let s 0) (incr s 2) (incr s 3) (incr s 4) s) 9)
 (test/exec :incr3 #(do (let s 0) (incr s 2) (incr s 3) (incr s -4) s) 1)
 (test/exec :incr4
-    (fn ->
+    (\ ->
         (defn tst [%0] (incr %0))
         (and
             (tst 10  | == 11)
@@ -6105,7 +6105,7 @@ lambda [
     true
 )
 (test/exec :incr5
-    (fn ->
+    (\ ->
         (defn tst [%0] (incr %0 5))
         (and
             (tst 10  | == 15)
@@ -6114,13 +6114,66 @@ lambda [
     true
 )
 (test/exec :incr6
-    (fn ->
+    (\ ->
         (defn tst [%0] (incr %0 -1))
         (and
             (tst 10  | == 9)
             (tst 100 | == 99))
     )
     true
+)
+(test/exec :incr7
+    (\ ->
+        (let x [1 2 3])
+        (incr x 4)
+        (incr x 5)
+        x
+    )
+    [1 2 3 4 5]
+)
+(test/exec :incr7a
+    (\ ->
+        (let x [1 2 3])
+        (incr x) ; appends 1 by default
+        (incr x)
+        x
+    )
+    [1 2 3 1 1]
+)
+(test/exec :incr8
+    (\ ->
+        (let x [1 2 3])
+        ; adds the increment as a single value
+        (incr x [4 5])
+        x
+    )
+    [1 2 3 [4 5]]
+)
+(test/exec :incr9
+    (\ ->
+        (let x "abc")
+        (incr x \d)
+        (incr x \e)
+        x
+    )
+    "abcde"
+)
+(test/exec :incr10
+    (\ ->
+        (let x "abc")
+        (incr x "de")
+        x
+    )
+    "abcde"
+)
+(test/exec :incr11
+    (\ ->
+        (let x "abc")
+        ; ToStrings() the argument and appends.
+        (incr x [1 2])
+        (re/replace x #"[ \r\n]+" "")
+    )
+    "abc[1,2]"
 )
 
 ;-------------------------------------------------------
@@ -6160,6 +6213,51 @@ lambda [
         [(pincr zzz) zzz]
     )
     [0 1]
+)
+(test/exec :pincr6
+    (\ ->
+        (let x [1 2 3])
+        [ (pincr x 4) x]
+    )
+    [[1 2 3 4] [1 2 3 4]]
+)
+(test/exec :pincr6a
+    (\ ->
+        (let x [1 2 3])
+        [ (pincr x) x]
+    )
+    [[1 2 3 1] [1 2 3 1]]
+)
+(test/exec :pincr7
+    (\ ->
+        (let x [1 2 3])
+        ; adds the increment collection as a single value
+        [(pincr x [4 5]) x]
+    )
+    ; both pre and post are the same collection
+    [[1 2 3 [4 5]] [1 2 3 [4 5]]]
+)
+(test/exec :pincr8
+    (\ ->
+        (let x "abc")
+        [(pincr x \d) x]
+    )
+    ["abc" "abcd"]
+)
+(test/exec :pincr9
+    (\ ->
+        (let x "abc")
+        [(pincr x "de") x]
+    )
+    ["abc" "abcde"]
+)
+(test/exec :pincr10
+    (\ ->
+        (let x "abc")
+        ; ToStrings() the argument and appends.
+        [ (pincr x [1 2]) (re/replace x #"[ \r\n]+" "") ]
+    )
+    ["abc" "abc[1,2]"]
 )
 
 

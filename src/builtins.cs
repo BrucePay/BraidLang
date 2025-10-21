@@ -9544,6 +9544,14 @@ namespace BraidLang
                     if (args[0] is ArgIndexLiteral ai)
                     {
                         val = ai.Value;
+
+                        // mutate the collection
+                        if (val is ICollection)
+                        {
+                            val.Add(increment);
+                            return ai.Value;
+                        }
+
                         ai.Value = val += increment;
                         return val;
                     }
@@ -9570,16 +9578,17 @@ namespace BraidLang
                         val = 0;
                     }
 
+                    // mutate the collection
+                    if (val is ICollection)
+                    {
+                        val.Add(increment);
+                        return targetVar.Value;
+                    }
+
                     if (val is int ival1 && increment is int ival2)
                     {
-                        try
-                        {
-                            targetVar.Value = val = BoxInt(checked(ival1 + ival2));
-                            return val;
-                        }
-                        catch
-                        {
-                        }
+                        targetVar.Value = val = BoxInt(checked(ival1 + ival2));
+                        return val;
                     }
 
                     targetVar.Value = val = val + increment;
@@ -9614,16 +9623,27 @@ namespace BraidLang
                     if (args[0] is ArgIndexLiteral ai)
                     {
                         origVal = val = ai.Value;
-                        ai.Value = val += increment;
+
+                        // mutate the collection
+                        if (val is ICollection)
+                        {
+                            val.Add(increment);
+                            // This doesn't matter since the original value has been mutated
+                            return origVal;
+                        }
+
+                        ai.Value += increment;
                         return origVal;
                     }
 
+                    // Handle regular symbols
                     if (!(args[0] is Symbol varsym))
                     {
                         varsym = Symbol.FromString(args[0].ToString());
                     }
 
                     PSStackFrame callStack = Braid.CallStack;
+                    // Can find variables outside the current scope
                     BraidVariable targetVar = callStack.GetVariable(varsym);
 
                     // var doesn't exist so create and initialize it.
@@ -9633,26 +9653,28 @@ namespace BraidLang
                         return 0;
                     }
 
-                    val = targetVar.Value;
+                    origVal = val = targetVar.Value;
                     if (val == null)
                     {
-                        val = 0;
+                        origVal = val = 0;
+                    }
+
+                    // mutate the collection
+                    if (val is ICollection)
+                    {
+                        val.Add(increment);
+                        // This doesn't matter since the original value has been mutated
+                        return origVal;
                     }
 
                     if (val is int ival1 && increment is int ival2)
                     {
-                        try
-                        {
-                            targetVar.Value = BoxInt(checked(ival1 + ival2));
-                            return val;
-                        }
-                        catch
-                        {
-                        }
+                        targetVar.Value = BoxInt(checked(ival1 + ival2));
+                        return origVal;
                     }
 
                     targetVar.Value = val + increment;
-                    return val;
+                    return origVal;
                 }
                 catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException rbe)
                 {
