@@ -90,7 +90,7 @@ namespace BraidLang
                         // The choice of value is arbitrary and not based
                         // on evidence. With experience we may choose to make
                         // a different choice.
-                        RunspaceCleanupTimer.Interval = _runspaceCleanupInterval;
+                        RunspaceCleanupTimer.Interval = _runspaceCleanupInterval * 1000;
                     }
                 }
             }
@@ -113,7 +113,7 @@ namespace BraidLang
                 }
             }
         }
-        static int _runspaceCleanupInterval = 4;
+        static int _runspaceCleanupInterval = 2;   // time in seconds
 
         static ConcurrentQueue<Runspace> RunspaceQueue = new ConcurrentQueue<Runspace>();
         static System.Timers.Timer RunspaceCleanupTimer = null;
