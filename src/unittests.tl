@@ -1747,7 +1747,7 @@ lambda [
 )
 (test/exec :>let2
     (fn ->
-        (range 10 | where (% 3) | >let __foo)
+        (range 10 | filter (% 3) | >let __foo)
         __foo
     )
     [1 2 4 5 7 8 10]
@@ -4738,7 +4738,7 @@ lambda [
         ; Count the number of comments in the 'autoload.tl' file.
         ; There should be more than 100.
         ( tokenize-file (file/join-path braidhome "autoload.tl")
-        | where (fn t -> (== (.type t) .BraidLang.TokenType/Comment))
+        | filter (fn t -> (== (.type t) .BraidLang.TokenType/Comment))
         | count | > 100
         )
     )
@@ -4904,9 +4904,7 @@ lambda [
 ;-------------------------------------------------------
 ; basic test of the filter function - get even numbers
 (test/exec :filter1  #(range 10 | filter (fn it -> (== (% it 2) 0))) [2 4 6 8 10])
-(test/exec :where1   #(range 10 | where  (fn it -> (== (% it 2) 0))) [2 4 6 8 10])
 (test/exec :filter2  #(range 10 | filter -not (fn it -> (== (% it 2) 0))) [1 3 5 7 9])
-(test/exec :where2   #(range 10 | where  -not (fn it -> (== (% it 2) 0))) [1 3 5 7 9])
 ; even numbers using the builtin predicate
 (test/exec :filter3  #(range 10 | filter even?) [2 4 6 8 10])
 (test/exec :filter4  #(range 10 | filter -not even?) [1 3 5 7 9])
@@ -5062,17 +5060,30 @@ lambda [
     [2 4 6]
 )
 (test/exec :filter34
-    (fn ->
-        ; test continue in filter - skips 
+    (\ ->
+        ; test continue in 'filter' - skips 
         (range 10 | filter -not (fn n -> (if (== n 6) (continue)) (% n 2)))
     )
     [2 4 8 10]
 )
 (test/exec :filter35
-    (fn ->
-        (range 1000 | filter (fn n -> (if (== n 99) (break))) | first)
+    (\ ->
+        ; test break in 'filter'
+        (range 1000 | filter (\ n -> (if (== n 99) (break))) | first)
     )
     99
+)
+(test/exec :filter36
+    (\ ->
+        ; test that 'filter' executes user functions in their own scope
+        (defn foo | n -> (let upper n) true)
+
+        (const upper 0)  ; create a constant in the current scope
+
+        ; run the filter. If it's run in the current scope it'll fail trying to set upper
+        (filter [1 2] foo)
+    )
+    [1 2]
 )
 
 ;-------------------------------------------------------
@@ -14679,7 +14690,7 @@ lambda [
         ; function to generate counters that take parameters
         (defn gen [v] (fn scale -> (* scale (incr v))))
 
-        ; function to generate counters where the paramter is established at
+        ; function to generate counters where the parameter is established at
         ; creation time
         (defn sgen [scale start]
             (let ctr (gen start))

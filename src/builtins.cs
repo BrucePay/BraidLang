@@ -9313,17 +9313,17 @@ namespace BraidLang
                     }
                     else if (predicate is IInvokeableValue lam)
                     {
-                        func = lam.FuncToCall;
+                        func = (Vector av) => lam.Invoke(av);
                     }
                     else if (predicate is System.Func<BraidLang.Vector, System.Object> justfunc)
                     {
                         func = justfunc;
                     }
-                }
-
-                if (func == null)
-                {
-                    func = (Vector cmpargs) => (cmpargs.Count == 1) && Braid.CompareItems(cmpargs[0], predicate);
+                    else
+                    {
+                        // Handle filtering when the predicate is a constant value
+                        func = (Vector cmpargs) => (cmpargs.Count == 1) && Braid.CompareItems(cmpargs[0], predicate);
+                    }
                 }
 
                 var argVect = new Vector { null };
@@ -9341,7 +9341,9 @@ namespace BraidLang
                     try
                     {
                         argVect[0] = item;
+                        
                         object funcResult = func(argVect);
+
                         if (funcResult is BraidBreakOperation breakOp)
                         {
                             if (breakOp.HasValue)
@@ -9368,7 +9370,8 @@ namespace BraidLang
                     }
                     catch (Exception e)
                     {
-                        System.Console.WriteLine("Exeception occurred filtering '{0}'", item); //BUGBUGBUGBUGBUGBUGBUG
+                        // This should never happen so we want to make sure it gets surfaced
+                        System.Console.WriteLine("Exception occurred filtering '{0}'", item);
                         BraidRuntimeException($"Exception occurred using 'filter' {e.Message}", e);
                     }
                 }
