@@ -1006,10 +1006,11 @@ namespace BraidLang
             process.StartInfo.Arguments = tempFile;
             // process.StartInfo.CreateNoWindow = true; // Setting this causes the editor to hang on startup
             process.StartInfo.UseShellExecute = false;
-            Console.WriteLine($"*** Starting editor '{editor}' on file '{tempFile}'\n");
+            // Console.WriteLine($"*** Starting editor '{editor}' on file '{tempFile}'\n");
             process.Start();
             process.WaitForExit();
-            string newText = System.IO.File.ReadAllText(tempFile).Trim('\n').Trim('\r');
+            string newText = System.IO.File.ReadAllText(tempFile)
+                .Trim('\n').Trim('\r').Replace('\r', ' ');
             System.IO.File.Delete(tempFile);
             SetText(newText);
             CmdDone();
@@ -1363,9 +1364,10 @@ namespace BraidLang
             }
 
             string result = this._text.ToString();
-            if (result != "")
+            if (result != "" && string.Compare(result, LastCommand, StringComparison.OrdinalIgnoreCase) != 0)
             {
                 this._history.Accept(result);
+                this.LastCommand = result;
             }
             else
             {
@@ -1374,6 +1376,8 @@ namespace BraidLang
 
             return result;
         }
+
+        string LastCommand = "";
 
         public void Close()
         {
@@ -1427,10 +1431,14 @@ namespace BraidLang
                     using (StreamReader sr = File.OpenText(this._histfile))
                     {
                         string line;
-
+                        string lastCommand = "";
                         while ((line = sr.ReadLine()) != null)
                         {
-                            if (line != "") Append(line);
+                            if (line != "" && string.Compare(line, lastCommand, StringComparison.OrdinalIgnoreCase) != 0)
+                            {
+                                Append(line);
+                                lastCommand = line;
+                            }
                         }
                     }
                 }

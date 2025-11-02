@@ -13,7 +13,7 @@ param ($scriptToRun = $null, [switch] $wait)
 $argsToPassToScript = if ($args) { $args } else { $null }
 
 Set-StrictMode -Version latest
-function say { [console]::writeline("$args")}
+function say { [console]::writeline("$args") }
 
 if ($wait)
 {
@@ -351,6 +351,7 @@ function BraidRepl
                 $pssb = $promptScriptBlock;
                 $txt = ""
                 $expr = $null
+                $single_token = $null
                 try
                 {
                       while (-not [BraidLang.Braid]::_stop)
@@ -374,9 +375,16 @@ function BraidRepl
                                 continue
                             }
 
+        
+
                             if ($txt -eq '\')
                             {
                                 break
+                            }
+
+                            if ($txt -match '^ *[^ ]+ *$')
+                            {
+                                $single_token = $txt.Trim()
                             }
 
                             # If the command is not wrapped in parens add them
@@ -414,24 +422,19 @@ function BraidRepl
                     continue
                 }
 
-                if ($txt -eq 'quit')
-                {
-                    [BraidLang.Braid]::ExitBraid = $true;
-                    break
-                }
 
                 if ($txt -eq '\')
                 {
                     Write-Host -fore yellow "Multi-line mode - type ;; to exit..."
                     $txt = "";
-                    while ($true)
+                    while (-not [BraidLang.Braid]::_stop)
                     {
                         $element = Read-Host -Prompt ":"
                         if ($element -eq ';;')
                         {
                             break
                         }
-                        $txt += "`n" + $element;
+                        $txt += " " + $element;
                     }
 
                     # add the consolidated text to the editor history
@@ -456,10 +459,30 @@ function BraidRepl
                             $stopwatch.Stop()
                             $stopwatch.Reset()
                             $stopwatch.Start()
+
                             try
                             {
                                 [BraidLang.Braid]::CallStack.Caller = $expr;
                                 $result = [BraidLang.Braid]::Eval($expr.Car);
+                            }
+                            catch 
+                            {
+                                if ($_.Exception.InnerException -is [BraidLang.BraidCommandNotFoundException] -and $single_token)
+                                {
+                                    $result = [BraidLang.Braid]::GetVariable($single_token)
+                                    if ($result)
+                                    {
+                                        $result = $result.Value
+                                    }
+                                    else
+                                    {
+                                        throw $_
+                                    }
+                                }
+                                else
+                                {
+                                    throw $_
+                                }
                             }
                             finally
                             {

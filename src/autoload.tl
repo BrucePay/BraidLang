@@ -308,7 +308,7 @@ Examples:
     ; into an executable expression that looks like:
     ;   (+ 2 (* 4 5))
     ;
-    (defn ParseExpr [next]
+    (defn ParseExpr [next-token]
 
         ; the value and operator stacks; just plain old vectors
         ; since Braid Vector types have .push() and .pop() methods
@@ -317,11 +317,11 @@ Examples:
 
         ; parse the tokens into an executable expression
         (let doloop true)
-        (while (and doloop (let token (next)))
+        (while (and doloop (let token (next-token)))
             (matchp token
                 ; nested expressions
                 | "("   ->
-                    (.push valstk (ParseExpr next))
+                    (.push valstk (ParseExpr next-token))
                 | ")"   ->
                     ; need to use loop variable because break is eaten by the pattern matcher
                     (let doloop false)
@@ -409,6 +409,7 @@ Examples:
             ]
 
             ; Return a closure that can be used to return the next token
+            ; note - this must use the raw lambda syntax, not fn or \
             (lambda []
                 (let result null)
                 (when (< tindex (.count tokens))
@@ -445,7 +446,7 @@ Examples:
     ; into an executable expression that looks like:
     ;   (+ 2 (* 4 5))
     ;
-    (defn ParseExpr [next]
+    (defn ParseExpr [next-token]
 
         ; the value and operator stacks; just plain old lists
         ; since BraidLists have .push() and .pop() methods
@@ -454,11 +455,11 @@ Examples:
 
         ; parse the tokens into an executable expression
         (let doloop true)
-        (while (and doloop (let token (next)))
+        (while (and doloop (let token (next-token)))
             (matchp token
                 ; nested expressions
                 | "("   ->
-                    (.push valstk (ParseExpr next))
+                    (.push valstk (ParseExpr next-token))
                 | ")"   ->
                     ; need to use loop variable because break is eaten by the pattern matcher
                     (let doloop false)

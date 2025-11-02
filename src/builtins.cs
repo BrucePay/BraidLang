@@ -9215,65 +9215,83 @@ namespace BraidLang
                         predicate = args[1];
                     }
 
-                    if (predicate is Regex pattern)
+                    // Figure out which func to use when comparing. This is a bit complicated
+                    // because, for some types, the default 'invoke' action is not right. For
+                    // filter we need a 'compare' action instead so we use a bunch of closures
+                    // to do this.
+                    switch (predicate)
                     {
-                        Func<Vector, object> regexFunc = (Vector matchargs) =>
-                         {
-                             if (matchargs != null && matchargs[0] != null)
-                                 return pattern.IsMatch(matchargs[0].ToString());
-                             else
-                                 return false;
-                         };
+                        case Regex pattern:
+                            func = (Vector matchargs) =>
+                             {
+                                 if (matchargs != null && matchargs[0] != null)
+                                     return pattern.IsMatch(matchargs[0].ToString());
+                                 else
+                                     return false;
+                             };
+                            break;
 
-                        func = regexFunc;
-                    }
-                    else if (predicate is Type || predicate is TypeLiteral)
-                    {
-                        Type type;
-                        if (args[1] is TypeLiteral tlit)
-                        {
-                            type = (Type)tlit.Value;
-                        }
-                        else
-                        {
-                            type = (Type)predicate;
-                        }
-
-                        Func<Vector, object> typeComparer = (Vector matchargs) =>
-                        {
-                            if (matchargs != null && matchargs[0] != null)
+                        case Type type:
+                            func = (Vector matchargs) =>
                             {
-                                object val = matchargs[0];
-                                Type valtype;
-                                if (val is Type t)
-                                    valtype = t;
+                                if (matchargs != null && matchargs[0] != null)
+                                {
+                                    object val = matchargs[0];
+                                    Type valtype;
+                                    if (val is Type t)
+                                        valtype = t;
+                                    else
+                                        valtype = val.GetType();
+
+                                    return type.IsAssignableFrom(valtype);
+                                }
                                 else
-                                    valtype = val.GetType();
-
-                                return type.IsAssignableFrom(valtype);
-                            }
-                            else
-                            {
-                                return false;
-                            }
-                        };
-
-                        func = typeComparer;
-                    }
-                    else if (args[1] is s_Expr sexpr)
-                    {
-                        if (sexpr.IsLambda)
-                        {
-                            func = funargs =>
-                            {
-                                var cond = new s_Expr(sexpr, new s_Expr(funargs[0]));
-                                var evalResult = Eval(cond, true, true);
-                                return evalResult;
+                                {
+                                    return false;
+                                }
                             };
-                        }
-                        else
-                        {
-                            if (donteval)
+                            break;
+
+                        case TypeLiteral tlit:
+                            Type tlitType = (Type)tlit.Value;
+
+                            func = (Vector matchargs) =>
+                            {
+                                if (matchargs != null && matchargs[0] != null)
+                                {
+                                    object val = matchargs[0];
+                                    Type valtype;
+                                    if (val is Type t)
+                                        valtype = t;
+                                    else
+                                        valtype = val.GetType();
+
+                                    return tlitType.IsAssignableFrom(valtype);
+                                }
+                                else
+                                {
+                                    return false;
+                                }
+                            };
+                            break;
+
+                        case s_Expr sexpr:
+                            if (sexpr.IsLambda)
+                            {
+                                // If it's a lambda, eval'ing it should give you
+                                // a function literal which you can just call
+                                // otherwise iit's an error.
+                                if (Eval(sexpr) is FunctionLiteral fl)
+                                {
+                                    predicate = fl.Value;
+                                    func = ((Callable)predicate).FuncToCall;
+                                }
+                                else
+                                {
+                                    BraidRuntimeException($"filter: expression '{sexpr}' can't be used as a predicate function.");
+                                }
+                            }
+                            else if (donteval)
                             {
                                 func = (Func<Vector, object>)GetFunc(callStack, predicate);
                             }
@@ -9283,6 +9301,14 @@ namespace BraidLang
                                 if (fresult == null)
                                 {
                                     BraidRuntimeException($"filter: no predicate function was found corresponding to '{predicate}'.");
+                                }
+
+                                // One more level of eval for the case a lambda is being built up
+                                // in pieces e.g.
+                                //    (range 10 | filter (list 'lambda '[n] '(% n 2)))
+                                if (fresult is s_Expr s && s.IsLambda)
+                                {
+                                    fresult = Eval(s);
                                 }
 
                                 // BUGBUGBUG either everything gets wrapped in Callable or this needs to expand a bunch.
@@ -9295,40 +9321,36 @@ namespace BraidLang
                                     BraidRuntimeException($"filter: the predicate argument '{fresult}' doesn't implement " +
                                                         "the Callable interface and can't be used as a 'filter' predicate.");
                                 }
-                            }
-                        }
-                    }
-                    else if (predicate is KeywordLiteral klit)
-                    {
-                        func = klit.FuncToCall;
-                    }
-                    else if (predicate is DictionaryLiteral dlit)
-                    {
-                        var ppe = new PropertyPatternElement(dlit);
-                        func = funargs =>
-                            {
-                                int consumed;
-                                return ppe.DoMatch(CallStack, funargs, 0, out consumed) == MatchElementResult.Matched;
                             };
-                    }
-                    else if (predicate is IInvokeableValue lam)
-                    {
-                        func = (Vector av) => lam.Invoke(av);
-                    }
-                    else if (predicate is System.Func<BraidLang.Vector, System.Object> justfunc)
-                    {
-                        func = justfunc;
-                    }
-                    else
-                    {
-                        // Handle filtering when the predicate is a constant value
-                        func = (Vector cmpargs) => (cmpargs.Count == 1) && Braid.CompareItems(cmpargs[0], predicate);
+                            break;
+
+                        case DictionaryLiteral dlit:
+                            var ppe = new PropertyPatternElement(dlit);
+                            func = funargs =>
+                                {
+                                    int consumed;
+                                    return ppe.DoMatch(CallStack, funargs, 0, out consumed) == MatchElementResult.Matched;
+                                };
+                            break;
+
+                        case IInvokeableValue lam:
+                            func = (Vector av) => lam.Invoke(av);
+                            break;
+
+                        case System.Func<BraidLang.Vector, System.Object> justfunc:
+                            func = justfunc;
+                            break;
+
+                        default:
+                            // Handle filtering when the predicate is a constant value
+                            func = (Vector cmpargs) => (cmpargs.Count == 1) && Braid.CompareItems(cmpargs[0], predicate);
+                            break;
                     }
                 }
 
                 var argVect = new Vector { null };
 
-                // Otherwise input is a collection so return a collection
+                // The filtered collection of values to return
                 var result = new Vector();
 
                 foreach (var item in GetNonGenericEnumerableFrom(data))
@@ -9341,7 +9363,7 @@ namespace BraidLang
                     try
                     {
                         argVect[0] = item;
-                        
+
                         object funcResult = func(argVect);
 
                         if (funcResult is BraidBreakOperation breakOp)
@@ -9379,6 +9401,7 @@ namespace BraidLang
                 // If the vector is empty, return null instead of the empty vector.
                 if (result.Count == 0)
                     return null;
+
                 return result;
             };
 
@@ -9495,9 +9518,19 @@ namespace BraidLang
                     else
                     {
                         if (donteval)
+                        {
                             func = GetFunc(callStack, predicate, out ftype, out funcname);
+                        }
                         else
-                            func = GetFunc(callStack, Eval(predicate, true, true), out ftype, out funcname);
+                        {
+                            // Handle the case where the lambda is computed
+                            //   range 10 | lazy-filter (list 'lambda '[n] '(% n 2)) | aslist
+                            func = GetFunc(callStack, Eval(predicate), out ftype, out funcname);
+                            if (func is s_Expr s && s.IsLambda)
+                            {
+                                func = Eval(s);
+                            }
+                        }
                     }
                 }
                 else if (predicate is DictionaryLiteral dlit)

@@ -1193,6 +1193,10 @@ namespace BraidLang
                         list.LineNo = lineno;
                         list.File = _current_file;
                         list.Function = _current_function;
+                        if (processedToken is Symbol lambda)
+                        {
+                            list.IsLambda = true;
+                        }
                     }
                     else
                     {

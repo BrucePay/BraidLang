@@ -1902,14 +1902,14 @@ namespace BraidLang
         {
         }
 
-        public FunctionLiteral(Callable lambda, string helpInfo)
+        public FunctionLiteral(Callable func, string helpInfo)
         {
-            if (lambda == null)
+            if (func == null)
             {
-                Braid.BraidRuntimeException("creating ^FunctionLiteral instance, the argument 'lambda' cannot be null.");
+                Braid.BraidRuntimeException("creating ^FunctionLiteral instance, the function argument cannot be null.");
             }
 
-            LambdaValue = lambda;
+            LambdaValue = func;
             HelpInfo = helpInfo;
         }
 

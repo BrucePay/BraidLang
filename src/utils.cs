@@ -497,6 +497,13 @@ namespace BraidLang
         /// <returns>The best match that was found or null if nothing was found or the user cancelled the operation.</returns>
         public static Symbol HandleUnboundSymbol(PSStackFrame callStack, Symbol sym)
         {
+
+            string[] matches = BestMatchFunction(sym.Value).Take(10).ToArray();
+
+            Braid.BraidCommandNotFoundException($"Unbound symbol '{sym.Value}'. Possible matches are: '{string.Join("', '", matches)}'.");
+
+            return null;
+/*
             if (callStack.IsInteractive == false)
             {
                 Braid.BraidRuntimeException($"Unbound symbol '{sym.Value}'.");
@@ -507,6 +514,7 @@ namespace BraidLang
             string result = BraidPromptForChoice(
                 $"\n  Symbol '{sym.Value}' was not found. Choose one of the following options or press 'c' to cancel:\n",
                 matches);
+
             if (result != null)
             {
                 var resolvedSym = Symbol.FromString(result);
@@ -518,6 +526,7 @@ namespace BraidLang
 
             Braid.BraidRuntimeException($"Unbound symbol '{sym.Value}': a symbol must have a value or function assigned to it before it can be used in an expression.");
             return null;
+*/
         }
 
         /// <summary>

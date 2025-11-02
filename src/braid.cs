@@ -116,6 +116,21 @@ namespace BraidLang
     }
 
     /// <summary>
+    /// Command not found exception.
+    /// </summary>
+    public class BraidCommandNotFoundException : BraidBaseException
+    {
+        public BraidCommandNotFoundException(string Message)
+        : base(Message)
+        {
+        }
+
+        public BraidCommandNotFoundException(string Message, Exception InnerException)
+            : base(Message, InnerException)
+        {
+        }
+    }
+    /// <summary>
     /// Exception thrown to exit Braid; thrown by the 'quit' built-in function.
     /// </summary>
     public class BraidExitException : System.Exception
@@ -685,7 +700,7 @@ namespace BraidLang
         }
 
         bool _isLambda;
-        public bool IsLambda { get => _isLambda; }
+        public bool IsLambda { get => _isLambda; internal set => _isLambda = value; }
 
         bool _isQuote;
         public bool IsQuote { get => _isQuote; }
@@ -1250,7 +1265,7 @@ namespace BraidLang
         {
             if (data == null)
             {
-                Braid.BraidRuntimeException($"The first argument to slice must not be null.");
+                Braid.BraidRuntimeException($"The first argument to 'slice' must not be null.");
             }
 
             if (data is Slice s)
@@ -2752,6 +2767,23 @@ namespace BraidLang
             throw new BraidUserException(msg, innerException);
         }
 
+        public static void BraidCommandNotFoundException(string message, Exception innerException = null, ISourceContext code = null)
+        {
+            string msg = string.Empty;
+            if (code != null)
+            {
+                msg += GetSourceLine(code.Text, code.Offset);
+            }
+            else if (CallStack.Caller != null)
+            {
+                var cntxt = CallStack.Caller;
+                msg += GetSourceLine(cntxt.Text, cntxt.Offset);
+            }
+
+            msg += BraidBaseException.Annotate(message, code);
+            throw new BraidCommandNotFoundException(msg, innerException);
+        }
+
         /// <summary>
         /// The directory where the Braid runtime is located.
         /// </summary>
@@ -4232,6 +4264,36 @@ namespace BraidLang
         }
 
         /// <summary>
+        /// Get a variable object from the Braid runtime
+        /// </summary>
+        /// <param name="nameObj">String or Symbol to look up</param>
+        /// <returns>The variable object</returns>
+        public static BraidVariable GetVariable(object nameObj)
+        {
+            if (nameObj == null)
+            {
+                BraidRuntimeException("The name argument to GetValue() cannot be null.");
+            }
+
+            if (!(nameObj is Symbol varsym))
+            {
+                varsym = Symbol.FromString(nameObj.ToString());
+                if (varsym == null)
+                {
+                    BraidRuntimeException("GetValue(): requires a non-empty symbol or string to retrieve.");
+                }
+            }
+
+            BraidVariable v = CallStack.GetVariable(varsym);
+            if (v != null)
+            {
+                return v;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Get the value of a braid variable. Used by "loadbraid.ps1".
         /// </summary>
         /// <param name="nameObj">The name of the variable to retrieve</param>
@@ -5086,8 +5148,19 @@ namespace BraidLang
                         else
                         {
                             parsedScript = (s_Expr)parsedScript.Cdr;
-                            scriptArgs = (VectorLiteral)parsedScript.Car;
-                            scriptBody = (s_Expr)parsedScript.Cdr;
+                            scriptArgs = parsedScript.Car as VectorLiteral;
+                            if (scriptArgs == null)
+                            {
+                                BraidRuntimeException(
+                                    $"Arguments to a script must be in a vector literal not '{parsedScript.Car.GetType().FullName}'.");
+                            }
+
+                            scriptBody = parsedScript.Cdr as s_Expr;
+                            if (scriptBody == null)
+                            {
+                                BraidRuntimeException(
+                                    $"The body of a script must be in an s-expression not '{parsedScript.Car.GetType().FullName}'.");
+                            }
                         }
 
                         Vector argsAndBody = new Vector

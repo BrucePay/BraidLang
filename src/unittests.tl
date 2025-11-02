@@ -15074,6 +15074,9 @@ lambda [
     )
     [1 2 3 4 5 6 7 8 9 10]
 )
+
+;---------------------------------------------------------
+; Test the 'continuation' function
 (test/exec :continuation1
     (\ ->
         ; Tail-recursively find the max value in the tree
@@ -15651,7 +15654,7 @@ lambda [
 )
 
 ;-----------------------------------------------------------
-; Test base of function
+; Test base-of function
 (test/exec :base-of1
     (\ -> (base-of []))
     ^System.Collections.Generic.List[System.Object] ; BUGBUGBUG - add more tests
