@@ -503,7 +503,7 @@ namespace BraidLang
             Braid.BraidCommandNotFoundException($"Unbound symbol '{sym.Value}'. Possible matches are: '{string.Join("', '", matches)}'.");
 
             return null;
-/*
+/* BUGBUGBUG - as is, this prompt mechanism was more annoying than useful but I'm leaving the code in case we reconsider
             if (callStack.IsInteractive == false)
             {
                 Braid.BraidRuntimeException($"Unbound symbol '{sym.Value}'.");

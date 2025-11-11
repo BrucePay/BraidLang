@@ -16464,119 +16464,74 @@ lambda [
 ;-----------------------------------------------------------
 ; Test 'completer' functionality - these tests are fragile as
 ; they depend on the contents of the default Braid directory.
-(test/exec :completer1
-    #(completer "'auto" null 0 | first)
+(test/exec :completer1 ; test file completion
+    #(completer "" "'auto" "" | first)
     "'autoload.tl"
 )
 (test/exec :completer2
-    #(completer "'au" null 0 | first)
+    #(completer "" "'au" "" | first)
     "'autoload.tl"
 )
 (test/exec :completer3
-    #(completer "(au" null 0 | first)
+    #(completer "" "(au" "" | first)
     "(autoload.tl"
 )
-(test/exec :completer4
-    #(completer "(.sub" null 0 | first | contains? "(.SubString")
+(test/exec :completer4 ; test method completion
+    #(completer "" ".sub" "" | first | contains? ".SubString")
     true
 )
 (test/exec :completer5
-    #(completer "(.subt" null 0 | first | contains? "(.Subtract")
+    #(completer "" ".subt" "" | first | contains? ".Subtract")
     true
 )
-(test/exec :completer6
-    #(completer ".math/sig" null 0 )
+(test/exec :completer6 ; test static method completion
+    #(completer "" ".math/sig" "" )
     [ ".math/Sign" ]
 )
 (test/exec :completer7
-    #(completer "(.math/sig" null 0)
-    [ "(.math/Sign" ]
+    #(completer "" ".console/wri" "")
+    [ ".console/WriteLine", ".console/Write" ]
 )
 (test/exec :completer8
-    #(completer ":auto" null 0 | first )
-    ":autoload.tl"
+    #(completer "" ".console/write" "")
+    [ ".console/WriteLine", ".console/Write" ]
 )
 (test/exec :completer9
-    #(completer ":au" null 0 | first)
-    ":autoload.tl"
-)
-(test/exec :completer10
-    #(completer "(:au" null 0 | first )
-    "(:autoload.tl"
-)
-(test/exec :complete10a
-    (fn ->
-        ; test completion on dictionary keys, no leading '('
-        (global :_completion_test_ {:z12345678 13})
-        (let result (completer ":z123" null 0))
-        (undef _completion_test_)
-        result
-    )
-    [ ":z12345678" ]
-)
-(test/exec :complete10b
-    (fn ->
-        ; test completion on dictionary keys with leading '('
-        (global :_completion_test_ {:z12345678 13})
-        (let result (completer "(:z123" null 0))
-        (undef _completion_test_)
-        result
-    )
-    [ "(:z12345678" ]
-)
-(test/exec :completer11
-    #(completer "(.console/wri" null 0)
-    [ "(.console/WriteLine", "(.console/Write" ]
-)
-(test/exec :completer12
-    #(completer ".console/wri" null 0)
-    [ ".console/WriteLine", ".console/Write" ]
-)
-(test/exec :completer13
-    #(completer "(.console/write" null 0)
-    [ "(.console/WriteLine", "(.console/Write" ]
-)
-(test/exec :completer14
-    #(completer ".console/write" null 0)
-    [ ".console/WriteLine", ".console/Write" ]
-)
-(test/exec :completer15
-    #(completer "(.console/writel" null 0)
-    [ "(.console/WriteLine" ]
-)
-(test/exec :completer16
-    #(completer ".console/writel" null 0)
+    #(completer "" ".console/writel" "" )
     [ ".console/WriteLine" ]
 )
-(test/exec :completer17
-(completer "^funct" null 0)
+(test/exec :completer10  ; test type completion
+    #(completer "" "^funct" "")
     [ "^function" ]
 )
-(test/exec :completer18
-(completer "(^funct" null 0)
-    [ "(^function" ]
+(test/exec :completer11
+    #(completer "" "^funct" "")
+    [ "^function" ]
 )
-(test/exec :completer19
-    (fn ->
-         (completer "" "(gps -" "" | contains? "-WarningAction:")
-    )
+(test/exec :completer12  ; test command parameter completion
+    #(completer "gps" "-" "" | contains? "-WarningAction")
     true
 )
-(test/exec :completer20
-    (fn ->
-         (completer "" "(files -" "")
-    )
-    [ "-new " ]
+(test/exec :completer13  ; test completers for map, filter, etc.
+    #(completer "map" "" "")
+    [ @"(\ x -> x)" ]
 )
-(test/exec :completer21
-    (fn ->
-        (completer "" "| map " "")
-    )
-    [ "(\ x -> x)" ]
+(test/exec :completer14
+    #(completer "filter" "" "")
+    [ @"(\ x -> x)" ]
+)
+(test/exec :completer15  ; test completers for reduce and fold
+    #(completer "reduce" "" "")
+    [ @"(\ x y -> (+ x y))" ]
+)
+(test/exec :completer16  ; test git argument completion
+    #(completer "git" ":sta" "")
+    [ ":status" ]
 )
 
+
 ;-----------------------------------------------------------
-; Test the 'project' function
+; Test the 'project' type generator function
 (test/exec :project1
     ; smoke test
     #(get-process | take 10 | project :name :id :ws | count | > 2)

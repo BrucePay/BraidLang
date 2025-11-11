@@ -3618,7 +3618,7 @@ Examples:
 
 See also: completer
 """
-    [(^regex? pattern ".")]
+    [(^regex? pattern #".")]
 
     (.BraidLang.Braid/callstack
     | .GetSnapshot
@@ -3645,6 +3645,12 @@ See also: completer
     | map (\ n -> (str "." n))
     )
 )
+
+;--------------------------------------------------------------------------
+;
+; Define the prompt string
+;
+(let prompt "=> ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -3714,6 +3720,7 @@ Exmples:
 ;
 ; The completer pattern function.
 ;
+
 (defn completer
 """
 The tab-completion implementation for Braid. This
@@ -3724,45 +3731,66 @@ Examples:
     (completer <prefixString> <beforeString> <suffixString>)
     (completer "" "(list/" ":foo")
 """
+    ; completions for reduce,foldl and foldr
+    | #"^(reduce|foldl|foldr)$" prefix after ->
+        [@"(\ x y -> (+ x y))"]
 
     ; completions for specific commands
-    | prefix #"^.*[|(] *(map|filter|where|map|each|lazy-map|lazy-filter) +([^ ]*)$" after ->
-        ["(\ x -> x)"]
-
-    ; completions for reduce,foldl and foldr
-    | prefix #"^.*[|(] *(reduce|foldl|foldr) +([^ ]*)$" after ->
-        ["(\ x y -> (+ x y))"]
+    | #"^(map|filter|where|map|each|lazy-map|lazy-filter)$" prefix after ->
+        [@"(\ x -> x)"]
 
     ; git command completions
-    | prefix #"^.*[|(] *(git) +([^ ]*)$" after ->
-        (re/match-all [
-            ":add @(modified))"
-            ":pull)"
-            ":push)"
+    | #"git" prefix after ->
+        (filter [
+            ":add @(modified)"
+            ":pull"
+            ":push"
             ":commit -m: \"\""
-            ":branch \"\")" ":status)"
-            ":diff)"
-            ":checkout \"\")"
-            ] (!! matches 2))
+            ":branch \"\""
+            ":status"
+            ":diff"
+            ":checkout \"\""
+            ] (\ s -> (.startswith s prefix)))
 
     ; completions for 'cd' only completes directories.
-    | prefix #"^.*[|(] *(cd) +([^ ]*)$" after ->
-        (Get-Childitem -ea: :ignore -Directory "${prefix}*" | map .Name | map (\ f ->  (str "'" f)))
+    | "cd" prefix after ->
+        (Get-Childitem -ea: :ignore -Directory "${prefix}*" | map .Name)
+
+    ; handle looking up static methods e.g. .console/w<tab>
+    | before (#"^\.[a-z0-9.]+/[a-z0-9]*$" prefix) after ->
+        (let typename:prefix: (.split prefix \/))
+        (let type (^type? (.substring typename 1)))
+        (let membername (^Regex? (str "^" prefix)))
+        (if type
+            (. type :getmembers
+                | filter -not ^System.Reflection.PropertyInfo
+                | filter .?IsStatic
+                | map .name
+                | re/replace-all "^[gs]et_"
+                | distinct
+                | re/match-all membername
+                | map #(str typename "/" %0)
+            )
+            ; otherwise
+            []
+        )
+
+    ; object member completions of the form '(.p<tab> val)'
+    | before (#"^\.[a-z0-9]+$" prefix) after ->
+        (all-members | filter -not .?IsStatic | filter (\ m -> (str/startswith m prefix)))
 
     ; handle named command parameters e.g. get-childitem -rec<tab>
-    | prefix #"^.*[(|] *([a-z][^ ]*).* +(-[a-z]*)$" after ->
-        (let name (!! matches 1))
-        (let sw (!! matches 2))
-        (let func (getFunc name))
+    | before (#"^-[^ ]*" prefix) after ->
+        (let func (getFunc before))
         (if func
             (matchp func
-                | ^lambda ->
-                    (.keywords func
+                | ^BraidLang.Function ->
+                    (.?keywords func
                     | map (\ obj ->
                         (let k (.key obj))
                         (let trailing (if (.value obj | .RequiresArgument) ": " " "))
                         (str "-" k trailing))
-                    | filter (\ w -> (str/startswith w sw))
+                    | filter (\ w -> (str/startswith w prefix))
                     )
 
                 | ^System.Management.Automation.AliasInfo | ^System.Management.Automation.CmdletInfo ->
@@ -3773,125 +3801,68 @@ Examples:
 
                     ; if the alias resolved to a cmdlet, return the parameter completions.
                     (forall pair (.?parameters func)
-                        (str "-" (.key pair) (if (.SwitchParameter (.value pair)) "" ":"))
-                            | filter (\ w -> (str/startswith w sw)))
+                        (str "-" (.key pair))
+                            | filter (\ w -> (str/startswith w prefix)))
 
                 | -> []
             )
         )
 
-    ; BUGBUGBUG - this works in the api but not actually on the cmd line - check c# code to see how before and after are built.
-    ; object member completions of the form '(.p<tab> val)'
-    | prefix (#"[|(]? *(\.[a-z]*)" member) (#" *([a-z]+)" var) ->
-        (let var (!! var 1))
-        (let member (!! member 1))
-
-        (if (bound? var)
-            (do
-                (let var (get var))
-                (If var
-                    (do
-                        (.getmembers (type-of var)
-                        | map (\ x -> (str "." (.name x) " "))
-                        | sort
-                        | distinct
-                        | filter (\ y -> (str/startswith y member))
-                        )
-                   )
-               )
-           )
-       )
-
-    ; handle looking up static methods e.g. .console/w<tab>
-    | #"^(\(?)\\.([a-z0-9.]+)/([a-z0-9]*)$" before after ->
-        (let typename (matches 2))
-        (let type (^type? typename))
-        (let membername (^Regex? (str "^" (matches 3))))
-
-        (if type
-            (. type :getmembers
-                | filter -not ^System.Reflection.PropertyInfo
-                | filter .?IsStatic
-                | map .name
-                | re/replace-all "^[gs]et_"
-                | distinct
-                | re/match-all membername
-                | map #(str (!! matches 1) "." typename "/" %0)
-            )
-            ; otherwise
-            []
+    ; deal with type names e.g. ^func.
+    | before (#"^\^[^ ]+" prefix) after ->
+        (let candidates (distinct [
+               @__system_types
+               @(.GetTypes *callstack* | .keys)
+               @(.BraidLang.Braid/callstack | .vars | .values | map .value
+                   | filter some? | map (\ e -> (. (.gettype e) :name)) | distinct | sort)
+            ] | sort)
         )
 
-    ; deal with type names e.g. (^func or ^func.
-    | #"^(\(?)\^([^ \t]+)" before after ->
-         (let startStr (!! matches 2))
-         (let candidates [
-                @__system_types
-                @((.GetTypes *callstack*) | .keys)
-                @(.BraidLang.Braid/callstack | .vars | .values | map .value
-                    | filter some? | map (\ e -> (. (.gettype e) :name)))
-             ]
-         )
-
-         (distinct candidates
-            | filter (\ candidate -> (str/startswith candidate startStr))
-                | map (\ s -> (str (!! matches 1) "^" s)))
-
-         ; BUGBUGBUG currently unused - returning all of the types is too much
-         ;(.AppDomain/CurrentDomain | .GetAssemblies | flatmap .gettypes | filter -not #"__anonymous" | map tostring)
-
-    ; deal with looking up member names .conso<tab> .sub<tab>
-    | #"^(\(?)\.([a-z0-9]+$)" before after ->
-        ; search all of the types used in bound variables
-        (all-members (^regex? (str "^" (!! matches 2)))
-            | map (\ n -> (str (!! matches 1) n)))
+        (let prefix (.substring prefix 1)) ; remove the ^ from the name
+        (distinct candidates
+            | filter (\ candidate -> (str/startswith candidate prefix))
+                | map (\ s -> (str "^" s)))
 
     ; match quoted words against the file system
-    | #"^\(?'([^ \t]+$)" before after ->
-        (let pattern (str (!! matches 1) "*"))
-        (get-childitem -ea: :ignore pattern | to-vector | map #(str "'" (.name %0)))
-
-    ; match :keyword arguments against the dictionary keys and the file system
-    | #"^(\(?):([^ \t]+$)" before after ->
-        (let pattern (str (!! matches 2) "*"))
-        (let ^regex? keypattern (str "^" (!! matches 2)))
-
-        ; try matching dictionary keys from all variables
-        (let results (.BraidLang.Braid/callstack | .GetSnapshot | .vars | map .value | map .value
-            | where ^IDictionary | flatmap .keys | re/match-all keypattern))
-
-        ; add in the file system matches
-        (let results [@results @(get-childitem -ea: :ignore pattern | map .name)])
-
-        ; filter, format and return the matches
-        (results | where some? | map #(str (matches 1) ":" %0))
+    | before (#"^'[^ \t]+$" prefix) after ->
+        (get-childitem -ea: :ignore (str (.substring prefix 1) "*") | to-vector | map #(str "'" (.name %0)))
 
     ; match "(cmd..."
-    | #"^\( *([^ \t]+$)" before after ->
-        (let ^regex? func-pattern (str "^" (!! matches 1)))
-        (let ^string script-pattern (str (!! matches 1) "*.tl"))
-        (let ^string cmdlet-pattern (str (!! matches 1) "*"))
+    | before (#"^\([^ \t]+$" prefix)  after ->
+        (let prefix (.substring prefix 1))
+        (let ^regex? func-pattern (str "^" prefix))
+        (let ^string script-pattern (str prefix "*.tl"))
+        (let ^string cmdlet-pattern (str prefix "*"))
 
         (concat
             ; try matching functions
-            (functions | map .Key | map .value | re/match-all func-pattern)
+            (functions | map .Key | map .value | filter func-pattern)
             ; try matching files
             (Get-Childitem -File -ea: :ignore script-pattern | map .Name)
-            (try (get-command -ea: :ignore cmdlet-pattern | map .name) -catch: [])
+            ; matching PowerShell commands
+            (try (get-command -ea: :ignore -type: (.System.Management.Automation.CommandTypes/Cmdlet) cmdlet-pattern | map .name) -catch: [])
         | distinct
         | map (\ s -> (str "(" s))
         )
 
     ; match unquoted words against functions and the current file system directory
-    | prefix before after ->
+    | before (#"^[^ \t]+$" prefix)  after ->
+        (let ^regex? func-pattern (str "^" prefix))
+        (let ^string script-pattern (str prefix "*.tl"))
+        (let ^string cmdlet-pattern (str prefix "*"))
+
         (concat
-            ; try matching functions...
-            (get-symbols | where bound? | map .Value | re/match-all "^${prefix}")
-            ; try matching files...
-            (Get-Childitem -File -ea: :ignore "${prefix}*" | map .Name | map (\ f ->  (str "'" f)))
+            ; try matching functions
+            (functions | map .Key | map .value | filter func-pattern)
+            ; try matching files
+            (Get-Childitem -File -ea: :ignore script-pattern | map .Name)
+            ; matching PowerShell commands
+            (try (get-command -ea: :ignore -type: (.System.Management.Automation.CommandTypes/Cmdlet) cmdlet-pattern | map .name) -catch: [])
         | distinct
-        | sort -descending
+        | map str
         )
+
+    | -> [] ; default returns empty collection
 )
 
 ; Bind the completer callback. You can't currently create a delegate from
@@ -3899,28 +3870,19 @@ Examples:
 
 (.BraidLang.LineEditor/BraidCompleter
     (^Func[string,string,string,object]?
-        (fn prefix before after  -> (try -catch: null (completer prefix before after)))))
+        (fn prefix before after -> (try -catch: null (completer prefix before after)))
+    )
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End completer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;--------------------------------------------------------------------------
 ;
 ; Functions that should be moved to a profile. These are "user-assistance"
 ; functions that aren't generally used in programs.
 ;
-
-;--------------------------------------------------------------------------
-;
-(defspecial edit
-    "Launch gvim on the argument file."
-    [file]
-
-    (if (list? file)
-        (let file (tostring (eval file)))
-    )
-
-    (Start-Process -NoNewWindow -FilePath: (whence "gvim") -ArgumentList: file)
-)
 
 ;--------------------------------------------------------------------------
 ;
@@ -3952,12 +3914,7 @@ Examples:
     (cls)
 )
 
-;--------------------------------------------------------------------------
-;
-;
-; Define the prompt string
-;
-(def prompt "=> ")
+
 
 ;--------------------------------------------------------------------------
 ;
@@ -4010,42 +3967,6 @@ Examples:
         -finally: #(.close fs)
     )
 )
-
-;--------------------------------------------------------------------------
-;
-; Wrapper to make git a little more friendly inside braid.
-
-;(defn git
-;"
-;The 'git' function is a Braid wrapper around 'git.exe' that makes
-;it a bit easier to use git from the Braid repl.
-;
-;Examples:
-;    (git :add @(modified))          ; all the the modified files
-;    (git :commit -m: \"msg...\")    ; creates a commit with the message \"msg\"
-;"
-;    [(^string? subcmd) :m: :norun &args]
-;
-;    (defn stringify
-;        | (^string e) -> " \"${e}\""
-;        | (^ISeq   o) -> (join o " ")
-;        | other       -> (+ " " other)
-;    )
-;
-;    (let fixedargs
-;        (str
-;            (.tolower subcmd)
-;            " "
-;            (if m "-m \"${m}\" "  " ")
-;            @(args | stringify)
-;        )
-;    )
-;
-;    (if norun
-;        (info "git.exe" fixedargs)
-;        (start -workingdirectory: (pwd) -wait -nonewwindow "git.exe" fixedargs)
-;    )
-;)
 
 ;--------------------------------------------------------------------------
 ;

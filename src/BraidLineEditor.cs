@@ -285,9 +285,38 @@ namespace BraidLang
                     {
                         try
                         {
-                            string before = input.Substring(0,position);
-                            string after  = input.Substring(position);
-                            object result = BraidCompleter.Invoke(prefix, before, after);
+                            string before;
+                            // Move to the previous token
+                            int before_end = beginning == 0 ? 0 : beginning - 1;
+                            if (before_end != 0)
+                            {
+                                while (before_end > 0 && input[before_end] == ' ')
+                                    before_end--;
+                                int before_start = before_end;
+                                while (before_start > 0 && input[before_start] != ' ')
+                                {
+                                    before_start--;
+                                }
+                                if (input[before_start] == ' ')
+                                    before_start++;
+                                before = input.Substring(before_start, before_end - before_start + 1);
+                            }
+                            else
+                            {
+                                before = "";
+                            }
+
+                            string after;
+                            if (input.Length == position)
+                            {
+                                after = "";
+                            }
+                            else
+                            {
+                                after = input.Substring(position);
+                            }
+                            // BUGBUGBUG Console.WriteLine($"\nbefore '{before}' prefix '{prefix}' after '{after}'\n");
+                            object result = BraidCompleter.Invoke(before, prefix, after);
                             if (result is PSObject pso)
                             {
                                 result = pso.BaseObject;
@@ -323,10 +352,10 @@ namespace BraidLang
                     foreach (var k in candidates)
                     {
                         // Console.WriteLine("checking candidates '{0}'", k); // BUGBUGBUG
-                        if (k.Length > prefix.Length)
+                        if (k.Length >= prefix.Length)
                         // && string.Equals(prefix, k.Substring(0, prefix.Length), StringComparison.OrdinalIgnoreCase))
                         {
-                            if (k[0] == '\'' && prefix[0] != '\'')
+                            if (prefix.Length > 0 && k[0] == '\'' && prefix[0] != '\'')
                             {
                                 matches.Add(k.Substring(prefix.Length+1));
                             }
