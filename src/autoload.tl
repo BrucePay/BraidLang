@@ -702,10 +702,28 @@ See also: file/parse parse-text tokenize-file tokenize-text
 ;--------------------------------------------------------------------------
 ;
 (defn doc
-"A function to quickly get the documentation string for a function"
+"
+A function to quickly get the documentation string for a function, type or
+method.
+
+Examples:
+    (doc if)         ; get the documentation for the 'if' command.
+    (doc ^int)       ; documentation for the ^int type
+    (doc .substring) ; documentation for .substring
+"
     [function]
 
-    (get-assoc function "helptext" | tostring | .trim)
+    (matchp function
+    | ^BraidLang.MemberLiteral  ->
+        (.BraidLang.Braid/callstack | .GetSnapshot | .Vars | map .Value | map .Value
+            | filter some? | map type-of | distinct | flatmap members-of
+            | filter (^regex? function) | join "\n")
+
+    | ^type -> ([ "Members of type ^${function}:" @(members-of function)] | join "\n")
+
+    | ->
+        (get-assoc function "helptext" | tostring | .trim)
+    )
 )
 
 ;--------------------------------------------------------------------------
@@ -3781,10 +3799,13 @@ Examples:
 
     ; handle named command parameters e.g. get-childitem -rec<tab>
     | before (#"^-[^ ]*" prefix) after ->
-        (let func (getFunc before))
+        ; this is tricky, we need to pass the local variable value for "before" into the caller's scope
+        ; To do this, we construct an s-expression using the locally resolved variables and use upDo
+        ; to evaluate that expression in the caller's context.
+        (let func (upDo (list getFunc before)))
         (if func
             (matchp func
-                | ^BraidLang.Function ->
+                | ^BraidLang.UserFunction ->
                     (.?keywords func
                     | map (\ obj ->
                         (let k (.key obj))

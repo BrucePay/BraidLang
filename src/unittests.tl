@@ -16460,6 +16460,18 @@ lambda [
     )
     true
 )
+(test/exec :doc8
+    (\ ->
+        (doc .subtract | re/match #"timespan")
+    )
+    true
+)
+(test/exec :doc9
+    (\ ->
+        (doc ^int | re/match #"max")
+    )
+    true
+)
 
 ;-----------------------------------------------------------
 ; Test 'completer' functionality - these tests are fragile as
@@ -16511,6 +16523,13 @@ lambda [
 (test/exec :completer12  ; test command parameter completion
     #(completer "gps" "-" "" | contains? "-WarningAction")
     true
+)
+(test/exec :completer12a
+    (\ ->
+        (defn foo [:one])
+        (completer "foo" "-" "")
+    )
+    [ "-one " ]
 )
 (test/exec :completer13  ; test completers for map, filter, etc.
     #(completer "map" "" "")
