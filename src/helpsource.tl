@@ -1393,7 +1393,7 @@ Examples:
     (foreach i (range 1) (println i))              ; print numbers from 1 to 10
     (foreach x:y: [[1 2] [3 4]] (println (+ x y))) ; print sum of pairs
     (foreach [a b] [1 2 3 4] (println (+ a b)))    ; traverse two elements at a time
-    (foreach [a:b: c:d:] [[1 2] [3 4]] (println [(+ a b) (+ c d))) ; pattern matching
+    (foreach [a:b: c:d:] [[1 2] [3 4]] (println [(+ a b) (+ c d)])) ; pattern matching
 
 See also: forall map lazy-map filter lazy-filter each
 """)
