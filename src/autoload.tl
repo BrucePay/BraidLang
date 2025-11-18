@@ -1181,10 +1181,10 @@ See also: let let?
 ;--------------------------------------------------------------------------
 ;
 (defn vars
-"
+"""
 Function to print out the variables in the current scope. An optional
 regular expression can be specified to filter the results.
-"
+"""
     [(^regex? varname #"")]
 
     (.BraidLang.Braid/callstackstack
@@ -1198,11 +1198,15 @@ regular expression can be specified to filter the results.
 
 ;--------------------------------------------------------------------------
 ;
-; Define a computed variable for 'pwd' instead of a function.
-;
 (undef pwd)
-;(let pwd -getter: (\ _ -> (.environment/CurrentDirectory)) nil)
-(defn pwd [] (.environment/CurrentDirectory))
+(defn pwd
+"""
+Function to get the process current working directory.
+"""
+    []
+
+    (.environment/CurrentDirectory)
+)
 
 ;--------------------------------------------------------------------------
 ;
@@ -1213,7 +1217,6 @@ regular expression can be specified to filter the results.
 )
 
 ; load the previously stored list of directories
-;(global "DIRS_PATH"  (join-path (resolve-path "~/.config") "braid.dirs"))
 (global "DIRS_PATH" (join-path (.historydir *line-editor*) "braid.dirs"))
 (if (test-path DIRS_PATH)
     (read-lines DIRS_PATH | map (\ p -> (!! DIRLIST p true)))
@@ -1238,16 +1241,23 @@ regular expression can be specified to filter the results.
 ;--------------------------------------------------------------------------
 ;
 (defspecial cd
-"Directory stack aware 'cd' change directory function."
+"""
+Directory stack aware 'cd' change directory function. If 'cd -' is specified,
+it will jump back to the previous directory. If '-parent' is specified,
+it will jump to the parent directory of the specified path. If '-my path' is specified
+it will jump to 'path' relative to the user's document directory.
+
+Examples:
+    cd foo              ; change directory foo
+    cd -my: foo         ; change to '~/documents/foo'
+    cd -                ; change back to the previous directory.
+    cd -parent a/b/c    ; change to a/b
+"""
     [(path "~") :parent :replace: :my]
 
     (matchp path
     | (^symbol sym) :where (file/dir-exists (.value sym)) -> (let path (.value sym))
     | -> (let path (^string? (upDo path)))
-    )
-
-    (when replace
-        (let path (re/replace path replace))
     )
   
     (when parent
@@ -1275,13 +1285,12 @@ regular expression can be specified to filter the results.
     | "-" ->
             (if (bound? 'OLDPATH)
                 (do
-                    ; pop back to your old path
-                    (alert "cd'ing back to" (global "OLDPATH"))
-            
                     (let temp .environment/CurrentDirectory)
                     (Set-Location (global "OLDPATH"))
                     (.environment/CurrentDirectory (^string? (get-location)))
                     (global "OLDPATH" temp)
+                    ; returns the new current directory
+                    (.environment/CurrentDirectory)
                 )
                 (warn "OLDPATH not set")
             )

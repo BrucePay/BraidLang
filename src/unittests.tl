@@ -2184,7 +2184,46 @@ lambda [
     true
 )
 (test/exec :is?18 #(is? null null) true)
-
+; test is? with property patterns
+(test/exec :is?19
+    (\ ->
+        (project {:a 1 :b 2} | is? {:a _ :b 2})
+    )
+    true
+)
+(test/exec :is?20
+    (\ ->
+        (project {:a 123 :b 2} | is? {:a _ :b 2})
+        a
+    )
+    123
+)
+(test/exec :is?21
+    (\ ->
+        (project {:a 123 :b 2} | is? {:a _ :b (> 1)})
+        a
+    )
+    123
+)
+(test/exec :is?22
+    (\ ->
+        (project {:a 123 :b 2} | is? {:a _ :b (> 10)})
+    )
+    false
+)
+(test/exec :is?23
+    (\ ->
+        (project {:a 123 :b 60 :c "hello"} | is? {:a _ :b (> 10) :c #"he"}) ; regex match
+        [a c]
+    )
+    [123 "hello"]
+)
+(test/exec :is?24
+    (\ ->
+        (project {:a 123 :b 60 :c "hello"} | is? {:a _ :b (> 10) :c #"zork"}) ; regex match fail
+    )
+    false
+)
 ;----------------------------------------------------
 ; Test the 'notis?' function
 (test/exec :isnot?1   #(isnot? 1 ^int)           false)

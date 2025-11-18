@@ -1571,14 +1571,16 @@ See also: distinct union except
 (bindhelp is?  """
 Syntax: (is? <object> <type>)
 
-Checks to see if the argument object is of the specified type. If only
-a single argument is specified, a new "curried" function is returned.
+Checks to see if the argument object is of the specified type or
+matches a specified property pattern. If only a single argument is
+specified, a new "curried" function is returned.
 
 Examples:
-    (is? 123 ^int)              ; returns true
-    (is? 123 ^string)           ; returns false
-    (is? "abc" ^string)         ; returns true
-    (filter coll1 (is? ^int))   ; returns the integers in 'coll1'
+    (is? 123 ^int)                          ; returns true
+    (is? 123 ^string)                       ; returns false
+    (is? "abc" ^string)                     ; returns true
+    (get-date | is? {:dayofweek "Tuesday"})
+    (filter coll1 (is? ^int))               ; returns the integers in 'coll1'
 
 See also: isnot?
 """)

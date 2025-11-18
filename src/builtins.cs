@@ -7541,6 +7541,16 @@ namespace BraidLang
 
                 object val = Eval(args[0]);
 
+                if (args[1] is DictionaryLiteral dlit)
+                {
+                    var ppe = new PropertyPatternElement(dlit);
+                    if (ppe.DoMatch(_callStack, val, 0, out _) == MatchElementResult.Matched)
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+
                 TypeLiteral tlit = null;
                 if (args[1] is TypeLiteral tl)
                 {
@@ -9280,7 +9290,7 @@ namespace BraidLang
                             {
                                 // If it's a lambda, eval'ing it should give you
                                 // a function literal which you can just call
-                                // otherwise iit's an error.
+                                // otherwise it's an error.
                                 if (Eval(sexpr) is FunctionLiteral fl)
                                 {
                                     predicate = fl.Value;

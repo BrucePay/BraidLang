@@ -870,7 +870,7 @@ namespace BraidLang
 
             Vector objectHolder = new Vector { null };
 
-// BUGBUGBUGBUGBUG - add error for KeyValue pair, error if key type doesn't match gereric key type?
+// BUGBUGBUGBUGBUG - add error for KeyValue pair, error if key type doesn't match generic key type?
             if (thingToMatch is IDictionary dict)
             {
                 foreach (var item in _patternElements)
