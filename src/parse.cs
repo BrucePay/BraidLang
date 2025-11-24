@@ -1917,7 +1917,17 @@ namespace BraidLang
             Vector patterns = new Vector();
 
             var caller = CallStack.Caller;
-            PatternFunction matcher = new PatternFunction(name, caller.File, caller.LineNo, caller.Text, caller.Offset);
+            PatternFunction matcher;
+            if (caller != null)
+            {
+                matcher = new PatternFunction(name, caller?.File, caller.LineNo, caller?.Text, caller.Offset);
+
+            }
+            else
+            {
+                matcher = new PatternFunction(name, "REPL", 0, "", 0);
+            }
+
             matcher.IsFunction = !noEnv;
             bool readingPattern = true;
             bool allowBacktracking = false;

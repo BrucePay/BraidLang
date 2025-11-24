@@ -711,6 +711,7 @@ See also: loaded-files loaded-functions
     | map (\ ty -> (str "type: " (. ty 'name) " file: "  (get-assoc ty :FileInfo )))
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn getmacro
@@ -724,6 +725,7 @@ then all defined macros are returned.
     | map .key
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn call
@@ -737,6 +739,7 @@ See also: apply
     [function &args]
     (eval (cons (getfunc function) args))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defspecial background
@@ -753,6 +756,7 @@ Examples:
     (let t (async (\ -> (try (eval expr) -catch: ""))))
     "Started task ${(.Id t)}"
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn partial
@@ -778,6 +782,7 @@ See also: compliment compose
         (func-to-call @args value)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn compliment
@@ -795,6 +800,7 @@ See also: partial compose
         (not (func-to-call @args value))
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defspecial compose
@@ -831,6 +837,7 @@ See also: partial compliment
     )
 )
 (def $ compose)
+
 ;--------------------------------------------------------------------------
 ;
 (defspecial or$
@@ -878,6 +885,7 @@ See also: partial compliment compose
         )
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defspecial and$
@@ -974,6 +982,7 @@ Examples:
     )
     res
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defspecial >let
@@ -986,6 +995,7 @@ Examples:
     [expression varsym]
     (upDo (list 'let varsym expression))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defspecial let-default
@@ -1039,6 +1049,7 @@ See also: let let?
             "           (let-default [<type>] <sym> <expression>)\n"
             "           (let-default [^type] <sym> <lower> <upper>)."))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn vars
@@ -1058,6 +1069,7 @@ Examples:
     | where -not (\ vname -> (getfunc -noexternals vname))
     | filter varname)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (undef pwd)
@@ -1070,6 +1082,7 @@ Examples:
     []
     (.environment/CurrentDirectory)
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; Initialize the directory stack
@@ -1082,6 +1095,7 @@ Examples:
 (if (test-path DIRS_PATH)
     (read-lines DIRS_PATH | map (\ p -> (!! DIRLIST p true)))
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; Initialize the OLDPATH variable used for "cd -"
@@ -1089,6 +1103,7 @@ Examples:
 (if (not (bound? 'OLDPATH) | or (not OLDPATH))
     (global "OLDPATH" .environment/CurrentDirectory)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro my
@@ -1098,6 +1113,7 @@ Changes directory relative to the user's document directory
     | path  -> `(cd -my ~path)
     |       -> `(cd -my)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defspecial cd
@@ -1160,6 +1176,7 @@ Examples:
             .environment/CurrentDirectory
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn dirs
@@ -1188,6 +1205,7 @@ Examples:
         )
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn sleep
@@ -1204,6 +1222,7 @@ Examples:
    (repeat iter (.System.Threading.Thread/sleep 100))
    (.System.Threading.Thread/sleep rest)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn pid
@@ -1216,6 +1235,7 @@ See also: tid pwd
     []
     ((.System.Diagnostics.Process/GetCurrentProcess) | .id)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn tid
@@ -1228,6 +1248,7 @@ See also: pid pwd
     []
     (.System.Threading.Thread/CurrentThread | .ManagedThreadID)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn path
@@ -1242,6 +1263,7 @@ Examples:
 (if (not (bound? '*path*))
     (const *path* -getter: (\ _ -> (.environment/GetEnvironmentVariable "PATH")) nil)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn get-env
@@ -1259,6 +1281,7 @@ See also: set-env env
         (.Environment/GetEnvironmentVariable varName)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn set-env
@@ -1276,6 +1299,7 @@ See also: get-env env
         (.Environment/SetEnvironmentVariable varName value)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn env
@@ -1304,6 +1328,7 @@ See also: get-env set-env
         result
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn taskid
@@ -1316,6 +1341,7 @@ See also: tid pid pwd
     []
     (.System.Threading.Tasks.Task/CurrentID)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn iterator
@@ -1347,6 +1373,7 @@ See also: reduce foldl roldr unfold
 )
 ; Alias unfold to iterator.
 (def unfold iterator)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; String utilities
@@ -1363,6 +1390,7 @@ Examples:
     [data]
     (map data ToString)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn toSourceString
@@ -1377,6 +1405,7 @@ Examples:
     [data]
     (.BraidLang.Utils/toSourceString data)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn str/truncate
@@ -1389,6 +1418,7 @@ Examples:
     [&args]
     (.BraidLang.Braid/truncate (join args))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn str/startsWith
@@ -1409,6 +1439,7 @@ Examples:
         (.startswith str frag .StringComparison/OrdinalIgnoreCase)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn re/match
@@ -1427,6 +1458,7 @@ Examples:
         result
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn like/match
@@ -1454,6 +1486,7 @@ See also: re/match
     | (^string? s)     -> (.ismatch pattern (^string? s))
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn re/not-match
@@ -1463,6 +1496,7 @@ Match a single string that doesn't match a regular expression.
     [ (^string? targetString) (^regex? regex)]
     (.Match regex targetString | .Success | not)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn re/match-all
@@ -1475,6 +1509,7 @@ Return all of the elements from a list that match the argument regex.
         (listOfStrings | filter pattern)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn re/not-match-all
@@ -1484,6 +1519,7 @@ Return all of the elements from a list that don't match the argument regex.
     [listOfStrings (^regex? pattern)]
     (listOfStrings | filter -not pattern)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defspecial ifmap
@@ -1513,6 +1549,7 @@ See also: if map
         )
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn re/replace
@@ -1532,6 +1569,7 @@ See also: re/replace-all
     | ->
         (throw "re/replace invalid arguments: (re/replace <string> <regex> [<replaceStr>])")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn re/replace-all
@@ -1547,6 +1585,7 @@ See also: re/replace
     [lst (^regex? regexToReplace) (^string? replaceStr "")]
     (lst | map (\ it -> (.replace regexToReplace (^string? it) replaceStr)))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn re/split
@@ -1570,6 +1609,7 @@ See also: re/split-all
     | stringToSplit ->
         (.split #" +" (tostring stringToSplit) | to-vector)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn re/split-all
@@ -1588,6 +1628,7 @@ The default split pattern is 1 or more whitespaces.
         (flatmap lst (\ (^string? string) -> (re/split string by)))
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn Str-To-Upper
@@ -1603,6 +1644,7 @@ Make the first character in a string into an uppercase letter.
         (.char/toUpper (!! stringToProcess 0) | ^string? | + (.substring stringToProcess 1))
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn Str-To-Upper-All
@@ -1612,6 +1654,7 @@ Make all the characters in a string uppercase.
     [(^string? stringToProcess)]
     (.tochararray stringToProcess | map (\ c -> (.char/ToUpper c)) | join "")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn Str-To-Lower
@@ -1621,6 +1664,7 @@ Makes the first character in a string a lowercase letter.
     [(^string? stringToProcess)]
     (.char/toLower (!! stringToProcess 0) | tostring | + (.substring stringToProcess 1))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn Str-To-Lower-All
@@ -1630,6 +1674,7 @@ Make all the characters in a string uppercase.
     [(^string? stringToProcess)]
     (.tochararray stringToProcess | map (\ c -> (.char/ToLower c)) | join "")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn fmt
@@ -1640,6 +1685,7 @@ Utility to format strings (using String.Format)
     (let fmtstr:args args)
     (.string/format (tostring fmtstr) (asarray args))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn hex
@@ -1656,6 +1702,7 @@ into a vector.
         (args | map (\ num -> (fmt "0x{0:x4}" num)) | scalarize)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn binary
@@ -1682,6 +1729,7 @@ the strings are prefixed with '0b' but if -noprefix is specified, then the
         (str "0b" result)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn str/normalize
@@ -1693,6 +1741,7 @@ See also: + join qstr
     [ &args ]
     (join args " " | re/replace #"[\r\n\t ]+" " ")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn str/reverse
@@ -1702,6 +1751,7 @@ Turns it's argument into a string then reverses that string.
     [(^string? argstr)]
     (join (chars argstr | reverse) "")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn str/replace
@@ -1717,6 +1767,7 @@ See also: str slice
         replacement
         @(slice targetStr (++ lastChar) (length targetStr | - lastChar | --))) ; suffix
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defspecial qstr
@@ -1741,6 +1792,7 @@ See also: + join str
         | join " "
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn insert-string
@@ -1772,6 +1824,7 @@ See also: str join
             (. source 'Insert index newStr)
     )
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Dictionary utilities
@@ -1805,6 +1858,7 @@ are assigned/added (like mkdir -p).
     ; return the original dictionary
     origdata
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Math Functions
@@ -1818,6 +1872,7 @@ Truncate a floating-point number returning an integer (^int).
     | (^BigDecimal bd) -> (.Truncate bd)
     | n                -> (.Math/Truncate n | ^int?)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn floor
@@ -1827,6 +1882,7 @@ Compute the floor of a number.
     | (^BigDecimal bd) -> (.floor bd)
     | n                -> (.Math/Floor n | ^int?)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn ceiling
@@ -1836,6 +1892,7 @@ Compute the ceiling of a number.
     [ num ]
     (.Math/Ceiling num | ^int?)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn round
@@ -1850,6 +1907,7 @@ Examples:
     | num (places 0) -> (.Math/Round num places)
     | -> (throw "the 'round' function takes exactly one numeric argument.")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn **
@@ -1864,6 +1922,7 @@ Examples:
     [(^double? x) (^double? y)]
     (.Math/pow x y)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn sin
@@ -1873,6 +1932,7 @@ Compute the sine of a number
     [ num ]
     (.Math/sin num)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn cos
@@ -1882,6 +1942,7 @@ Compute the cosine of a number.
     [ num ]
     (.Math/cos num)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn tan
@@ -1891,6 +1952,7 @@ Compute the tangent of a number.
     [ num ]
     (.Math/tan num)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn log
@@ -1901,6 +1963,7 @@ Compute the log of two values e.g. (log n m)
     | (^double? n) 10.0 -> (.math/log10 n)
     | (^double? n) -> (.math/log n)
 )
+
 ;-------------------------------------------------------------------------
 ;
 (defn abs
@@ -1917,6 +1980,7 @@ See also: sign round ceiling floor
     )
     (.math/abs num)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn sign
@@ -1932,6 +1996,7 @@ See also: abs round ceiling floor
     [num]
     (.math/sign num)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn sqrt
@@ -1945,6 +2010,7 @@ See also: sqr
     | num              -> (.Math/sqrt num)
     |                  -> (throw "the 'sqrt' function takes exactly one numeric argument.") 
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn div
@@ -1959,6 +2025,7 @@ See also: / %
     | m     -> (fn n -> (div n m)) ; "curry" this function
     |       -> (throw "The 'div' function requires two numeric arguments e.g (div 9 2).")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn sqr
@@ -1971,6 +2038,7 @@ See also: sqrt
     [number]
     (* number number)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn rfact
@@ -1984,6 +2052,7 @@ Examples:
     | 0      (result 1i) -> result
     | number (result 1i) -> (recur (-- number) (* number result))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn fact
@@ -1994,6 +2063,7 @@ Compute the factorial of the argument. Big integers are used.
     | 1     -> 1
     | num   -> (* @(range 1i num))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn combinations
@@ -2006,6 +2076,7 @@ See also: choose fact
     [n k]
     (fact n | / (fact k | *(fact (- n k))))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn choose
@@ -2021,6 +2092,7 @@ See also: combinations
             (choose xs n)
         )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn permute
@@ -2037,6 +2109,7 @@ See also: choose combinations
         )
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn combine
@@ -2055,6 +2128,7 @@ See also: choose combinations permute
             )
         )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn sum
@@ -2084,9 +2158,10 @@ See also: prod + reduce
     | n (accessor echo)      -> (accessor n)
     | &args -> (throw "The 'sum' function expects either a list or a list & an accessor function, not '${args}'")
 )
+
 ;--------------------------------------------------------------------------
 ;
-(defn prod
+(defn product
 """
 Compute the product of the numbers in the argument list.
 """
@@ -2106,6 +2181,7 @@ Compute the product of the numbers in the argument list.
     | n (accessor echo)      -> (accessor n)    ; handle scalar case
     | &args -> (throw "The 'prod' function expects either a list or a list & an accessor function, not '${args}'")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn fib
@@ -2116,6 +2192,7 @@ Compute the fibonocci number for the argument using the naive recursive algorith
     | 1      -> 1i
     | number -> (+ (fib (- number 1)) (fib (- number 2)))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn fastfib
@@ -2125,6 +2202,7 @@ A fast tail-recursive implementation of the 'fib' function
     | 0 _ (current 0i) -> current
     | number (prev 0i) (current 1i) -> (recur (-- number) current (+ current prev))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn iterfib
@@ -2141,6 +2219,7 @@ See also: fib rpfib
         | last
         | last)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn isPrime
@@ -2158,6 +2237,7 @@ Examples:
         ; test all odd numbers in that range to see if they are divisors of n
         (range 3 upper 2 | list/all (fn x -> (% n x)))
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; This code was adapted from a common Haskell example. It computes the primes
@@ -2171,6 +2251,7 @@ Find all primes in the range 1 to n using a 'Sieve of Eratosthenes'-like algorit
     | _ r -> r
     | n -> (recur (range 3 n 2) [])
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn gcd
@@ -2180,6 +2261,7 @@ Compute the greatest common divisor for two numbers
     | x 0 -> x
     | x y -> (recur y (% x y))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn average
@@ -2193,6 +2275,7 @@ Examples:
     | %none? (func null) -> 0
     | lst    (func null) -> (sum lst @func | ^double? | / (length lst))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn median
@@ -2219,6 +2302,7 @@ Compute the median value of a list of numbers.
             )
         )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn max
@@ -2230,6 +2314,7 @@ Return the max of two items.
     | x y func      -> y
     | x             -> (bigger x)   ; return curried function
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn max-list
@@ -2257,6 +2342,7 @@ See also: min max min-list smaller bigger
     | (^ISeq lst) func  -> (reduce lst (\ x y  -> (max x y func)))
     | scalar func       -> scalar
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn max-list-index
@@ -2269,6 +2355,7 @@ Find the first index of the maximum element in a list.
     | s x:xs i is -> (recur x xs (++ i) (++ i))
     | s nil _  is -> [s is]
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn min
@@ -2279,6 +2366,7 @@ Return the smaller of two items.
     | x y      -> (smaller x y)
     | x        -> (smaller x) ; curried
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn min-list
@@ -2301,6 +2389,7 @@ See also: min max max-list smaller bigger
     | (^ISeq lst) func  -> (reduce lst (\ x y  -> (min x y func)))
     | scalar (func nil) -> scalar
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn min-list-index
@@ -2313,6 +2402,7 @@ Find the first index of the minimum element in a list.
     | s x:xs i is -> (recur x xs (++ i) (++ i))
     | s nil _ is -> [s is]
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn extract-min
@@ -2326,6 +2416,7 @@ Extract (remove and return) the n smallest items from a vector.
         (.removeat lst i)
         (recur lst (-- n) (nconc s r))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn get-min
@@ -2338,6 +2429,7 @@ Find and return the n smallest items from a list.
         (let m (min-list lst))
         (recur (where lst (> m)) (-- n) (nconc m r))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn qsort
@@ -2353,6 +2445,7 @@ See also: sort
         (list/split xs (<= pivot) | (\ smaller:larger: ->
             [ @(qsort smaller) pivot @(qsort larger) ]))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn roll
@@ -2370,6 +2463,7 @@ See also: roll band bor bxor bnot
     )
     r
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn rolr
@@ -2387,6 +2481,7 @@ See also: roll band bor bxor bnot
     )
     r
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn leap-year?
@@ -2400,6 +2495,7 @@ True if the passed argument is a leap year.
             (zero? (% year 4))
             (some? (% year 100))))
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; List utilities
@@ -2412,8 +2508,10 @@ True if the passed argument is a leap year.
 Returns the second item in a sequence
 """
     [lst]
+
     (echo lst | cdr | car)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn second
@@ -2421,26 +2519,38 @@ Returns the second item in a sequence
 Returns the second item in a sequence
 """
     [lst]
+
     (echo lst | cdr | car)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn caddr
 """
 Returns the third item in a sequence
+
+Examples:
+    (caddr '(1 2 3 4))  ; returns 3
 """
     [lst]
+
     (echo lst | cdr | cdr | car)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn third
 """
 Returns the third item in a sequence
+
+Examples:
+    (third '(1 2 3 4))  ; returns 3
 """
     [lst]
+
     (echo lst | cdr | cdr | car)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn cddr
@@ -2453,21 +2563,26 @@ Examples:
     (cddr [])           ; returns nil
 """
     [lst]
+
     (echo lst | cdr | cdr)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn mapcat
 """
 For each argument collection, map a function onto the elements of the collection
 then concatenate the results into a single flat collection.
+
 Examples:
     (mapcat ++ [1 2] [3 4] [5 6])   ; returns [2 3 4 5 6 7]
+
 See also: map concat
 """
     [f &colls]
     (forall -flatten c colls (map c f))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn subseq
@@ -2492,6 +2607,7 @@ includes the item at the 'end' position.
         )
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn debug/pwatch
@@ -2500,6 +2616,7 @@ The 'debug/pwatch' (pipeline watch) function is a debugging utility that can be
 inserted into a pipeline to see what's passing through the pipeline. The
 output display will prefixed with the user specified tag to help correlate
 the output. An optional filter may be specified to reduce the ammount of output.
+
 Examples:
     (ls | pwatch "files" #".cs$" | map .length)
 """
@@ -2510,12 +2627,17 @@ Examples:
     )
     input
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn contains?
 """
 Returns true if the argument list contains the specified value or
 matches the lambda. Does a shallow search.
+
+Examples:
+    (contains? '(1 2 3) 3)      ; returns true
+    (contains? '(1 2 3) "foo")  ; returns false
 """
     | (^BraidLang.RangeList rangeList) value -> (.contains rangelist value)
     | (^IDictionary dict) (^callable value) ->
@@ -2543,6 +2665,7 @@ matches the lambda. Does a shallow search.
     
     | -> (throw "Invalid arguments to 'contains?' expected (in? <val> <collection>).")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn in?
@@ -2586,6 +2709,7 @@ See also: contains?
     
     | -> (throw "Invalid arguments to 'in?' expected (in? <val> <collection>).")
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn contains-scalar
@@ -2606,6 +2730,7 @@ Does a deep (recursive) search.
     )
     false
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn scalarize
@@ -2620,6 +2745,7 @@ If the argument is a collection of 1 element, extract it and return it as a scal
     | lst -> lst
     | null -> null
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn contains-key
@@ -2661,6 +2787,7 @@ Examples:
         | ->  ; ignore everything else
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn last-node
@@ -2668,9 +2795,11 @@ Examples:
 Returns the last node in a list. Not to be confused with the 'last'
 function which returns the last *value* in a list. In otherwords,
 'last-node' returns the 'cdr' of the last nde, instead of the last car.
+
 Examples:
     (last-node '(1 2 3)) ; returns (3)
     (last '(1 2 3))      ; returns 3
+
 See also: flatmap flatten
 """
     [(^ISeq lst)]
@@ -2679,6 +2808,7 @@ See also: flatmap flatten
     )
     lst
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; BUGBUGBUG - remove hard dependency on .console/windowwidth
@@ -2690,6 +2820,7 @@ padded to column width and finally wrapped at console width. If '-sort'
 is specified, the elements are returned/displayed in sorted order.
 NOTE: This function has a hard dependency on there being a console. Should
 fix that.
+
 Examples:
     (ls | list/wrapprint)      ; returns a string
     (ls | list/wrapprint inf)  ; prints using the 'info' function, returns null.
@@ -2715,6 +2846,7 @@ Examples:
         | join "\n")
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn list/all
@@ -2722,8 +2854,10 @@ Examples:
 Applies the argument function to each element of the list. If the
 function evaluates to true for all elements, then this function returns
 true.
+
 Examples:
     (all [1 2 3 4] (\ x  -> x (> x 0))) ; returns true
+
 See also: any
 """
     [lst func]
@@ -2732,6 +2866,7 @@ See also: any
     )
     true
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn list/any
@@ -2739,8 +2874,10 @@ See also: any
 Applies the argument function to each element of the list. If the
 function evaluates to true for any of the elements, then this
 function returns true.
+
 Examples:
     (all [0 9 1 0] (\ x  -> x (> x 0))) ; returns true
+
 See also: any
 """
     [lst func]
@@ -2749,6 +2886,7 @@ See also: any
     )
     false
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn get-prop
@@ -2765,6 +2903,7 @@ the member accessors can be used with map to get the same effect.
         (. item property)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn list/monotonic
@@ -2772,11 +2911,13 @@ the member accessors can be used with map to get the same effect.
 Returns true if the members of the argument collection increase monotonically in size, If
 the '-descending' flag is specified, it will return true if the list is decreasing monotonically
 in size. The expression (list/monotonic [1 2 3]) is effectively equivalent to (<= 1 2 3).
+
 Examples:
     (list/monotonic [1 2 3 4])              ; returns true
     (list/monotonic [2 1 3])                ; returns false
     (list/monotonic [3 2 1])                ; returns false
     (list/monotonic -descending [3 2 1])    ; returns true
+
 See also: <= >= list/any list/all
 """
     [lst :descending]
@@ -2785,6 +2926,7 @@ See also: <= >= list/any list/all
         (apply <= lst)
     )
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; I/O Utilities
@@ -2800,8 +2942,10 @@ Examples:
 See also: read-file write-text write-data write-lines
 """
     [(^string? path)]
-    (.IO.File/ReadAllText (resolve-path path | .path))
+
+    (.IO.File/ReadAllText (.braid/resolvepath path))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn write-text
@@ -2818,6 +2962,7 @@ See also: read-text read-data write-data read-file write-lines write-source
         (let text (tostring text)))
     (.System.IO.File/WriteAllText path (tostring text))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn write-source
@@ -2832,6 +2977,7 @@ See also: read-text read-data write-data read-file write-lines
         (.BraidLang.utils/tostringstring text))
     (.System.IO.File/WriteAllText path text)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn read-data
@@ -2839,8 +2985,9 @@ See also: read-text read-data write-data read-file write-lines
 Read binary data from a file.
 """
     [(^string path)]
-    (.IO.File/ReadAllBytes (resolve-path path | .path))
+    (.IO.File/ReadAllBytes (.braid/resolvepath path))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn write-data
@@ -2850,6 +2997,7 @@ Write binary data to a file.
     [data (^string path)]
     (.IO.File/WriteAllBytes path  data)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn write-lines
@@ -2859,6 +3007,7 @@ write an array of strings to a file.
     [(^string[]? text) (^string? path)]
     (.IO.File/WriteAlllines path text)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/dirname
@@ -2868,6 +3017,7 @@ Gets the directory part of a file name
     | ^Io.File  -> (.directoryName %0)
     | path      -> (.io.path/GetDirectoryName (tostring path))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/filename
@@ -2877,6 +3027,7 @@ Gets the directory part of a file name
     | ^Io.File  -> (.name %0)
     | path      -> (.io.path/GetFileName (tostring path))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/basename
@@ -2886,6 +3037,7 @@ Gets the basename part of a file name.
     | ^Io.File  -> (.io.path/GetFileNameWithoutExtension (.name %0))
     | path      -> (.io.path/GetFileNameWithoutExtension (tostring path))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/extension
@@ -2907,6 +3059,7 @@ Gets or sets the extension on a file name
                     "The second optional argument is a new extension for the file."
                     ]))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/tempFileName
@@ -2926,6 +3079,7 @@ See also: file/extension file/basename file/dirname file/filename
         tfn
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/exists
@@ -2935,6 +3089,7 @@ Test to see if a file exists
     [(^string path)]
     (.io.file/exists path)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/dir-exists
@@ -2944,6 +3099,7 @@ Test to see if a directory exists
     [(^string path)]
     (.io.directory/exists path)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/isRooted
@@ -2953,6 +3109,7 @@ Test to see if a pathname is absolute.
     [(^string path)]
     (.io.path/IsPathRooted path)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/setWriteTime
@@ -2964,6 +3121,7 @@ the 'touch' utility.
     [(^string pathToSet) (targetTime (.datetime/now))]
     (.io.file/SetLastWriteTime pathToSet targetTime)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn file/join-path
@@ -2978,8 +3136,9 @@ Join path components into a single string using the system appropriate path sepa
             (foreach p args (let base (.io.path/combine base p)))
             base
         )
-   )
+    )
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ;   Vector utilities
@@ -2997,6 +3156,7 @@ See also: new-vector to-vector
     | lst   -> (new ^Vector (.BraidLang.Braid/GetNonGenericEnumerableFrom lst))
     | -> (throw "Too many arguments to 'copy-vector'. This function takes 1 argument: the vector to copy.")
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; Cache of anonymous types generated by the project function..
@@ -3087,6 +3247,7 @@ See also: deftype defobject
         )
     )
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; .Net-specific functions
@@ -3097,12 +3258,14 @@ See also: deftype defobject
 The 'new-stopwatch' function returns a .NET ^System.Diagnostics.Stopwatch object
 which can be used to time operations. The returned object has members .start,
 .stop, .elapsed, .reset.
+
 Examples:
     (let sw (new-stopwatch))            ; create the mobject
     (.start sw)                         ; start timing
     (.stop sw)                          ; stop timing
     (.elapsed sw | totalmilliseconds)   ; get elapsed time.
     (.reset sw)                         ; reset the stopwatch.
+
 See also: time
 """
     []
@@ -3112,19 +3275,23 @@ See also: time
 (if (not (bound? '*sw*))
     (const *sw* (new-stopwatch))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn asEventHandler
 """
 Make an ^EventHandler delegate out of a Braid lambda. The lambda must take
 two parameters: the object invoking the event and the eventArgs object.
+
 Examples:
     (.Add_Shown MainForm (asEventHandler (\ o e -> (.Activate MainForm))))
+
 See also: CreateDelegate
 """
     [callback]
     (^EventHandler? callback)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn members-of
@@ -3144,12 +3311,14 @@ returned.
 -all
 Normally the getter/setter methods for properties are filtered out however
 if -all is specified, no filtering is done.
+
 Examples:
     (members-of ^string)             ; get all of the members on ^string
     (members-of ^string #"sub")    ; get the members matching the pattern argument
     (members-of "hi")              ; gets the type of the argument and returns that type's members
     (members ^string -all -private)  ; gets all members, public & private, will be returned,
     (members ^int -raw)              ; returns MemberInfo objects instead of strings.
+
 See also: type-of base-of
 """
     [
@@ -3208,11 +3377,16 @@ See also: type-of base-of
         @(if (not raw) (.braidLang.BraidTypeBuilder/GetExtensionMethods type))
     ]
 )
+
+;--------------------------------------------------------------------------
+;
 (defn base-of
 """
 The 'base-of' function returns the base type of its type argument.
+
 Examples:
     (base-of ^System.Reflection.MemberFilter)  ; returns System.MulticastDelegate
+
 See also: members-of type-of
 """
     [obj]
@@ -3223,12 +3397,16 @@ See also: members-of type-of
             
     (.basetype type)
 )
+
+;--------------------------------------------------------------------------
+;
 (defn all-members
 """
 The 'all-members' function is used by the 'completer' function to do method completion.
 It returns a Vector of all of the members defined on the types that are currently 'in use'
 i.e. there is an instance of that type stored in a Braid variable. These members are considered
 to be the 'interesting' ones for the interactive user.
+
 Examples:
     (all-members #"sub")
 See also: completer
@@ -3264,6 +3442,7 @@ See also: completer
 ; Define the prompt string
 ;
 (let prompt "=> ")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; PowerShell-specific functions
@@ -3459,6 +3638,26 @@ Examples:
         (fn prefix before after -> (try -catch: null (completer prefix before after)))
     )
 )
+
+(.BraidLang.LineEditor/HistoryEditor
+    (^Func[object]?
+        (fn ->
+            (using-module winforms)
+
+            (let vhc 
+                (wf/listbox "Command History"
+                    -Source: #(.commandhistory *line-editor* | .dump)
+                    -Forecolor: "yellow"
+                    -SelectAction: (\ (^Vector selected) ->
+                        (.setText *line-editor* (!! selected 0 | .substring 5))
+                    )
+                )
+            )
+            nil
+        )
+    )
+)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; End completer
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

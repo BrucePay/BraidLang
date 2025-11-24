@@ -174,7 +174,11 @@ namespace BraidLang
 
         private string _defaultPrompt;
 
+        // Hook for doing tab completion externally
         public static Func<string, string, string, object> BraidCompleter {get; set;}
+
+        // Hook for editiong history externally
+        public static Func<object> HistoryEditor {get; set; }
 
         public LineEditor(string name)
             : this(name, 1000)
@@ -214,6 +218,9 @@ namespace BraidLang
 
                                   // Edit the current line in vi
                                   Handler.Control('\\', CmdVisualEdit),
+                                  
+                                  // Select history entry to invoke
+                                  Handler.Control('H', CmdHistoryEdit),
 
                                   Handler.Control('D', CmdDeleteChar),
                                   Handler.Control('L', CmdRefresh),
@@ -225,7 +232,9 @@ namespace BraidLang
 
                                   Handler.Alt('V', ConsoleKey.V, CmdVisualEdit),
 
-                                  Handler.Alt('H', ConsoleKey.H, CmdHome),
+                                  // Handler.Alt('H', ConsoleKey.H, CmdHome),
+                                  Handler.Alt('H', ConsoleKey.H, CmdHistoryEdit),
+
                                   Handler.Alt('M', ConsoleKey.M, CmdMiddle),
                                   Handler.Alt('E', ConsoleKey.E, CmdEnd),
                                   // Handler.Alt('B', ConsoleKey.B, CmdBackwardWord),
@@ -626,7 +635,7 @@ namespace BraidLang
         //
         // Commands
         //
-        private void CmdDone()
+        public void CmdDone()
         {
             this._done = true;
         }
@@ -1043,7 +1052,18 @@ namespace BraidLang
             System.IO.File.Delete(tempFile);
             SetText(newText);
             CmdDone();
-        } 
+        }
+
+        /// <summary>
+        /// Launch the history editor
+        /// </summary>
+        private void CmdHistoryEdit()
+        {
+            if (HistoryEditor != null)
+            {
+                HistoryEditor.Invoke();
+            }
+        }
 
         private void CmdHistoryNext()
         {
@@ -1326,7 +1346,7 @@ namespace BraidLang
             ForceCursor(this._cursor);
         }
 
-        private void SetText(string newtext)
+        public void SetText(string newtext)
         {
             Console.SetCursorPosition(0, this._homeRow);
             InitText(newtext);

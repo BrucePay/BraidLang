@@ -2193,28 +2193,36 @@ Examples:
 """)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(bindhelp [read-file read-lines]  """
-Syntax: (read-file <fileNames> [<regex> [lambda]])
+(bindhelp [read-file read-lines file/read-lines]  """
+Syntax: (@fn@ <fileNames> [<regex>] [lambda])
 
-This function reads files line by line, returning a vector of lines. If a regular expression is
-specified then only lines matching that regular expression will be returned. You
+This function reads files line by line, returning a vector of lines. If a regular expression
+is specified then only lines matching that regular expression will be returned. You
 can also specify a lambda which will be invoked on each matched item and the result
-of the invocation will be returned. The lambda receives 2-4 arguments which are,
-in order:
+of the invocation will be returned. If the lambda returns null, then nothing will be added
+to the output collection, allowing for more sophisticated filtering of the file.
+If you specify a standard lambda, it  will receive 1-4 arguments which are, in order:
 - the text of the matching line
-- an array of the regex submatches in the line
+- an array of the regex submatches in the line if a regex was specified
 - the number of the matching line
 - the name of the current file
-The 'read-file' function takes one named parameter '-not' which changes the regex processing
-from match to not match.
+Pattern lambdas, on the other hand, receive only a single argument - the current line being
+processed.
+The '@fn@' function also takes two named parameters: '-not' which changes the regex processing
+from 'match' to 'not match' and '-annotate' which will result in the output lines being prefixed with
+the current file name and line number.
 
 Examples:
     (@fn@ 'foo.txt)                 ; returns a vector of the lines in the file
-    (@fn@ 'foo.txt #"bar")        ; only returns the lines matching the regex
+    (@fn@ 'foo.txt #"bar")          ; only returns the lines matching the regex
     ; Return the names of braid functions defined in a file i.e. ' ... defn <name> ...'
     (@fn@ 'autoload.tl  #"defn +([^ ]+)" (fn l m -> (!! m 1)))a
     ; Read all of the *.tl files and return strings of the form "fileName:lineno functionName".
-    (@fn@ '*.tl #"defn +([^ ]+)" (fn l m n f -> (str f ': n " " (m 1))))
+    (@fn@ (ls '*.tl) #"defn +([^ ]+)" (fn l m n f -> (str f ': n " " (m 1))))
+    ; use a pattern lambda to find all braid functions in the current file tree
+    (@fn@ (ls -recurse '*.tl) (fn | (#"defn ([^ ]+)" _:m:_ -> m | -> null)))
+    ; as the previous function but prefiltering with a regex which is faster
+    (@fn@ (ls -recurse '*.tl) #"defn " (fn | (#"defn ([^ ]+)" m -> (!! m 1) | -> null)))
 
 See also: read-text read-data
 """)

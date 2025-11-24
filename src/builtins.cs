@@ -2660,17 +2660,23 @@ namespace BraidLang
 
             /////////////////////////////////////////////////////////////////////
             ///
-            /// Read lines from a file optionally filtering with a regex then applying a lambda to the line.
+            /// Read lines from files optionally filtering with a regex then
+            /// applying a lambda to ch line.
             /// 
             FunctionTable[Symbol.FromString("read-file")] =
             FunctionTable[Symbol.FromString("file/read-lines")] =
             FunctionTable[Symbol.FromString("read-lines")] = (Vector args) =>
             {
-
-                if (args.Count < 1 || args[0] == null)
+                if (args.Count < 1)
                 {
                     BraidRuntimeException(
-                        "file/read-lines: requires at least one argument: (file/read-lines [-not] [-annotate] <fileName> [<pattern> [<lambda>]]).");
+                        "file/read-lines: requires at least one non-null argument: (file/read-lines [-not] [-annotate] <fileName> [<pattern> [<lambda>]]).");
+                }
+
+                // if there are no files to read, return null instead of an error
+                if (args[0] == null)
+                {
+                    return null;
                 }
 
                 bool not = false;
@@ -2697,28 +2703,71 @@ namespace BraidLang
                     }
                 }
 
-                Vector filesToRead = new Vector();
-                if (args[0] is string str)
+                // Unwrap PSObjects
+                if (args[0] is PSObject pso && !(pso.BaseObject is PSCustomObject))
                 {
-                    filesToRead.Add(str);
+                    args[0] = pso.BaseObject;
+                }
+
+                Vector filesToRead = new Vector();
+                if (args[0] is FileInfo || args[0] is string)
+                {
+                    filesToRead.Add(args[0]);
                 }
                 else if (args[0] is IEnumerable ienum)
                 {
                     foreach (object e in ienum)
                     {
-                        filesToRead.Add(e);
+                        object element = e;
+                        if (element is null)
+                        {
+                            BraidRuntimeException(
+                                "file/read-lines: requires a non-null file name to process.");
+                        }
+
+                        if (element is PSObject epso && !(epso.BaseObject is PSCustomObject))
+                        {
+                            element = epso.BaseObject;
+                        }
+
+                        if (element is FileInfo)
+                        {
+                            filesToRead.Add(element);
+                            continue;
+                        }
+
+                        filesToRead.Add(element.ToString());
                     }
                 }
                 else
                 {
-                    filesToRead.Add(args[0]);
+                    // Could be an error here but for now, convert everything to string and try to read it as a file.
+                    filesToRead.Add(args[0].ToString());
                 }
 
                 Regex pattern = null;
+                Callable callable = null;
+
                 if (args.Count > 1)
                 {
+                    if (args[1] == null)
+                    {
+                        BraidRuntimeException("The second argument to 'file/read-lines' cannot be null.");
+                    }
+
+                    // If the second argument is a callable function.
+                    if (args[1] is Callable pf)
+                    {
+                        // At this point, if args > 2 error 
+                        if (args.Count > 2)
+                        {
+                            BraidRuntimeException("The second argument to 'file/read-lines' cannot be a function if there are more than two arguments.");
+                        }
+
+                        callable = pf;
+                    }
                     // If it's already a regex, use as-is otherwise turn it into a string and make a regex out of it.
-                    if (args[1] is Regex re)
+                    else if (args[1] is Regex re)
                     {
                         pattern = re;
                     }
@@ -2728,49 +2777,39 @@ namespace BraidLang
                     }
                 }
 
-                Callable callable = null;
                 if (args.Count > 2)
                 {
                     callable = args[2] as Callable;
                     if (callable == null)
                     {
-                        BraidRuntimeException("The third argument to 'file/read-lines' should be a callable function.");
+                        BraidRuntimeException("The third argument to 'file/read-lines' must be a callable function.");
                     }
                 }
 
                 int nargs = 2;
-                if (callable is UserFunction lam)
+                if (callable is PatternFunction)
+                {
+                    // Pattern functions are vararg so we can't know how many args they take.
+                    nargs = 1;
+                }
+                else if (callable is UserFunction lam)
                 {
                     nargs = lam.Arguments.Count;
                 }
 
                 Vector result = new Vector();
+                // At this point the elements are either FileInfos or strings representing file names.
                 foreach (var element in filesToRead)
                 {
-
-                    // Skip nulls
-                    if (element == null)
-                    {
-                        continue;
-                    }
-
-                    var uelement = (element is PSObject pso) ? pso.BaseObject : element;
-
-                    // Skip directories
-                    if (element is System.IO.DirectoryInfo)
-                    {
-                        continue;
-                    }
-
                     string fileToRead;
-                    if (uelement is System.IO.FileInfo f)
+                    if (element is System.IO.FileInfo f)
                     {
                         fileToRead = f.FullName;
                     }
                     else
                     {
-                        // Use PowerShell to resolve the path.
-                        fileToRead = ResolvePath(uelement.ToString());
+                        // Use PowerShell to resolve the path, let PowerShell deal with any errors.
+                        fileToRead = ResolvePath((string) element);
                     }
 
                     using (var file = File.OpenText(fileToRead))
@@ -2833,6 +2872,8 @@ namespace BraidLang
                                 valToReturn = line;
                             }
 
+                            // If the function returned a non-null value, add it to the result set.
+                            // Null values are just skipped. This lets the callable also act as a filter.
                             if (valToReturn != null)
                             {
                                 if (annotate)

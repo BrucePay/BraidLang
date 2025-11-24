@@ -652,19 +652,19 @@ lambda [
 )
 
 ;-------------------------------------------------------
-; The prod function.
-(test/exec :prod1  (fn -> (prod 1)) 1)
-(test/exec :prod2  (fn -> (prod [])) 0)
-(test/exec :prod2a (fn -> (prod nil)) 0)
-(test/exec :prod3  (fn -> (prod [1])) 1)
-(test/exec :prod4  (fn -> ([1] | prod )) 1)
-(test/exec :prod5  (fn -> (1 | prod )) 1)
-(test/exec :prod6  (fn -> ([] | prod)) 0)
-(test/exec :prod7  (fn -> (prod (range 10))) 3628800)
-(test/exec :prod8  (fn -> (range 10 | prod)) 3628800)
-(test/exec :prod9  (fn -> ([10 0.5] | prod)) 5)
-(test/exec :prod10 (fn -> (range 100 | prod | type-of)) ^BigInteger)
-(test/exec :prod11 (fn -> (* [123.45m] 100 | prod | type-of)) ^bigDecimal)
+; The product function.
+(test/exec :product1  (fn -> (product 1)) 1)
+(test/exec :product2  (fn -> (product [])) 0)
+(test/exec :product2a (fn -> (product nil)) 0)
+(test/exec :product3  (fn -> (product [1])) 1)
+(test/exec :product4  (fn -> ([1] | product )) 1)
+(test/exec :product5  (fn -> (1 | product )) 1)
+(test/exec :product6  (fn -> ([] | product)) 0)
+(test/exec :product7  (fn -> (product (range 10))) 3628800)
+(test/exec :product8  (fn -> (range 10 | product)) 3628800)
+(test/exec :product9  (fn -> ([10 0.5] | product)) 5)
+(test/exec :product10 (fn -> (range 100 | product | type-of)) ^BigInteger)
+(test/exec :product11 (fn -> (* [123.45m] 100 | product | type-of)) ^bigDecimal)
 
 ;-------------------------------------------------------
 ; The average function.

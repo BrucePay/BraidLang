@@ -406,7 +406,7 @@ Examples:
             [
                 (let lb
                     (wf/control :listbox
-                        :Font       (wf/font "Consolas" 12)
+                        :Font       (wf/font "Consolas" 14)
                         :height     120
                         :dock       "fill" 
                         :anchor     "top,left"
@@ -421,7 +421,10 @@ Examples:
                         :onDoubleClick
                             (fn e o ->
                                 (if selectAction
-                                    (selectAction (.SelectedItems lb | to-vector))
+                                    (do
+                                        (selectAction (.SelectedItems lb | to-vector))
+                                        (.close app)
+                                    )
                                     (wf/messagebox "No Select Action has been set for this tool.")
                                 )
                             )
@@ -432,7 +435,10 @@ Examples:
                                 | \return -> ; carriage return
                                     (.Handled e true) 
                                     (if SelectAction
-                                        (selectAction (.SelectedItems lb | to-vector))
+                                        (do
+                                            (selectAction (.SelectedItems lb | to-vector))
+                                            (.close app)
+                                        )
                                         (wf/messagebox "No select action has been set for this tool.")
                                     )
 
