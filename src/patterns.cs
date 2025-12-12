@@ -1003,13 +1003,29 @@ namespace BraidLang
                 case string str:
                     targetList = str.ToCharArray();
                     break;
+
                 case IList ilist:
                     targetList = ilist;
                     break;
+
+                case System.Runtime.CompilerServices.ITuple tuple:
+                    // Copy the tuple into a vector
+                    // BUGBUGBUG - this works but is slow - need a better way that doesn't copy the whole list.
+                    int num = tuple.Length;
+                    int index = 0;
+                    Vector vlist = new Vector();
+                    while (index < num)
+                    {
+                        vlist.Add(tuple[index++]);
+                    }
+                    targetList = vlist;
+                    break;
+
                 case IEnumerable en:
                     //BUGBUGBUG - need a better way that doesn't copy the whole list.
                     targetList = new Vector(en);
                     break;
+
                 default:
                     return MatchElementResult.NoMatch;
             }

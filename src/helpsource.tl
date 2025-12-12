@@ -138,11 +138,14 @@ See also: == === !==
 Syntax: (% arg1 arg2)
 
 The mod function '%' computes the modulus of the its argument values.
-The function is only defined for numeric values.
+The function is only defined for numeric values and integer-valued
+strings.
 
 Examples:
     (% 9 4)                     ; returns 1
-    (range 10 | filter (% 2))   ; return all the odd numbers
+    (% "9" 4)                   ; returns 1
+    (% 12.43 3.2)               ; returns 2.83
+    (range 10 | filter (% 2))   ; use a curried function to return all the odd numbers
 
 See also: + - * / -- ++ incr decr
 """)
@@ -2196,7 +2199,7 @@ Examples:
 (bindhelp [read-file read-lines file/read-lines]  """
 Syntax: (@fn@ <fileNames> [<regex>] [lambda])
 
-This function reads files line by line, returning a vector of lines. If a regular expression
+This function reads files line by line, returning a vector of strings. If a regular expression
 is specified then only lines matching that regular expression will be returned. You
 can also specify a lambda which will be invoked on each matched item and the result
 of the invocation will be returned. If the lambda returns null, then nothing will be added
@@ -2208,9 +2211,10 @@ If you specify a standard lambda, it  will receive 1-4 arguments which are, in o
 - the name of the current file
 Pattern lambdas, on the other hand, receive only a single argument - the current line being
 processed.
-The '@fn@' function also takes two named parameters: '-not' which changes the regex processing
-from 'match' to 'not match' and '-annotate' which will result in the output lines being prefixed with
-the current file name and line number.
+The '@fn@' function also takes three named parameters: '-not' which changes the regex processing
+from 'match' to 'not match', '-annotate' which will result in the output lines being prefixed with
+the current file name and line number and '-context' which results in the lambda being passed a
+3-item vector containing the previous, current and next lines.
 
 Examples:
     (@fn@ 'foo.txt)                 ; returns a vector of the lines in the file

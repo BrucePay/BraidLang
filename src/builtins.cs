@@ -1322,6 +1322,16 @@ namespace BraidLang
                     BraidRuntimeException("The '%' operation takes exactly 2 arguments");
                 }
 
+                if (args[0] is string)
+                {
+                    args[0] = ConvertToHelper<int>(args[0]);
+                }
+
+                if (args[1] is string)
+                {
+                    args[1] = ConvertToHelper<int>(args[1]);
+                }
+
                 dynamic first = args[0];
                 dynamic second = args[1];
                 return first % second;
@@ -2490,11 +2500,11 @@ namespace BraidLang
             };
 
             /////////////////////////////////////////////////////////////////////
-            FunctionTable[Symbol.FromString("aslist")] = (Vector args) =>
+            FunctionTable[Symbol.FromString("aslist")] = FunctionTable[Symbol.FromString("to-list")] = (Vector args) =>
             {
                 if (args.Count != 1)
                 {
-                    BraidRuntimeException("aslist: takes exactly 1 argument.");
+                    BraidRuntimeException("to-list: takes exactly 1 argument.");
                 }
 
                 switch (args[0])
@@ -2520,11 +2530,11 @@ namespace BraidLang
             ///
             /// Function to turn a collection into a .NET object[] array.
             /// 
-            FunctionTable[Symbol.FromString("asarray")] = (Vector args) =>
+            FunctionTable[Symbol.FromString("asarray")] = FunctionTable[Symbol.FromString("to-array")] = (Vector args) =>
             {
                 if (args.Count < 1 || args.Count > 2)
                 {
-                    BraidRuntimeException("asarray: takes 1 or 2 argument: (asarray <collection> [<type>])");
+                    BraidRuntimeException("to-array: takes 1 or 2 argument: (asarray <collection> [<type>])");
                 }
 
                 Type targetType = typeof(object);
@@ -2661,7 +2671,7 @@ namespace BraidLang
             /////////////////////////////////////////////////////////////////////
             ///
             /// Read lines from files optionally filtering with a regex then
-            /// applying a lambda to ch line.
+            /// applying a lambda to each line.
             /// 
             FunctionTable[Symbol.FromString("read-file")] =
             FunctionTable[Symbol.FromString("file/read-lines")] =
@@ -2681,6 +2691,7 @@ namespace BraidLang
 
                 bool not = false;
                 bool annotate = false;
+                bool context = false;
                 var callStack = Braid.CallStack;
                 var namedParameters = callStack.NamedParameters;
                 if (namedParameters != null)
@@ -2694,6 +2705,10 @@ namespace BraidLang
                         else if (key.Equals("annotate", StringComparison.OrdinalIgnoreCase))
                         {
                             annotate = Braid.IsTrue(namedParameters["annotate"]);
+                        }
+                        else if (key.Equals("context", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context = Braid.IsTrue(namedParameters["context"]);
                         }
                         else
                         {
@@ -2787,10 +2802,12 @@ namespace BraidLang
                 }
 
                 int nargs = 2;
+                bool patternFunction = false;
                 if (callable is PatternFunction)
                 {
                     // Pattern functions are vararg so we can't know how many args they take.
                     nargs = 1;
+                    patternFunction = true;
                 }
                 else if (callable is UserFunction lam)
                 {
@@ -2822,9 +2839,43 @@ namespace BraidLang
                             argvec.Add(null);
                         }
 
+                        string prev = String.Empty;
+                        string current = String.Empty;
+                        string next = String.Empty;
+
                         int linenumber = 0;
-                        while ((line = file.ReadLine()) != null)
+
+                        bool loop = true;
+                        while (loop)
                         {
+                            if ((line = file.ReadLine()) == null)
+                            {
+                                if (context)
+                                {
+                                    // last line - process with next = ""
+                                    line = "";
+                                    loop = false;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+
+                            if (context)
+                            {
+                                prev = current;
+                                current = next;
+                                next = line;
+
+                                // First line - loop to populate 'next'
+                                if (current == String.Empty)
+                                {
+                                    next = line;
+                                    continue;
+                                }
+                            }
+
                             linenumber++;
                             if (pattern != null && (match = pattern.Match(line)).Success == not)
                             {
@@ -2839,14 +2890,23 @@ namespace BraidLang
                             object valToReturn = null;
                             if (callable != null)
                             {
-                                // first arg is the current line of text
+                                // first lambda arg is the current line or a context vector
                                 if (nargs > 0)
-                                    argvec[0] = line;
+                                {
+                                    if (context)
+                                    {
+                                        argvec[0] = new Vector { prev, current, next };
+                                    }
+                                    else
+                                    {
+                                        argvec[0] = line;
+                                    }
+                                }
 
                                 // second arg is the array of matches
                                 if (nargs > 1)
                                 {
-                                    var matchArray = new List<string>();
+                                    var matchArray = new List<string>(match.Groups.Count);
                                     if (match != null)
                                     {
                                         for (var index = 0; index < match.Groups.Count; index++)
@@ -5898,7 +5958,7 @@ namespace BraidLang
             {
                 if (args.Count < 1)
                 {
-                    return null;
+                    BraidRuntimeException("Missing arguments. The 'join' function takes a list to join with an optional seperator (default is ' '): (join <list> [<sep>])");
                 }
 
                 if (args.Count > 2)

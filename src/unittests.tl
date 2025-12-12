@@ -1203,13 +1203,17 @@ lambda [
 (test/exec :/13 #(/ 9.0m 4.0 | type-of) ^bigdecimal) ; bigdecimal division
 
 ;-------------------------------------------------------
-; Test modulus (%) function
-(test/exec :%1 #(% 9 2)           1)
-(test/exec :%2 #(% 9.5678 6)     3.5678)
-(test/exec :%3 #(range 10 | filter (% 2)) [1 3 5 7 9])
-(test/exec :%4 #(is? (% 2) ^Lambda) true)
-(test/exec :%5 #(% 9m 2)           1m)
-(test/exec :%5a #(% 9 2m)           1m)
+; Test the modulus (%) function
+(test/exec :%1  #(% 9 2)           1)
+(test/exec :%1a #(% "9" 2)         1)
+(test/exec :%1b #(% 9 "2")         1)
+(test/exec :%1c #(% "9" "2")       1)
+(test/exec :%1d #(try (% "9" "abc") | is? ^exception) true)
+(test/exec :%2  #(% 9.5678 6)      3.5678)
+(test/exec :%3  #(range 10 | filter (% 2)) [1 3 5 7 9])
+(test/exec :%4  #(is? (% 2) ^Lambda) true)
+(test/exec :%5  #(% 9m 2)          1m)
+(test/exec :%5a #(% 9 2m)          1m)
 (test/exec :%5b #(% 9m 2 | type-of) ^BigDecimal)
 (test/exec :%5c #(% 9 2m | type-of) ^BigDecimal)
 
@@ -12955,7 +12959,7 @@ lambda [
 ; test the 'pid' command
 (test/exec :pid1
     (fn ->
-        (^bool? (pid))
+        (!= (pid) 0)
     )
     true
 )
@@ -18232,7 +18236,98 @@ lambda [
     2432902008176640000
 )
 
- 
+;--------------------------------------------------------------------
+; test file/read-lines
+; write and flush tool that makes sure the file is flushed to disk before
+; trying to read it.
+(defn writeAndflush [data, name]
+    (let fs (new ^io.FileStream name .io.FileMode/Create .io.FileAccess/Write .io.FileShare/None))
+    (let writer (new ^io.StreamWriter fs))
+
+    (.write writer data)
+    (.Flush writer)
+    (.Flush fs true)
+
+    (.dispose writer)
+    (.dispose fs)
+)
+(test/exec :file/read-lines1
+    (\ ->
+        (let testfile (file/tempFileName))
+        (writeAndFlush "1\n2\n3\n4\n5" testfile)
+        (file/read-lines testfile | map ^int?) ; basic test with no additional args
+    )
+    [1 2 3 4 5]
+)
+(test/exec :file/read-lines2
+    (\ ->
+        (let testfile (file/tempFileName))
+        (writeAndFlush "1\n2\n3\n4\n5" testfile)
+        (file/read-lines testfile #"2|3" | map ^int?) ; test regex filtering
+    )
+    [2 3]
+) 
+(test/exec :file/read-lines3
+    (\ ->
+        (let testfile (file/tempFileName))
+        (writeAndFlush "1\n2\n3\n4\n5" testfile)
+        (file/read-lines testfile #"2|3" (\ l -> (sqr (^int? l)))) ; test regex + regular lambda
+    )
+    [4 9]
+) 
+(test/exec :file/read-lines4
+    (\ ->
+        (let testfile (file/tempFileName))
+        (writeAndFlush "1\n2\n3\n4\n5" testfile)
+        (file/read-lines testfile #"2|3" (\ | l -> (sqr (^int? l)))) ; test regex + pattern lambda
+    )
+    [4 9]
+)
+(test/exec :file/read-lines5
+    (\ ->
+        (let testfile (file/tempFileName))
+        (writeAndFlush "1\n2\n3\n4\n5" testfile)
+        (file/read-lines -context testfile #"2|3" (\ l -> l)) ; test with context and a regular lambda
+    )
+    [ [ "", "1", "2" ], [ "1", "2", "3" ] ]
+)
+(test/exec :file/read-lines6
+    (\ ->
+        (let testfile (file/tempFileName))
+        (writeAndFlush "1\n2\n3\n4\n5" testfile)
+        (file/read-lines -context testfile #"2|3" (\ | l -> l)) ; now with a pattern lambda
+    )
+    [ [ "", "1", "2" ], [ "1", "2", "3" ] ]
+)
+(test/exec :file/read-lines7
+    (\ ->
+        (let testfile (file/tempFileName))
+        (writeAndFlush "1\n2\n3\n4\n5" testfile)
+        (file/read-lines -context testfile (\ | [ a (% 2) b ] -> [a b] | -> nil)) ; using a pattern to filter data
+    )
+  [[ "" "2" ] [ "2" "4" ] [ "4" "" ]]
+)
+(test/exec :file/read-lines8
+    (\ ->
+        (let testfile (file/tempFileName))
+        (writeAndFlush "1\n2\n3\n4\n5" testfile)
+        (file/read-lines -context testfile (\ a:b:c: -> [b c a])) ; destructuring in a regular lambda
+    )
+    [[ "1", "2", "" ] [ "2", "3", "1" ] [ "3", "4", "2" ] [ "4", "5", "3" ] [ "5", "", "4" ]]
+)
+(test/exec :file/read-lines9
+    (\ ->
+        (try (file/read-lines "no such file") | is? ^exception) ; test error behaviour
+    )
+    true
+)
+(test/exec :file/read-lines10
+    (\ ->
+       (try (file/read-lines (join-path start-braid.ps1 (\ l -> (throw "error")))) | is? ^exception)
+    )
+    true
+)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;

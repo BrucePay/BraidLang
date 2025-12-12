@@ -2937,8 +2937,10 @@ See also: <= >= list/any list/all
 (defn read-text
 """
 This function reads all of the text in a file and returns it as a single string.
+
 Examples:
     (read-text foo.txt)
+
 See also: read-file write-text write-data write-lines
 """
     [(^string? path)]
@@ -2952,15 +2954,18 @@ See also: read-file write-text write-data write-lines
 """
 Write an object to a text file. If the object is a string, just write
 it as is.
+
 Examples:
-    (write-file "Hello." 'file.txt)           ; write 'Hello.' to file.txt
+    (write-file "Hello." 'file.txt)             ; write 'Hello.' to file.txt
     (read-text 'foo.txt | write-text 'bar.txt)  ; copies the contents from foo.txt to bar.txt.
+
 See also: read-text read-data write-data read-file write-lines write-source
 """
     [text (^string? path)]
-    (if (not (is? text ^string))
-        (let text (tostring text)))
-    (.System.IO.File/WriteAllText path (tostring text))
+    (unless (is? text ^string)
+        (let text (tostring text))
+    )
+    (.System.IO.File/WriteAllText path text)
 )
 
 ;--------------------------------------------------------------------------
