@@ -888,12 +888,17 @@ namespace BraidLang
                         else if (args.Count > 0)
                         {
                             obj = args[0];
-                            if (obj == null && quiet)
+                            if (obj == null)
                             {
-                                return null;
-                            }
+                                if (quiet)
+                                {
+                                    return null;
+                                }
 
-                            //BUGBUGBUG - figure out how to deal with null here.
+                                Braid.BraidRuntimeException(
+                                    $"member '{_toString}' can't be accessed without specifying a non-null " +
+                                    "object implementing the member.");
+                            }
 
                             otype = obj.GetType();
                         }

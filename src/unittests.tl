@@ -17527,6 +17527,28 @@ lambda [
     )
     #{1 2 4}
 )
+(test/exec :hashset31
+    (\ ->
+        (reduce [1 2 3] add #{})  ; turn a vector into a hashset
+    )
+    #{1 2 3}
+)
+(test/exec :hashset32
+    (\ ->
+        (let hs #{})    ; build a hashset incrementally
+        (add hs 1)
+        (add hs 2)
+        (add hs 3)
+        hs
+    )
+    #{1 2 3}
+)
+(test/exec :hashset33
+    (\ ->
+        (id #{} | add 1 | add 2 | add 3)    ; build a hashset with a pipeline
+    )
+    #{1 2 3}
+)
 
 ;--------------------------------------------------------------------
 ; Test the .signature API

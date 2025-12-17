@@ -2292,20 +2292,33 @@ namespace BraidLang
             ///
             FunctionTable[Symbol.FromString("add")] = (Vector args) =>
             {
+                if (args.Count == 1)
+                {
+                    return curryFunction(Symbol.FromString("add"), args[0]);
+                }
+
                 if (args.Count != 2)
                 {
                     BraidRuntimeException($"add: requires two arguments: a vector (^IList) and a value to add to that vector, not {args}");
                 }
 
                 IList input = args[0] as IList;
-                if (input == null)
+                if (input != null)
                 {
-                    BraidRuntimeException($"add: the vector argument to this function must be a non-null vector, not {args}");
+                    input.Add(args[1]);
+                    return input;
                 }
 
-                input.Add(args[1]);
+                HashSet<object> set = args[0] as HashSet<object>;
+                if (set != null)
+                {
+                    set.Add(args[1]);
+                    return set;
+                }
 
-                return input;
+                BraidRuntimeException($"add: the first argument to this function must be a non-null Vector or HashSet, not {args}");
+
+                return null;
             };
 
             /////////////////////////////////////////////////////////////////////
