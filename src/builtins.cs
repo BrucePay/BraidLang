@@ -10767,18 +10767,12 @@ namespace BraidLang
                     {
                         return new Vector();
                     }
-                    return new Vector { lstCollection[0] };
+                    return null;
                 }
 
                 if (start >= vecLen || start < 0)
                 {
                     return null;
-                    /*
-                    if (vecLen == 0)
-                        return null; //BUGBUGBUG
-
-                    BraidRuntimeException($"slice: the optional second argument '{args[1]}' must be an integer greater than 0 and less than the length of the collection which is {vecLen}.");
-                    */               
                 }
 
                 if (start + length > vecLen)

@@ -16044,9 +16044,9 @@ lambda [
 )
 (test/exec :slice23a
     (\ ->
-        (slice [5] 1) ; special case - should return [5]
+        (slice [5] 1) ; BUGBUGBUG special case - used to return [5]
     )
-    [5]
+    nil
 )
 (test/exec :slice23b
     (\ ->
@@ -16056,9 +16056,9 @@ lambda [
 )
 (test/exec :slice23c
     (\ ->
-        (slice "a" 1) ; special case - should return "a"
+        (slice "a" 1) ; special case - BUGBUGBUG used to return "a"
     )
-    ["a"]
+    nil
 )
 (test/exec :slice24
     (\ ->

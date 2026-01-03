@@ -1,3 +1,4 @@
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; This is the Braid prelude file defining additional functions
@@ -33,6 +34,7 @@ See also: load using-module
         (.reflection.assembly/LoadWithPartialName (^string? asm))
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro for
@@ -47,6 +49,7 @@ Examples:
     [init-expr test-expr incr-expr &args]
     `(do ~init-expr (while ~test-expr ~@args ~incr-expr))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro when
@@ -56,6 +59,7 @@ Examples:
     [cond-expr &args]
     `(if ~cond-expr (do ~@args))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro unless
@@ -65,6 +69,7 @@ Examples:
     [cond-expr &args]
     `(if (not ~cond-expr) (do ~@args))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro comment
@@ -74,6 +79,7 @@ macro to comment out a list of forms (but that list must be well-formed).
     [&args]
     
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro fn
@@ -131,6 +137,7 @@ Examples:
     )
     (new ^BraidLang.FunctionLiteral lam)
 )
+
 ; alias \ to fn so you can write (\ x y -> (+ x y))
 (let \ fn)
 ;--------------------------------------------------------------------------
@@ -184,6 +191,7 @@ See also: if cond matchp
     (list-add final result)
     final
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro lazy-each
@@ -193,6 +201,7 @@ A macro to support 'lazy each' functionality.
     [args expr]
     (drain (lazy-map args expr))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro =
@@ -322,6 +331,7 @@ Examples:
     ; gather the args, join them into a string, tokenize then parse them into s-expressions
     (echo args | join | tokenize | parseexpr )
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; A Macro that parses and transforms infix arithmetic expressions with
@@ -448,6 +458,7 @@ Examples:
     ; gather the args, join them into a string, tokenize then parse them into s-expressions
     `(let ~varToSet ~(args | join | tokenize | parseexpr))
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; Macros to do the equivalent of +=, -=etc.
@@ -484,6 +495,7 @@ Examples:
     )
     result
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defmacro let?
@@ -493,6 +505,7 @@ Macro shortcut to 'let -success ...'
     [symbol value]
     `(let -success ~symbol ~value)
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; System utilities
@@ -532,6 +545,7 @@ Gets help information about commands. The first argument is unevaluated.
         )
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn parse-text
@@ -548,6 +562,7 @@ See also: file/parse eval
     [text]
     (.BraidLang.Braid/parse text)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn tokenize-file
@@ -558,6 +573,7 @@ See also: parse-text file/parse eval
     [filename]
     (tokenize-text (read-text filename))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn walk-tree
@@ -581,6 +597,7 @@ See also: file/parse parse-text tokenize-file tokenize-text
     | (^iseq t) -> (recur t (\ n -> (println n)))
     | ->
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; Gets the current (active) stack frame object.
@@ -612,6 +629,7 @@ Binds a variable just like 'let' but doesn't return a value.
         `(let ~symbol ~value | void)
     | -> (throw "vlet: invalid syntax. (vlet [<type>] <symbol> <value>)") 
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn doc
@@ -634,6 +652,7 @@ Examples:
         (get-assoc function "helptext" | tostring | .trim)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn loaded-functions
@@ -651,6 +670,7 @@ See also: loaded-files loaded-types
         | filter (\ f -> (re/match f pattern))
      )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn where-defined
@@ -666,6 +686,7 @@ Examples:
     | ^ScriptBlock   -> "powershell"
     |                -> "built-in"
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn loaded-files
@@ -836,6 +857,7 @@ See also: partial compliment
         )
     )
 )
+
 (def $ compose)
 
 ;--------------------------------------------------------------------------
@@ -1090,6 +1112,7 @@ Examples:
 (if (not (bound? 'DIRLIST) | or (not DIRLIST))
     (global "DIRLIST" {(pwd) true})
 )
+
 ; load the previously stored list of directories
 (global "DIRS_PATH" (join-path (.historydir *line-editor*) "braid.dirs"))
 (if (test-path DIRS_PATH)
@@ -1260,6 +1283,7 @@ Examples:
     []
     (.Environment/GetEnvironmentVariable "PATH")
 )
+
 (if (not (bound? '*path*))
     (const *path* -getter: (\ _ -> (.environment/GetEnvironmentVariable "PATH")) nil)
 )
@@ -1371,6 +1395,7 @@ See also: reduce foldl roldr unfold
     | ->
         (throw "invalid arguments to 'iterator'; syntax: (iterator <func> [<initialValue> [<finalValue>]])")
 )
+
 ; Alias unfold to iterator.
 (def unfold iterator)
 
@@ -2163,7 +2188,17 @@ See also: prod + reduce
 ;
 (defn product
 """
-Compute the product of the numbers in the argument list.
+Compute the product of the numbers in the argument list. An optional
+accessor function can be provided to allow the calculation to use a
+specific property.
+
+Examples:
+    (product [1 2 3])       ; returns 6
+    (product (ls) .length)  ; returns the product of the lengths of the files
+    (range 10 | product)    ; effectively calculate (fact 10)
+
+See also:
+    * sum
 """
     | (^ISeq listOfNumbers) ->
         (matchp (length listOfNumbers)
@@ -2336,10 +2371,12 @@ See also: min max min-list smaller bigger
     | %none?            -> nil
     | [x]               -> x ; use [x] instead of x: for testing purposes
     | (^ISeq lst)       -> (reduce lst bigger)
+    | (^IList lst)      -> (reduce lst bigger)
     | scalar            -> scalar
     | %none? func       -> nil
     | [x] func          -> x
     | (^ISeq lst) func  -> (reduce lst (\ x y  -> (max x y func)))
+    | (^IList lst) func -> (reduce lst (\ x y  -> (max x y func)))
     | scalar func       -> scalar
 )
 
@@ -3169,6 +3206,7 @@ See also: new-vector to-vector
 (if (not (bound? '*anonymous-types*))
     (const *anonymous-types* {})
 )
+
 (defn project
 """
 This function "projects" a subset of the properties on an object (or elements of a dictionary)
@@ -3276,6 +3314,7 @@ See also: time
     []
     (new ^System.Diagnostics.Stopwatch)
 )
+
 ; set up an ambient stopwatch
 (if (not (bound? '*sw*))
     (const *sw* (new-stopwatch))
@@ -3442,6 +3481,7 @@ See also: completer
     | map (\ n -> (str "." n))
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; Define the prompt string
@@ -3467,6 +3507,7 @@ Exmples:
     [(^string bodyText)]
     (.System.Management.Automation.Scriptblock/Create bodyText)
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Run the helpsource.tl to load the help info for built-in functions
@@ -3478,6 +3519,7 @@ Exmples:
 (try -catch: (\ e ->  (throw "Error processing help: ${(.message e)}" e))
     ((file/join-path braidhome "helpsource.tl"))
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; REPL Command Completer Function
@@ -3502,9 +3544,11 @@ Look for types based on a regular expression.
         | filter .?isPublic | filter -not #"__anonymous"
             | filter pattern)
 )
+
 (if (not (bound? '__system_types))
     (const __system_types  (select-type "^system\.[^.]*$" | re/replace-all "^system\."))
 )
+
 ;
 ; The completer pattern function.
 ;
@@ -3636,6 +3680,7 @@ Examples:
         )
     | -> [] ; default returns empty collection
 )
+
 ; Bind the completer callback. You can't currently create a delegate from
 ; a pattern matcher so we use a lambda wrapper as a workaround for now.
 (.BraidLang.LineEditor/BraidCompleter
@@ -3686,6 +3731,7 @@ Examples:
     ; get the filtered list of names
     (list/wrapprint (allfiles | map .name | filter pattern) printFn)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn fixit
@@ -3696,6 +3742,7 @@ Examples:
     (.console/cursorvisible true)
     (cls)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn fgrep
@@ -3717,6 +3764,7 @@ only '*.tl' files are scanned.
         )
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; Utility to compute the mb5 hash of a file as a string
@@ -3742,6 +3790,7 @@ Examples:
         -finally: #(.close fs)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 ; function to list just the names of the git modified files to add.
@@ -3755,6 +3804,7 @@ Examples:
     []
     (git.exe :status | filter #"deleted:|modified:" | map (\ n -> (re/split n | second)))
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn lc
@@ -3775,6 +3825,7 @@ Count the lines in the argument files.
         (alert "Total lines" total)
     )
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn out-list
@@ -3789,6 +3840,7 @@ Examples:
     [obj]
     (echo obj | Format-List -Force "*" | Out-String -Stream)
 )
+
 ;--------------------------------------------------------------------------
 ;
 (defn sls
