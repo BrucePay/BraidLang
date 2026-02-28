@@ -342,6 +342,57 @@ lambda [
 )
 
 ;-------------------------------------------------------
+; the "str/insert" function
+(test/exec :str/insert1
+    (\ ->
+        (str/insert "abcd" 2 "1234")
+    )
+    "ab1234cd"
+)
+(test/exec :str/insert2
+    (\ ->
+        (str/insert "abcd" 0 "1234")
+    )
+    "1234abcd"
+)
+(test/exec :str/insert3
+    (\ ->
+        (str/insert "abcd" 4 "1234")
+    )
+    "abcd1234"
+)
+(test/exec :str/insert4
+    (\ ->
+        (str/insert "abcd" 10 "1234")
+    )
+    "abcd1234"
+)
+(test/exec :str/insert5
+    (\ ->
+        (str/insert "abcd" -1 "1234")
+    )
+    "abc1234d"
+)
+(test/exec :str/insert6
+    (\ ->
+        (str/insert "abcd" -10 "1234")
+    )
+    "1234abcd"
+)
+(test/exec :str/insert7
+    (\ ->
+        (str/insert "" -10 "1234")
+    )
+    "1234"
+)
+(test/exec :str/insert8
+    (\ ->
+        (str/insert "" 10 "1234")
+    )
+    "1234"
+)
+
+;-------------------------------------------------------
 ; the "fmt" function
 (test/exec :fmt1
     (fn ->
@@ -4594,7 +4645,7 @@ lambda [
 ; the thenSort function
 (test/exec :thenSort1
     (fn ->
-        ([[2 "c"] [3 "b"] [3 "a"] [1 "a"] [2 "b"] [2 "a"]] | sort ($ (!! 0)) | thenSort ($ (!! 1)))
+        ([[2 "c"] [3 "b"] [3 "a"] [1 "a"] [2 "b"] [2 "a"]] | lazy-sort ($ (!! 0)) | thenSort ($ (!! 1)))
     )
     [
       [1 "a"]
@@ -4607,7 +4658,7 @@ lambda [
 )
 (test/exec :thenSort2
     (fn ->
-        ([[2 "c"] [3 "b"] [3 "a"] [1 "a"] [2 "b"] [2 "a"]] | sort ($ (!! 0)) | thenSort -descending ($ (!! 1)))
+        ([[2 "c"] [3 "b"] [3 "a"] [1 "a"] [2 "b"] [2 "a"]] | lazy-sort ($ (!! 0)) | thenSort -descending ($ (!! 1)))
     )
     [
       [1 "a"]

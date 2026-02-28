@@ -1930,7 +1930,7 @@ namespace BraidLang
             {
                 if (args.Count != 1)
                 {
-                    BraidRuntimeException("length: takes exactly 1 argument");
+                    BraidRuntimeException($"length: takes exactly 1 argument, not {args.Count}.");
                     return null;
                 }
 
@@ -2051,7 +2051,18 @@ namespace BraidLang
                             return indexable;
                         }
 
-                        return indexable[index];
+                        try
+                        {
+                            return indexable[index];
+                        }
+                        catch (System.IndexOutOfRangeException e)
+                        {
+                            BraidRuntimeException(
+                                $"!!: index '{index}' for the collection' {indexable.GetType()}' was out of bounds." +
+                                $"The collection contains {indexable.Count} elements.", e);
+                        }
+
+                        return null; // makes the C# compiler happy
 
                     case IDictionary idict:
                         if (args.Count == 3)
@@ -2149,7 +2160,7 @@ namespace BraidLang
                         {
                             int count = 0;
                             foreach (var e in enumerable) count++;
-                            BraidRuntimeException($"!!: The specified index ({index}) was out of range. It must be non-negative " +
+                            BraidRuntimeException($"!!: The specified index ({index}) was out of bounds. It must be non-negative " +
                                                 $"and less than the size of the collection ({count}).");
                         }
 
@@ -3153,21 +3164,21 @@ namespace BraidLang
                     }
                     else
                     {
-                        return enumerable.OrderBy((val) =>
+                        return new Vector(enumerable.OrderBy((val) =>
                         {
                             data[0] = val;
                             return func.Invoke(data);
-                        }, PSComparer.GetComparer());
+                        }, PSComparer.GetComparer()));
                     }
                 }
 
                 if (descending)
                 {
-                    return enumerable.OrderByDescending((n) => n, PSComparer.GetComparer());
+                    return new Vector(enumerable.OrderByDescending((n) => n, PSComparer.GetComparer()));
                 }
                 else
                 {
-                    return enumerable.OrderBy((n) => n, PSComparer.GetComparer());
+                    return new Vector(enumerable.OrderBy((n) => n, PSComparer.GetComparer()));
                 }
             };
 

@@ -1659,6 +1659,9 @@ The default split pattern is 1 or more whitespaces.
 (defn Str-To-Upper
 """
 Make the first character in a string into an uppercase letter.
+
+Examples:
+    (Str-To-Upper "abcd")   ; returns "Abcd"
 """
     [(^string? stringToProcess)]
     (if (null? stringToProcess | or (length stringToProcess | == 0))
@@ -1675,6 +1678,9 @@ Make the first character in a string into an uppercase letter.
 (defn Str-To-Upper-All
 """
 Make all the characters in a string uppercase.
+
+Examples:
+    (Str-To-Upper-all "abcd")   ; returns "ABCD"
 """
     [(^string? stringToProcess)]
     (.tochararray stringToProcess | map (\ c -> (.char/ToUpper c)) | join "")
@@ -1685,6 +1691,9 @@ Make all the characters in a string uppercase.
 (defn Str-To-Lower
 """
 Makes the first character in a string a lowercase letter.
+
+Examples:
+    (Str-To-Lower "ABCD")   ; returns "aBCD"
 """
     [(^string? stringToProcess)]
     (.char/toLower (!! stringToProcess 0) | tostring | + (.substring stringToProcess 1))
@@ -1694,7 +1703,10 @@ Makes the first character in a string a lowercase letter.
 ;
 (defn Str-To-Lower-All
 """
-Make all the characters in a string uppercase.
+Make all the characters in a string lowercase.
+
+Examples:
+    (Str-To-Lower-All "ABCD")   ; returns "abcd"
 """
     [(^string? stringToProcess)]
     (.tochararray stringToProcess | map (\ c -> (.char/ToLower c)) | join "")
@@ -1704,7 +1716,12 @@ Make all the characters in a string uppercase.
 ;
 (defn fmt
 """
-Utility to format strings (using String.Format)
+Utility to format strings (using .Net's String.Format method)
+
+Examples:
+    (fmt "{0}-{1}-{2}" :a :bb :ccc) ; returns "a-bb-ccc"
+    (fmt "{0:x} {1:x}" 0x123 0x321) ; format as hex
+    (fmt "{0,10}|" "foo")           ; format a 10 char field
 """
     [&args]
     (let fmtstr:args args)
@@ -1820,14 +1837,14 @@ See also: + join str
 
 ;--------------------------------------------------------------------------
 ;
-(defn insert-string
+(defn str/insert
 """
 Inserts a substring into a string at the specified location. If the specified
 location is negative, it will be treated as the offset from the end of the
 string instead of from the beginning.
 Examples:
-    (insert-string "\abcdef" 3 "123") ; returns 'abc123def'
-    (insert-string "abcdef" -4 "123") ; returns 'ad123cdef'
+    (str/insert "\abcdef" 3 "123") ; returns 'abc123def'
+    (str/insert "abcdef" -4 "123") ; returns 'a123cdef'
 See also: str join
 """
     [(^string source) (^int index) (^string newStr)]
@@ -1842,11 +1859,11 @@ See also: str join
                 (let index (+ (length source) index))
                 (if (< index 0)
                     (str newStr source)
-                    (. source 'Insert index newStr)
+                    (.insert source index newStr)
                 )
             )
         true
-            (. source 'Insert index newStr)
+            (.insert source index newStr)
     )
 )
 

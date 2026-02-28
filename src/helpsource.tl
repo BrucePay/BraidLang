@@ -2492,12 +2492,12 @@ Examples:
 (bindhelp thenSort """
 Syntax: (thenSort <output-of-sort> [<accessor>])
 
-This function performs a secondary sort on the enumerator returned by 'sort'. It can
+This function performs a secondary sort on the enumerator returned by 'lazy-sort'. It can
 be applied multiple times to perform very complex sortings. Note that this is a lazy
 function and returns an IEnumerable.
 
 Examples:
-    (sort [[2 :a] [1 :a] [2 :b]] car | thenSort second) ; returns [[1 :a] [2 :a] [2 :b]]
+    (lazy-sort [[2 :a] [1 :a] [2 :b]] car | thenSort second) ; returns [[1 :a] [2 :a] [2 :b]]
 
 See also: sort
 """)

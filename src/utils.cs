@@ -40,6 +40,11 @@ namespace BraidLang
                 return "nil";
             }
 
+            if (Braid._stop)
+            {
+                return "";
+            }
+
             if (Utils.textoffset.Length > 1000)
             {
                 Utils.textoffset = string.Empty;
