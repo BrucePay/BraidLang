@@ -16,6 +16,7 @@ using System.Management.Automation;
 using System.Management.Automation.Internal; // needed for AutomationNull 
 using System.Management.Automation.Runspaces;
 using System.Reflection;
+using System.Diagnostics.Eventing.Reader;
 
 namespace BraidLang
 {
@@ -388,13 +389,34 @@ namespace BraidLang
 
                         try
                         {
-                            var sbresult = sb.InvokeReturnAsIs(evaledArgs.ToArray());
-                            if (sbresult is PSObject respso2 && !(respso2.BaseObject is PSCustomObject))
-                            {
-                                sbresult = respso2.BaseObject;
-                            }
+                            Collection<PSObject> psc = (Collection<PSObject>)((evaledArgs.Count == 1) ?
+                                sb.Invoke(evaledArgs[0]) : 
+                                sb.Invoke(evaledArgs.ToArray()));
 
-                            return sbresult;
+                            if (psc.Count == 1)
+                            {
+                                if (psc[0].BaseObject is PSCustomObject)
+                                {
+                                    return psc[0].BaseObject;
+                                }
+                                return psc[0];
+                            }
+                            else
+                            {
+                                Vector v = new Vector();
+                                foreach (PSObject p in psc)
+                                {
+                                    if (p.BaseObject is PSCustomObject)
+                                    {
+                                        v.Add(p);
+                                    }
+                                    else
+                                    {
+                                        v.Add(p.BaseObject);
+                                    }
+                                }
+                                return v;
+                            }
                         }
                         finally
                         {

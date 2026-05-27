@@ -599,7 +599,9 @@ namespace BraidLang
         object Pattern { get; set; }
 
         FunctionLiteral _lambda;
+        Callable _callable;
         s_Expr _predicate;
+        ScriptBlock _sb;
         Vector matchArgs;
 
         public GenericElement(object pattern, Symbol variable)
@@ -616,9 +618,17 @@ namespace BraidLang
 
             Variable = variable;
             _lambda = Pattern as FunctionLiteral;
-            if (_lambda == null && Pattern is s_Expr cexpr)
+            if (_lambda == null)
             {
-                if (cexpr.Car is Callable || cexpr.Car is Func<Vector, object> || cexpr.IsLambda)
+                if (Pattern is Callable c)
+                {
+                    _callable = c;
+                }
+                else if (Pattern is ScriptBlock sb)
+                {
+                    _sb = sb;
+                }
+                else if (Pattern is s_Expr cexpr && (cexpr.Car is Callable || cexpr.Car is Func<Vector, object> || cexpr.IsLambda))
                 {
                     _predicate = cexpr;
                 }
@@ -666,6 +676,42 @@ namespace BraidLang
             if (Pattern is BraidLiteral mlit)
             {
                 Pattern = mlit.Value;
+            }
+
+            if (_sb != null)
+            {
+                if (Braid.IsTrue(_sb.InvokeReturnAsIs(thingToMatch)))
+                {
+                    if (Variable != null)
+                    {
+                        callstack.SetLocal(Variable, thingToMatch);
+                    }
+
+                    consumed = 1;
+                    return MatchElementResult.Matched;
+                }
+            }
+
+            if (_callable != null)
+            {
+                var argvec = new Vector(1)
+                {
+                    thingToMatch
+                };
+
+                if (Braid.IsTrue(_callable.Invoke(argvec)))
+                {
+                    if (Variable != null)
+                    {
+                        callstack.SetLocal(Variable, thingToMatch);
+                    }
+
+                    consumed = 1;
+                    return MatchElementResult.Matched;
+                }
+
+                return MatchElementResult.NoMatch;
+
             }
 
             if (_lambda != null)

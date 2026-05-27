@@ -80,5 +80,6 @@ else
     Copy-Item src/bin/Debug/braidlang.* $StageDir -PassThru 
 }
 
-Copy-Item -verbose src/BraidRepl.ps1 $StageDir -PassThru
-Copy-Item -verbose src/*.tl   $StageDir -PassThru
+Copy-Item -verbose src/BraidRepl.ps1 $StageDir
+Copy-Item -verbose src/*.tl          $StageDir
+Copy-Item -verbose src/*.html        $StageDir

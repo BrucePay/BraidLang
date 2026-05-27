@@ -11,6 +11,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -1811,6 +1812,11 @@ namespace BraidLang
                 callstack.NamedParameters = oldnp;
             }
         }
+
+        public static implicit operator Func<object, object>(Function v)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     /// <summary>
@@ -3095,7 +3101,13 @@ namespace BraidLang
                 var regex = new Regex(strval, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                 return (T)Convert.ChangeType(regex, typeof(T));
             }
-            else if (typeof(T) == typeof(Type) && value is string svalue)
+
+            if (typeof(T) == typeof(Type) && value is TypeLiteral t)
+            {
+                return LanguagePrimitives.ConvertTo<T>(t.Type);
+            }
+
+            if (typeof(T) == typeof(Type) && value is string svalue)
             {
                 Type btype = CallStack.LookUpType(svalue);
                 if (btype != null)
@@ -3103,13 +3115,9 @@ namespace BraidLang
                     return LanguagePrimitives.ConvertTo<T>(btype);
                     // BUGBUGBUG - why doesn't this work return (T)Convert.ChangeType(btype, typeof(T));
                 }
+            }
 
-                return LanguagePrimitives.ConvertTo<T>(svalue);
-            }
-            else
-            {
-                return LanguagePrimitives.ConvertTo<T>(value);
-            }
+            return LanguagePrimitives.ConvertTo<T>(value);
         }
 
         public static object ConvertTo(object value, Type targetType)
@@ -4025,8 +4033,7 @@ namespace BraidLang
         /// <returns>The dictionary of associated values.</returns>
         public static object GetAssoc(object key)
         {
-            ConcurrentDictionary<string, object> result;
-            if (associationTable.TryGetValue(key, out result))
+            if (associationTable.TryGetValue(key, out ConcurrentDictionary<string, object> result))
             {
                 return result;
             }

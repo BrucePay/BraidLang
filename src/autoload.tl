@@ -970,7 +970,7 @@ Examples:
 """
     [fnToMemoize]
 
-    (let data (new ^Dictionary[object,object]))
+    (let data (new ^System.Collections.Generic.Dictionary[object,object]))
     (fn n ->
         (if (.containsKey data n)
             (!! data n)
@@ -2229,6 +2229,18 @@ See also:
         | 1 -> (!! listOfNumbers 0  | accessor)
         |   -> (* @(listOfNumbers | map accessor))
         )
+    | (^System.Collections.IList listOfNumbers) ->
+        (matchp (length listOfNumbers)
+        | 0 -> 0
+        | 1 -> (!! listOfNumbers 0)
+        |   -> (* @listOfNumbers)
+        )
+    | (^System.Collections.IList listOfNumbers) accessor ->
+        (matchp (length listOfNumbers)
+        | 0 -> 0
+        | 1 -> (!! listOfNumbers 0  | accessor)
+        |   -> (* @(listOfNumbers | map accessor))
+        )
     | %none? (accessor null) -> 0
     | n (accessor echo)      -> (accessor n)    ; handle scalar case
     | &args -> (throw "The 'prod' function expects either a list or a list & an accessor function, not '${args}'")
@@ -2388,12 +2400,12 @@ See also: min max min-list smaller bigger
     | %none?            -> nil
     | [x]               -> x ; use [x] instead of x: for testing purposes
     | (^ISeq lst)       -> (reduce lst bigger)
-    | (^IList lst)      -> (reduce lst bigger)
+    | (^System.Collections.IList lst)      -> (reduce lst bigger)
     | scalar            -> scalar
     | %none? func       -> nil
     | [x] func          -> x
     | (^ISeq lst) func  -> (reduce lst (\ x y  -> (max x y func)))
-    | (^IList lst) func -> (reduce lst (\ x y  -> (max x y func)))
+    | (^System.Collections.IList lst) func -> (reduce lst (\ x y  -> (max x y func)))
     | scalar func       -> scalar
 )
 

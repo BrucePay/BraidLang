@@ -9476,6 +9476,22 @@ namespace BraidLang
                             func = justfunc;
                             break;
 
+                        case ScriptBlock sb:
+                            func = (Vector sbargs) => {
+                                if (sbargs.Count != 1)
+                                {
+                                    return false;
+                                }
+                                Collection<PSObject> sbResult = sb.Invoke(sbargs[0]);
+                                if (sbResult != null && sbResult.Count == 1 && Braid.IsTrue(sbResult[0]))
+                                {
+                                    return true;
+                                }
+
+                                return false;
+                            };
+                            break;
+
                         default:
                             // Handle filtering when the predicate is a constant value
                             func = (Vector cmpargs) => (cmpargs.Count == 1) && Braid.CompareItems(cmpargs[0], predicate);
@@ -11186,7 +11202,7 @@ namespace BraidLang
                                     pipeline_data = Eval(new s_Expr(sexpr));
                                     break;
                                 case ScriptBlock sb:
-                                    pipeline_data = sb.Invoke();
+                                    pipeline_data = sb.Invoke(argvect);
                                     break;
                                 case CommandInfo ci:
                                     pipeline_data = InvokePowerShellCommand(null, null, ci, null);

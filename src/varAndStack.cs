@@ -225,16 +225,22 @@ namespace BraidLang
         {
             if (caller == null)
             {
-                Braid.WriteConsoleColor(ConsoleColor.Red, $"In 'new PSStackFrame' : CallStack.Caller was null'.");
-                Braid.BraidRuntimeException("new PSStackFrame: argument 'caller' was null.");
+                Vars = environment;
+                Parent = parent;
+                Caller = caller;
+                LineNo = 0;
+                File = "repl";
+                Function = name;
             }
-
-            Vars = environment;
-            Parent = parent;
-            Caller = caller;
-            LineNo = caller.LineNo;
-            File = caller.File;
-            Function = name;
+            else
+            {
+                Vars = environment;
+                Parent = parent;
+                Caller = caller;
+                LineNo = caller.LineNo;
+                File = caller.File;
+                Function = name;
+            }
         }
 
         /// <summary>
