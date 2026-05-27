@@ -1,0 +1,615 @@
+
+param (
+    [Switch] $RunExamples
+)
+
+#-------------------------------------------------------------------------------------
+# General utility functions, not Braid specific
+#-------------------------------------------------------------------------------------
+
+
+function type-of
+{
+    param ([object] $obj)
+
+    $obj.GetType().FullName
+}
+
+function time ($sb)
+{
+    $sw = [Diagnostics.Stopwatch]::StartNew()
+    foreach ($_ in 1..50)
+    {
+        [void] (& $sb)
+    }
+    $sw.Stop()
+    $sw.Elapsed.TotalMilliseconds / 50
+}
+
+function base ($obj)
+{
+    if ($obj -is [System.Management.Automation.PSObject])
+    {
+        $obj.psobject.BaseObject
+    }
+    else
+    {
+        $obj
+    }
+}
+
+function ToString
+{
+    param (
+        [Parameter(Position = 0, ValueFromPipeline = $true)]
+            [object] $obj
+    )
+
+    if ($obj)
+    {
+        $obj.ToString()
+    }
+    else
+    {
+        ""
+    }
+}
+
+#-------------------------------------------------------------------------------------
+# Braid-specific helper functions for calling into Braid from PowerShell.
+#------------------------------------------------------------------------------------- 
+function Get-BraidFunction
+{
+    param ($name)
+
+    if ($name -is [System.Collections.IEnumerable] -and $name -isnot [string])
+    {
+        return $name
+    }
+
+    # if the name starts with a dot, it's a member literal e.g. .length
+    if ($name -match '^\.')
+    {
+        return ([BraidLang.MemberLiteral]::new($name, 0, ""))
+    }
+
+    # if the name starts with a caret followed by a letter, it's a type literal e.g. ^string
+    if ($name -match '^\^[a-z]')
+    {
+        return ([BraidLang.TypeLiteral]::new($name.Substring(1), 0, ""))
+    }
+
+    $fn = [BraidLang.Braid]::GetFunc([BraidLang.Braid]::Callstack, $name, $false)
+    if ($fn)
+    {
+        return $fn
+    }
+
+    throw "Get-BraidFunction: unrecognized function name '$name'."
+}
+$alias:gbf = "Get-BraidFunction"
+
+function Invoke-BraidFunction
+{
+    if ($args.length -eq 0)
+    {
+        throw "Invoke-BraidFunction requires at least one argument: the function to invoke."
+    }
+
+    $function = $args[0]
+
+    if ($function -is [string])
+    {
+        $f = Get-BraidFunction $function
+        if ($f)
+        {
+            $function = $f
+        }
+        else
+        {
+            throw "Invoke-BraidFunction: could not resolve function name '$function'."
+        }
+    }
+
+    if ($Function -is [System.Management.Automation.CommandInfo])
+    {
+        # if it's a PowerShell command, we need to invoke it differently.
+        $_,$psArgs = $args
+
+        # if it's not [object[]], then it's a single argument andwe need to wrap it in an array to splat it.
+        if ($psArgs -isnot [object[]])
+        {
+            $psargs = ,$psargs
+        }
+
+        if ($psArgs)
+        {
+            return & $Function @psArgs
+        }
+
+        return & $Function
+    }
+
+    if ($Function -is [BraidLang.TypeLiteral])
+    {
+        if ($args.length -ne 2)
+        {
+            throw "Invoking a type literal only supports one argument. You passed $($args.length - 1)."
+        } 
+
+        return (,$Function.Invoke($args[1]))
+    }
+
+    $result = switch ($args.length)
+    {
+        1 { ,$Function.Invoke(@()) }
+        2 { ,$Function.Invoke((,$args[1])) }
+        3 { ,$Function.Invoke(($args[1],$args[2])) }
+        4 { ,$Function.Invoke(($args[1],$args[2],$args[3])) }
+        5 { ,$Function.Invoke(($args[1],$args[2],$args[3],$args[4])) }
+        6 { ,$Function.Invoke(($args[1],$args[2],$args[3],$args[4],$args[5])) }
+        default { throw "Invoke-BraidFunction currently only supports up to 5 arguments. You passed $($args.length - 1)." }
+    }
+
+    if ($result -is [BraidLang.Vector])
+    {
+        return (,$result)
+    }
+
+    $result
+}
+$Alias:ibf = "Invoke-BraidFunction"
+
+function New-BraidExpression
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(ValueFromRemainingArguments, Position=0)]
+            $Elements = @()
+    )
+
+    # ibr to-list $Elements
+    $first, $rest = $Elements
+    $l = [BraidLang.s_Expr]::new($first)
+
+    if ($rest -is [BraidLang.s_Expr])
+    {
+        $rest = ,$rest
+    }
+
+    foreach ($e in $rest)
+    {
+        [void] $l.Add($e)
+    }
+    , $l
+}
+$alias:nbe = "New-BraidExpression"
+
+function Invoke-BraidExpression
+{
+    param ([BraidLang.s_Expr] $Expression)
+    
+    , [BraidLang.Braid]::Eval($expression)
+}
+$Alias:ibe = "Invoke-BraidExpression"
+
+function New-BraidPipeExpression 
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(ValueFromRemainingArguments, Position=0)]
+            $Elements = @()
+    )
+
+    [BraidLang.s_Expr] $pipeline = [BraidLang.s_Expr]::new((gbf pipe))
+    foreach ($e in $Elements)
+    {
+        [void] $pipeline.Add($e)
+    }
+    , $pipeline
+}
+$alias:nbpe = "New-BraidPipeExpression"
+
+function New-BraidFunction
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Position = 0)]
+            [string] $Name,
+
+        [Parameter(Position = 1)]
+            [string[]] $Parameters,
+
+        [Parameter(ValueFromRemainingArguments, Position=0)]
+            $Body = @()
+    )
+
+    $pv = [BraidLang.Vector]::new()
+    foreach ($p in $Parameters)
+    {
+        [void] $pv.Add((ibf symbol $p))
+    }
+    
+    $expr = New-BraidExpression (ibf symbol lambda)
+    [void] $expr.Add($pv)
+    foreach ($e in $Body)
+    {
+        [void] $expr.Add($e)
+    }
+
+    # bind the function to the specified.
+    ibf let (ibf symbol $Name) (ibe $expr)  
+}
+$alias:nbf = "New-BraidFunction"
+
+function New-BraidLambda
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Position = 1)]
+            [string[]] $Parameters,
+
+        [Parameter(ValueFromRemainingArguments)]
+            $Body = @()
+    )
+
+    $pv = [BraidLang.Vector]::new()
+    foreach ($p in $Parameters)
+    {
+        [void] $pv.Add((ibf symbol $p))
+    }
+    
+    $expr = New-BraidExpression (ibf symbol lambda)
+    [void] $expr.Add($pv)
+
+    # assemble the lambda's body. If the body is a single s_Expr, we can add it directly.
+    # If it's a list of expressions, we need to add each one separately.
+    if ($Body -is [BraidLang.s_Expr])
+    {
+        [void] $expr.Add($Body)
+    }
+    else
+    {
+        foreach ($e in $Body)
+        {
+            [void] $expr.Add($e)
+        }
+    }
+
+    # create the function object from the S-Expression
+    (ibe $expr)  
+}
+$alias:nbl = "New-BraidLambda"
+
+function Get-BraidSymbol
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Position = 0)]
+            [string] $Name
+    )
+
+    [braidlang.Symbol]::FromString($Name)
+}
+$alias:gbs = "Get-BraidSymbol"
+
+function Get-BraidVariableValue
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Position = 0)]
+            [string] $Name
+    )
+
+    [BraidLang.Braid]::GetVariable($Name).Value
+}
+$alias:gbvv = "Get-BraidVariableValue"
+
+function Set-BraidVariableValue
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Position = 0)]
+            [string] $Name,
+
+        [Parameter(Position = 1)]
+            $Value
+    )
+
+    [BraidLang.Braid]::SetVariable($Name, $Value)
+}
+$alias:sbvv = "Set-BraidVariableValue"
+
+ function ConvertFrom-BraidSourceText
+ { 
+    param (
+        $sourceText
+    )
+    
+    ibf Parse-Text $sourceText
+ }
+$alias:cfbst = "ConvertFrom-BraidSourceText"
+
+function Get-BraidSymbol
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Position = 0)]
+            [string] $Name
+    )
+
+    ibf symbol $Name
+}
+$alias:gbs = "Get-BraidSymbol"
+
+function Get-BraidHelp
+{
+    param (
+        [Parameter(Position = 0)]
+            [object] $Name = $null,
+        [Parameter()]
+            [switch] $SearchAll,
+        [Parameter()]
+            [switch] $WebView
+    )
+
+    if ($WebView)
+    {
+        Invoke-Item (Join-Path (Split-Path -Parent ([braidlang.PatternFunction].Assembly.Location)) "helptext.html")
+        return
+    }
+
+    if ($name)
+    {
+        if ($SearchAll)
+        {
+            ibf help ([regex] $name)
+        }
+        else
+        {
+            $result = $null
+            try
+            {
+                # Help is associated with the actual function object not name.
+                $result = ibf doc (gbf $name)
+            }
+            catch {}
+
+            if (-not $result)
+            {
+                 "Get-BraidHelp:No help found for '$name'. Try using the -SearchAll switch to search all help text for matches."
+            }
+            $result
+        }
+    }
+    else
+    {
+        @"
+
+        To get help on a Braid function, pass the name of the function to lookup.
+        By defaulth the name passed will be used as a regular expression to match against the help text for all Braid
+        functions, and the help text for any matching functions will be returned.
+        
+        For example:
+            Get-BraidHelp "foreach"   # get help on the 'foreach' function.
+            Get-BraidHelp "for"       # Find all functions with "for" in the name, e.g. 'foreach', 'format', etc.
+            Get-BraidHelp "."         # get a list of all functions and their help text.
+"@
+    }
+}
+$alias:gbh = "Get-BraidHelp"
+
+function New-BraidPropertyPattern
+{
+    if ($args.Count % 2 -ne 0)
+    {
+        throw "New-BraidPropertyPattern requires an even number of arguments representing property-value pairs."
+    }
+
+    [braidlang.DictionaryLiteral]::new($args, "", 0, "", 0)
+}
+$alias:nbpp = "New-BraidPropertyPattern"
+
+#-------------------------------------------------------------------------------------
+# Examples showing how to call Braid from PowerShell.
+#-------------------------------------------------------------------------------------
+
+if (-not $RunExamples)
+{
+    return
+}
+
+# Call a user function
+write-host "ibf fib 10:" (ibf fib 10)
+
+# Invoke a property
+write-host "ibf .length '1234':" (ibf .length '1234')
+
+# Sum the lengths of the files in the current directory using 'map'
+write-host 'ibf sum (ibf map (ls) (gbf .?length)):' (ibf sum (ibf map (ls) (gbf .?length)))
+
+# Square a list numbers using 'map'
+write-host 'ibf map (ibf list 5 6) (gbf sqr):' (ibf map (ibf list 5 6) (gbf sqr))
+
+# Use map on a single element list
+write-host 'ibf map (ibf list 5) (gbf sqr):' (ibf map (ibf list 5) (gbf sqr))
+
+# square the numbers in a PowerShell array using map.
+write-host 'ibf map (1,2,3) (gbf sqr):' (ibf map (1,2,3) (gbf sqr))
+
+# count a list of numbers
+write-host 'ibf count (ibf list 5 6):' (ibf count (ibf list 5 6))
+
+# count an array of numbers
+write-host 'ibf count (1,2,3):' (ibf count (1,2,3))
+
+# count the number of files in the current directory using 'ls'
+write-host 'ibf count (ls):' (ibf count (ls))
+
+# use 'reduce' to computmthe product of a list of numbers
+write-host 'ibf reduce (ibf vector 1 2 3) *:' (ibf reduce (ibf vector 1 2 3) *)
+
+# sort files by length
+write-host 'ibf last (ibf sort (ls) (gbf .?length)):' (ibf last (ibf sort (ls) (gbf .?length)))
+
+write-host 'ibe (nbe + 1 2 3):' (ibe (nbe + 1 2 3))
+
+# manually construct a Braid pipeline
+$pe = (nbe (gbf pipe) (nbe (gbf range) 10) (nbe (gbf filter) (nbe (gbf %) 2)) (nbe (gbf sum)))
+write-host "pipeline: " $pe.tostring() "result:" (ibe $pe)
+
+# Use the parse-text function to parse a pipeline
+write-host 'Parsing (range 10 | filter even? | sum)'
+(ibf parse-text '(range 10 | filter even? | sum)').ToString()
+
+# Create a new braid function expression that adds 1 to its argument, and then invoke it.  
+$f = (nbe (ibf symbol lambda) (ibf vector (ibf symbol x)) (nbe (ibf symbol +) (ibf symbol x) 1))
+$ff = ibe $f   # eval the expression to get a callable function
+write-host "ff(5):" (ibf $ff 5) # should be 6
+
+# Create a pipe expression (list 1 2 3 | map sqr) and evaluate it.
+$e = (nbpe (nbe (ibf symbol list) 1 2 3) (nbe (ibf symbol map) (gbf sqr)))
+write-host "Evaluating pipe expression (list 1 2 3 | map sqr):" (ibe $e) # should be (1 4 9)
+$e = (nbpe (nbe (gbf range) 10) (nbe (gbf filter) (gbf even?)) (nbe (gbf map) (gbf sqr)))
+write-host "Evaluating pipe expression (range 10 | filter even? | map sqr):" (ibe $e) # should be (4 16 36 64 100)
+
+# define a function
+$e = (nbe (ibf symbol lambda) ([BraidLang.Vector] @((ibf symbol x))) (nbe (gbf +) (ibf symbol x) 2))
+ibf .tostring $e # call tostring using braid; this let's us see the expression we created
+ibf (ibe $e) 3 # should be 5
+# bind the function to a variable
+(ibf let (ibf symbol add2) (ibe $e)).ToString()
+# invoke the new function
+ibf add2 10 # should be 12
+
+# Try defining a function using New-BraidFunction, which is easier than constructing the expression manually.
+# This function will add 3 to its argument, but also print "Hello there" as a side effect.
+[void] (New-BraidFunction add3 x (nbe (gbf println) "Hello there") (nbe (gbf +) (ibf symbol x) 3))
+(gbf add3).ToString() # print the defined function
+write-host "Invoking add3(7):" (ibf add3 7) # should print "Hello there" and then return 10
+
+# Create another function
+$f = (nbl x (nbe (gbf while) (gbs x) (nbe (gbf print) (gbs x) " ") (nbe (gbf let) (gbs x) (nbe (gbf -) (gbs x) 1))))
+write-host "Printing the numbers from 20 down to 1:"
+ibf $f 20
+
+# Create a function "addpair"that takes two arguments and returns their sum.
+ibf let (gbs addpair) (nbl (gbs x),(gbs y) (nbe (gbf +) (gbs x) (gbs y)))
+write-host "addpair(3,4):" (ibf addpair 3 4) # should be 7
+
+# test invoking a PowerShell command through the braid function system.
+write-host "Current UTC time:" (ibf get-date -asutc)
+write-host "Current UTC time again:" (ibf get-date -Format u)
+
+# call the braid 'edit-distance' function on two words
+write-host "Edit distance:" (ibf edit-distance "foo" "bOo") # should be two
+
+write-host "Testing a pattern function with 3 different values"
+$f = ibf eval-string '(defn say-type2 | ^int -> "integer" | ^string -> "string" | -> "other")'
+write-host "say-type2 123:" (ibf say-type2 123) # should be "integer"
+write-host "say-type2 'abc':" (ibf say-type2 'abc') # should be "string"
+write-host "say-type2 1.23:" (ibf say-type2 1.23) # should be "other"
+
+# Use the 'list/split' function to split a list of numbers into two lists: one with numbers less than 4,
+# and one with numbers greater than or equal to 4. We'll use a lambda as the splitting function.
+write-host "split list with lambda:" ((ibf list/split (ibf vector 1 2 3 4 5) (nbl x (nbe (gbf "<") (gbs x) 4))).tostring()) # should be ((1 2 3) (4 5))
+
+# parse braid source text
+write-host 'Parsing braid source text:' (cfbst '(+ 1 2 (* 3 10) 4)' ).ToString()
+
+# Call the 'tobraidsourcestring' function on a list
+write-host 'call tobraidsourcestring on an expression' (ibf tosourcestring (nbe (gbf +) 1 2 (nbe (gbf *) 3 10) 4))
+
+# bind a lambda to a symbol to create a function
+Write-Host "Create a new lambda expression."
+ $l = nbl (nbe x y) (nbe (gbf +) (gbs x) (gbs y))
+ (ibf let (gbs addpair) $l).ToString()
+ ibf addpair 2 3
+ Write-host "addpair(2,3):" (ibf addpair 2 3) # should be 5
+
+ # Filter a list using a regex
+ write-host "Filtering a list of numbers using a regex"
+ $e = (nbe (gbf filter) (nbe (gbf range) 20) ([regex] "[234]"))
+ ibe $e
+ Write-Host "filter expression:" $e.ToString()
+
+ # use a curried operation filter a list of numbers
+ write-host "Filtering a list of numbers using a curried operation"
+ $op = ibe (nbe (gbf %) 2)
+ ibf filter (ibf range 20) $op
+
+ write-host "Compare two lists:" (ibf == (cfbst "(+ 1 2 3)") (nbe (gbf +) 1 2 3))
+
+ write-host "`n`----------------------------------------------------------------n"
+
+# Use property patterns to filter the list of files
+ibf filter (ls -file) (nbpp extension (nbl n (nbe (gbf "==") (gbs n) ".tl")) name ([regex] "^g")) | format-table
+
+# Bo it again but in seperate steps
+Write-host "Just get the name of the files that have an extension of .tl and start with g:"
+$pp = (
+    nbpp `
+       extension (nbl n (nbe (gbf "==") (gbs n) ".tl")) `
+       name ([regex] "^g")
+ )
+ibf map (ibf filter (ls -file) $pp) (gbf .name)
+
+write-host "`n`----------------------------------------------------------------n"
+
+# Filter the event log with a property pattern that matches entries with 
+# an EntryType of "error" and a message that contains the word "timeout"
+if ( -not $elogdata)
+{
+    # Only do this once since getting the eventlog data is slow and we want to focus on the speed of the filtering.
+    write-host "`n`nGetting eventlog data..."
+    $elogdata = get-eventlog system
+}
+write-host "Filtering eventlog data with a property pattern, get last 5 matches" 
+ibf last (ibf filter $elogdata (nbpp EntryType "error" message ([regex] "timeout"))) 5 | format-table
+
+
+
+write-host "Filtering eventlog data with a property pattern using a scriptblock, get last 5 matches"
+ibf last (ibf filter $elogdata (nbpp EntryType {param ($o) $o -eq "Error"} message ([regex] "timeout"))) 5
+
+<# PERFORMANCE: Compare times FOR PowerShell vs Braid:
+
+# filter eventlog data using PowerShell native commands
+PS[1] (57) > time {$elogdata | where {$_.entrytype -eq "error" -and $_.message -match "timeout"} | select -last 5}
+255.074128 ms
+
+# filter eventlog data using Braid propery patterns with a Braid lambda
+PS[1] (58) > time {ibf last (ibf filter $elogdata (nbpp EntryType "error" message ([regex] "timeout"))) 5}
+77.014396 ms
+
+# filter eventlog data using Braid propery patterns with a PowerShell lambda (scriptblock)
+PS[1] (59) > time {ibf last (ibf filter $elogdata (nbpp EntryType {param ($o) $o -eq "Error"} message ([regex] "timeout"))) 5}
+161.845024 ms
+
+#>
+
+write-host "`n`----------------------------------------------------------------n"
+# Destructuring assignment example with variables x & xs
+write-host "Destructuring assignment example into variables x & xs from the list (1,2,3,4,5)"
+ibf let (gbs x:xs) (1,2,3,4,5)
+write-host "x: " (gbvv x)
+write-host "xs:" (gbvv xs) 
+
+write-host "`n`----------------------------------------------------------------n"
+
+# defining a function by setting a variable "ee" to a lambda expression
+sbvv (gbs ee) (nbl n (nbe (gbf if) (nbe (gbf even?) (gbs n)) (gbs true) (gbs false))) > $null
+write-host "Testing the function ee that we defined using Set-BraidVariableValue with a lambda expression.\nee should return true for even numbers and false for odd numbers."
+write-host "ee(2):" (ibf ee 2) # should be true
+write-host "ee(3):" (ibf ee 3) # should be false
+
+write-host "`n`----------------------------------------------------------------n"
+# This example shows how to use the Braid async and await functions to make 
+# an asynchronous http request to microsoft.com and await the result.
+write-host "Async example: making an http request to microsoft.com using the http/get function from braid, and awaiting the result."
+ibf using-module http  # make sure the http module is loaded so we can use the http/get function in the example below.
+$l = nbl $null (nbe (gbf http/get) "http://microsoft.com")   # lambda that makes an http request to microsoft.com when invoked
+$t = ibf async $l # invoke the lambda asynchronously, which will return a task object
+
+# await the result of the http request and print the length of the response body
+write-host "http/get returned" (ibf await $t | foreach ToString | foreach length) "characters"
