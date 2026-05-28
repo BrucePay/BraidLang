@@ -7,21 +7,52 @@ param (
 # General utility functions, not Braid specific
 #-------------------------------------------------------------------------------------
 
-
-function type-of
+<#
+.SYNOPSIS
+    Returns the full name of the type of the given object.
+.PARAMETER object
+    The object to get the type of. 
+#>
+function Type-Of
 {
     param ([object] $obj)
 
     $obj.GetType().FullName
 }
 
-function time ($sb)
+
+<#
+.SYNOPSIS
+    Measures the execution time of a script block, optionally taking the 
+    number of iterations to run as a parameter. It returns the execution time in milliseconds.
+    Any output from the script block is discarded.
+.PARAMETER Sb
+    The script block to execute.
+.PARAMETER Iterations
+    The number of iterations to run the script block for. This is optional and defaults to
+#>
+function time
 {
+    [CmdletBinding(DefaultParameterSetName = "Default")]
+    param (
+        <# The number of iterations to run the script block for. This is optional and defaults to 1. #>
+        [Parameter()]
+        [int] 
+            $Iterations = 1,
+            
+        <# The block of code to run #>
+        [Parameter(Position = 0, ParameterSetName = "Default")]
+        [ScriptBlock]
+            $Sb
+
+    )
+
     $sw = [Diagnostics.Stopwatch]::StartNew()
-    foreach ($_ in 1..50)
+    foreach ($i in $Iterations)
     {
         [void] (& $sb)
     }
+
     $sw.Stop()
     $sw.Elapsed.TotalMilliseconds / 50
 }
@@ -38,6 +69,12 @@ function base ($obj)
     }
 }
 
+<#
+.SYNOPSIS
+    Returns the string representation of the argument object.
+.PARAMETER object
+    The object to convert to a string.
+#>
 function ToString
 {
     param (
@@ -47,17 +84,22 @@ function ToString
 
     if ($obj)
     {
-        $obj.ToString()
+        return $obj.ToString()
     }
-    else
-    {
-        ""
-    }
+
+    ""
 }
 
 #-------------------------------------------------------------------------------------
 # Braid-specific helper functions for calling into Braid from PowerShell.
-#------------------------------------------------------------------------------------- 
+#-------------------------------------------------------------------------------------
+
+<#
+.SYNOPSIS
+    Retrieves a Braid function by its name.
+.PARAMETER name
+    The name of the function to retrieve.
+#>
 function Get-BraidFunction
 {
     param ($name)
@@ -89,6 +131,14 @@ function Get-BraidFunction
 }
 $alias:gbf = "Get-BraidFunction"
 
+<#
+.SYNOPSIS
+    Invokes a Braid function with the specified arguments.
+.PARAMETER Function
+    The function to invoke.
+.PARAMETER Args
+    The arguments to pass to the function.
+#>
 function Invoke-BraidFunction
 {
     if ($args.length -eq 0)
@@ -160,6 +210,12 @@ function Invoke-BraidFunction
 }
 $Alias:ibf = "Invoke-BraidFunction"
 
+<#
+.SYNOPSIS
+    Creates a new Braid expression from the specified elements.
+.PARAMETER Elements
+    The elements to include in the expression.
+#>
 function New-BraidExpression
 {
     [CmdletBinding()]
@@ -185,6 +241,12 @@ function New-BraidExpression
 }
 $alias:nbe = "New-BraidExpression"
 
+<#
+.SYNOPSIS
+    Invokes a Braid expression.
+.PARAMETER Expression
+    The expression to invoke.
+#>
 function Invoke-BraidExpression
 {
     param ([BraidLang.s_Expr] $Expression)
@@ -193,6 +255,12 @@ function Invoke-BraidExpression
 }
 $Alias:ibe = "Invoke-BraidExpression"
 
+<#
+.SYNOPSIS
+    Creates a new Braid pipe expression from the specified elements.
+.PARAMETER Elements
+    The elements to include in the pipe expression.
+#>
 function New-BraidPipeExpression 
 {
     [CmdletBinding()]
@@ -210,6 +278,16 @@ function New-BraidPipeExpression
 }
 $alias:nbpe = "New-BraidPipeExpression"
 
+<#
+.SYNOPSIS
+    Creates a new Braid function with the specified name, parameters, and body.
+.PARAMETER Name
+    The name of the function to create.
+.PARAMETER Parameters
+    The parameters for the function.
+.PARAMETER Body
+    The body of the function.
+#>
 function New-BraidFunction
 {
     [CmdletBinding()]
@@ -242,6 +320,14 @@ function New-BraidFunction
 }
 $alias:nbf = "New-BraidFunction"
 
+<#
+.SYNOPSIS
+    Creates a new Braid lambda function with the specified parameters and body.
+.PARAMETER Parameters
+    The parameters for the lambda function.
+.PARAMETER Body
+    The body of the lambda function.
+#>
 function New-BraidLambda
 {
     [CmdletBinding()]
@@ -281,6 +367,12 @@ function New-BraidLambda
 }
 $alias:nbl = "New-BraidLambda"
 
+<#
+.SYNOPSIS
+    Retrieves a Braid symbol by its name.
+.PARAMETER Name
+    The name of the symbol to retrieve.
+#>
 function Get-BraidSymbol
 {
     [CmdletBinding()]
@@ -293,6 +385,12 @@ function Get-BraidSymbol
 }
 $alias:gbs = "Get-BraidSymbol"
 
+<#
+.SYNOPSIS
+    Retrieves the value of a Braid variable by its name.
+.PARAMETER Name
+    The name of the variable to retrieve.
+#>
 function Get-BraidVariableValue
 {
     [CmdletBinding()]
@@ -305,6 +403,14 @@ function Get-BraidVariableValue
 }
 $alias:gbvv = "Get-BraidVariableValue"
 
+<#
+.SYNOPSIS
+    Sets the value of a Braid variable by its name.
+.PARAMETER Name
+    The name of the variable to set.
+.PARAMETER Value
+    The value to set for the variable.
+#>
 function Set-BraidVariableValue
 {
     [CmdletBinding()]
@@ -319,8 +425,14 @@ function Set-BraidVariableValue
     [BraidLang.Braid]::SetVariable($Name, $Value)
 }
 $alias:sbvv = "Set-BraidVariableValue"
-
- function ConvertFrom-BraidSourceText
+    
+<#
+.SYNOPSIS
+    Converts Braid source text into a Braid expression.
+.PARAMETER SourceText
+    The Braid source text to convert.
+#>
+function ConvertFrom-BraidSourceText
  { 
     param (
         $sourceText
@@ -330,6 +442,13 @@ $alias:sbvv = "Set-BraidVariableValue"
  }
 $alias:cfbst = "ConvertFrom-BraidSourceText"
 
+
+<#
+.SYNOPSIS
+    Retrieves a Braid symbol by its name.
+.PARAMETER Name
+    The name of the symbol to retrieve.
+#>
 function Get-BraidSymbol
 {
     [CmdletBinding()]
@@ -342,6 +461,16 @@ function Get-BraidSymbol
 }
 $alias:gbs = "Get-BraidSymbol"
 
+<#
+.SYNOPSIS
+    Retrieves help information for a Braid function.
+.PARAMETER Name
+    The name of the function for which to retrieve help.
+.PARAMETER SearchAll
+    Indicates whether to search all help text for matches.
+.PARAMETER WebView
+    Indicates whether to open the help in a web view.
+#>
 function Get-BraidHelp
 {
     param (
@@ -399,6 +528,12 @@ function Get-BraidHelp
 }
 $alias:gbh = "Get-BraidHelp"
 
+<#
+.SYNOPSIS
+    Creates a new Braid property pattern with the specified property-value pairs.
+.PARAMETER PropertyValues
+    The property-value pairs for the pattern.
+#>
 function New-BraidPropertyPattern
 {
     if ($args.Count % 2 -ne 0)
@@ -411,7 +546,7 @@ function New-BraidPropertyPattern
 $alias:nbpp = "New-BraidPropertyPattern"
 
 #-------------------------------------------------------------------------------------
-# Examples showing how to call Braid from PowerShell.
+# Examples showing how to use these functions to invoke Braid from PowerShell.
 #-------------------------------------------------------------------------------------
 
 if (-not $RunExamples)
@@ -425,6 +560,8 @@ write-host "ibf fib 10:" (ibf fib 10)
 # Invoke a property
 write-host "ibf .length '1234':" (ibf .length '1234')
 
+#-------------------------------------------------------------------------------------
+
 # Sum the lengths of the files in the current directory using 'map'
 write-host 'ibf sum (ibf map (ls) (gbf .?length)):' (ibf sum (ibf map (ls) (gbf .?length)))
 
@@ -437,6 +574,8 @@ write-host 'ibf map (ibf list 5) (gbf sqr):' (ibf map (ibf list 5) (gbf sqr))
 # square the numbers in a PowerShell array using map.
 write-host 'ibf map (1,2,3) (gbf sqr):' (ibf map (1,2,3) (gbf sqr))
 
+#-------------------------------------------------------------------------------------
+
 # count a list of numbers
 write-host 'ibf count (ibf list 5 6):' (ibf count (ibf list 5 6))
 
@@ -446,13 +585,19 @@ write-host 'ibf count (1,2,3):' (ibf count (1,2,3))
 # count the number of files in the current directory using 'ls'
 write-host 'ibf count (ls):' (ibf count (ls))
 
-# use 'reduce' to computmthe product of a list of numbers
+#-------------------------------------------------------------------------------------
+
+# use 'reduce' to compute product of a list of numbers
 write-host 'ibf reduce (ibf vector 1 2 3) *:' (ibf reduce (ibf vector 1 2 3) *)
 
-# sort files by length
+#-------------------------------------------------------------------------------------
+
+# sort files by length, using an explicit lambda and then with a curried function
 write-host 'ibf last (ibf sort (ls) (gbf .?length)):' (ibf last (ibf sort (ls) (gbf .?length)))
 
 write-host 'ibe (nbe + 1 2 3):' (ibe (nbe + 1 2 3))
+
+#-------------------------------------------------------------------------------------
 
 # manually construct a Braid pipeline
 $pe = (nbe (gbf pipe) (nbe (gbf range) 10) (nbe (gbf filter) (nbe (gbf %) 2)) (nbe (gbf sum)))
@@ -462,12 +607,14 @@ write-host "pipeline: " $pe.tostring() "result:" (ibe $pe)
 write-host 'Parsing (range 10 | filter even? | sum)'
 (ibf parse-text '(range 10 | filter even? | sum)').ToString()
 
+#-------------------------------------------------------------------------------------
+
 # Create a new braid function expression that adds 1 to its argument, and then invoke it.  
 $f = (nbe (ibf symbol lambda) (ibf vector (ibf symbol x)) (nbe (ibf symbol +) (ibf symbol x) 1))
 $ff = ibe $f   # eval the expression to get a callable function
 write-host "ff(5):" (ibf $ff 5) # should be 6
 
-# Create a pipe expression (list 1 2 3 | map sqr) and evaluate it.
+# Create a pipe expression (list 1 2 3 | map sqr) using nbpe and evaluate it.
 $e = (nbpe (nbe (ibf symbol list) 1 2 3) (nbe (ibf symbol map) (gbf sqr)))
 write-host "Evaluating pipe expression (list 1 2 3 | map sqr):" (ibe $e) # should be (1 4 9)
 $e = (nbpe (nbe (gbf range) 10) (nbe (gbf filter) (gbf even?)) (nbe (gbf map) (gbf sqr)))
@@ -482,6 +629,8 @@ ibf (ibe $e) 3 # should be 5
 # invoke the new function
 ibf add2 10 # should be 12
 
+#-------------------------------------------------------------------------------------
+
 # Try defining a function using New-BraidFunction, which is easier than constructing the expression manually.
 # This function will add 3 to its argument, but also print "Hello there" as a side effect.
 [void] (New-BraidFunction add3 x (nbe (gbf println) "Hello there") (nbe (gbf +) (ibf symbol x) 3))
@@ -493,7 +642,7 @@ $f = (nbl x (nbe (gbf while) (gbs x) (nbe (gbf print) (gbs x) " ") (nbe (gbf let
 write-host "Printing the numbers from 20 down to 1:"
 ibf $f 20
 
-# Create a function "addpair"that takes two arguments and returns their sum.
+# Create a function "addpair" that takes two arguments and returns their sum.
 ibf let (gbs addpair) (nbl (gbs x),(gbs y) (nbe (gbf +) (gbs x) (gbs y)))
 write-host "addpair(3,4):" (ibf addpair 3 4) # should be 7
 
@@ -504,11 +653,7 @@ write-host "Current UTC time again:" (ibf get-date -Format u)
 # call the braid 'edit-distance' function on two words
 write-host "Edit distance:" (ibf edit-distance "foo" "bOo") # should be two
 
-write-host "Testing a pattern function with 3 different values"
-$f = ibf eval-string '(defn say-type2 | ^int -> "integer" | ^string -> "string" | -> "other")'
-write-host "say-type2 123:" (ibf say-type2 123) # should be "integer"
-write-host "say-type2 'abc':" (ibf say-type2 'abc') # should be "string"
-write-host "say-type2 1.23:" (ibf say-type2 1.23) # should be "other"
+#-------------------------------------------------------------------------------------
 
 # Use the 'list/split' function to split a list of numbers into two lists: one with numbers less than 4,
 # and one with numbers greater than or equal to 4. We'll use a lambda as the splitting function.
@@ -522,35 +667,43 @@ write-host 'call tobraidsourcestring on an expression' (ibf tosourcestring (nbe 
 
 # bind a lambda to a symbol to create a function
 Write-Host "Create a new lambda expression."
- $l = nbl (nbe x y) (nbe (gbf +) (gbs x) (gbs y))
- (ibf let (gbs addpair) $l).ToString()
- ibf addpair 2 3
- Write-host "addpair(2,3):" (ibf addpair 2 3) # should be 5
+$l = nbl (nbe x y) (nbe (gbf +) (gbs x) (gbs y))
+(ibf let (gbs addpair) $l).ToString()
+ibf addpair 2 3
+Write-host "addpair(2,3):" (ibf addpair 2 3) # should be 5
 
- # Filter a list using a regex
- write-host "Filtering a list of numbers using a regex"
- $e = (nbe (gbf filter) (nbe (gbf range) 20) ([regex] "[234]"))
- ibe $e
- Write-Host "filter expression:" $e.ToString()
+# Filter a list using a regex
+write-host "Filtering a list of numbers using a regex"
+$e = (nbe (gbf filter) (nbe (gbf range) 20) ([regex] "[234]"))
+ibe $e
+Write-Host "filter expression:" $e.ToString()
 
- # use a curried operation filter a list of numbers
- write-host "Filtering a list of numbers using a curried operation"
- $op = ibe (nbe (gbf %) 2)
- ibf filter (ibf range 20) $op
+# use a curried operation filter a list of numbers
+write-host "Filtering a list of numbers using a curried operation"
+$op = ibe (nbe (gbf %) 2)
+ibf filter (ibf range 20) $op
 
- write-host "Compare two lists:" (ibf == (cfbst "(+ 1 2 3)") (nbe (gbf +) 1 2 3))
+write-host "Compare the two lists:" (ibf == (cfbst "(+ 1 2 3)") (nbe (gbf +) 1 2 3))
 
- write-host "`n`----------------------------------------------------------------n"
+#-------------------------------------------------------------------------------------
+
+write-host "`n`----------------------------------------------------------------n"
+
+write-host "Testing a pattern function with 3 different values"
+$f = ibf eval-string '(defn say-type2 | ^int -> "integer" | ^string -> "string" | -> "other")'
+write-host "say-type2 123:" (ibf say-type2 123) # should be "integer"
+write-host "say-type2 'abc':" (ibf say-type2 'abc') # should be "string"
+write-host "say-type2 1.23:" (ibf say-type2 1.23) # should be "other"
 
 # Use property patterns to filter the list of files
-ibf filter (ls -file) (nbpp extension (nbl n (nbe (gbf "==") (gbs n) ".tl")) name ([regex] "^g")) | format-table
+ibf filter (ls -file) (nbpp "extension" (nbl n (nbe (gbf "==") (gbs n) ".tl")) "name" ([regex] "^g")) | format-table
 
 # Bo it again but in seperate steps
 Write-host "Just get the name of the files that have an extension of .tl and start with g:"
 $pp = (
     nbpp `
-       extension (nbl n (nbe (gbf "==") (gbs n) ".tl")) `
-       name ([regex] "^g")
+       extension  (nbl n (nbe (gbf "==") (gbs n) ".tl")) `
+       name       ([regex] "^g")
  )
 ibf map (ibf filter (ls -file) $pp) (gbf .name)
 
@@ -566,8 +719,6 @@ if ( -not $elogdata)
 }
 write-host "Filtering eventlog data with a property pattern, get last 5 matches" 
 ibf last (ibf filter $elogdata (nbpp EntryType "error" message ([regex] "timeout"))) 5 | format-table
-
-
 
 write-host "Filtering eventlog data with a property pattern using a scriptblock, get last 5 matches"
 ibf last (ibf filter $elogdata (nbpp EntryType {param ($o) $o -eq "Error"} message ([regex] "timeout"))) 5
@@ -588,7 +739,10 @@ PS[1] (59) > time {ibf last (ibf filter $elogdata (nbpp EntryType {param ($o) $o
 
 #>
 
+#-------------------------------------------------------------------------------------
+
 write-host "`n`----------------------------------------------------------------n"
+
 # Destructuring assignment example with variables x & xs
 write-host "Destructuring assignment example into variables x & xs from the list (1,2,3,4,5)"
 ibf let (gbs x:xs) (1,2,3,4,5)
@@ -599,11 +753,15 @@ write-host "`n`----------------------------------------------------------------n
 
 # defining a function by setting a variable "ee" to a lambda expression
 sbvv (gbs ee) (nbl n (nbe (gbf if) (nbe (gbf even?) (gbs n)) (gbs true) (gbs false))) > $null
-write-host "Testing the function ee that we defined using Set-BraidVariableValue with a lambda expression.\nee should return true for even numbers and false for odd numbers."
+write-host "Function ee:" (gbf ee).ToString()
+write-host "Testing the function ee that we defined using Set-BraidVariableValue with a lambda expression.`nee should return true for even numbers and false for odd numbers."
 write-host "ee(2):" (ibf ee 2) # should be true
 write-host "ee(3):" (ibf ee 3) # should be false
 
+#-------------------------------------------------------------------------------------
+
 write-host "`n`----------------------------------------------------------------n"
+
 # This example shows how to use the Braid async and await functions to make 
 # an asynchronous http request to microsoft.com and await the result.
 write-host "Async example: making an http request to microsoft.com using the http/get function from braid, and awaiting the result."
@@ -613,3 +771,15 @@ $t = ibf async $l # invoke the lambda asynchronously, which will return a task o
 
 # await the result of the http request and print the length of the response body
 write-host "http/get returned" (ibf await $t | foreach ToString | foreach length) "characters"
+
+
+
+#-------------------------------------------------------------------------------------
+
+write-host "`n`----------------------------------------------------------------n"
+
+write-host "An example showing how to define a type/class in Braid using 'deftype'"
+$t = ibe (nbe (gbs deftype) ([braidlang.typeLiteral]::new("footype", 0, "")) (gbs x) (gbs y))
+write-Host "New type defined:" $t.ToString()
+write-host "Looking at the properties of the defined type:"
+ibf members-of $t
