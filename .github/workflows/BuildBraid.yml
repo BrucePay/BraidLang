@@ -56,10 +56,26 @@ jobs:
           }
 
       - name: Run Braid tests
+        shell: pwsh
+        run: |
+          $safeOsName = "${{ matrix.os }}" -replace "[^A-Za-z0-9_.-]", "-"
+          $logPath = Join-Path "test-results" "braid-tests-$safeOsName.log"
+          & (Join-Path "Tests" "Run-BraidTests.ps1") -NoBuild -Suite portable -LogPath $logPath
+
+      - name: Run Windows-only Braid tests
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          & (Join-Path "Tests" "Run-BraidTests.ps1") -NoBuild
+          $logPath = Join-Path "test-results" "braid-tests-windows-only.log"
+          & (Join-Path "Tests" "Run-BraidTests.ps1") -NoBuild -Suite windows -MinimumTests 20 -LogPath $logPath
+
+      - name: Upload Braid test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: braid-test-logs-${{ matrix.os }}
+          path: test-results
+          if-no-files-found: ignore
 
       - name: Upload staged runtime
         uses: actions/upload-artifact@v4

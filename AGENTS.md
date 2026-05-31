@@ -73,6 +73,14 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\stage\BraidRepl.ps1 str "Braid r
 
 For language/runtime behavior changes, inspect `Tests\unittests.tl` and prefer running the existing Braid test harness instead of inventing a separate test framework.
 
+The default test runner suite is portable and is expected to pass on Windows, Linux, and macOS:
+
+```powershell
+.\Tests\Run-BraidTests.ps1 -Suite portable
+```
+
+Use `-Suite windows` for Windows-only integration coverage and `-All` only for exploratory full-suite runs; full-suite failures are not currently a CI baseline.
+
 Documentation-only changes do not require a build unless they alter documented commands or generated artifacts.
 
 ## Coding conventions

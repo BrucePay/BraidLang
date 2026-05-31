@@ -3698,8 +3698,20 @@ namespace BraidLang
             {
                 return string.Empty;
             }
-            int x = Console.CursorLeft;
-            int width = Console.WindowWidth - x;
+            int width = 80;
+            try
+            {
+                if (!Console.IsOutputRedirected)
+                {
+                    int x = Console.CursorLeft;
+                    width = Console.WindowWidth - x;
+                }
+            }
+            catch (IOException)
+            {
+                width = 80;
+            }
+
             if (width < 40)
             {
                 width = 40;
@@ -5430,4 +5442,3 @@ namespace BraidLang
         }
     }
 }
-

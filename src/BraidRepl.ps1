@@ -52,7 +52,7 @@ function Invoke-Autoload
 {
     try
     {
-        $autoLoadFile = Join-Path $PSScriptRoot "autoLoad.tl"
+        $autoLoadFile = Join-Path $PSScriptRoot "autoload.tl"
         if (Test-Path $autoLoadFile)
         {
             $currentTimeStamp = (Get-ChildItem $autoloadFile).LastWriteTime;

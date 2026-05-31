@@ -93,15 +93,15 @@ The module also loads `Braid.Format.ps1xml`, which gives common scalar Braid run
 
 ## Continuous integration and release artifacts
 
-The GitHub Actions workflow builds, smoke-tests, and validates the module on:
+The GitHub Actions workflow builds, smoke-tests, validates the module, and runs the portable Braid `.tl` test suite on:
 
 - Windows
 - Linux
 - macOS
 
-Each workflow run uploads the staged runtime as an artifact named for the platform. This is the release foundation: a tagged release can promote those tested artifacts without changing the build path.
+Each workflow run uploads the staged runtime and Braid test logs as artifacts named for the platform. This is the release foundation: a tagged release can promote those tested artifacts without changing the build path.
 
-The Braid test harness currently runs in CI on Windows. Linux and macOS still build, smoke-test, and validate the PowerShell module, but the `.tl` unit harness is not yet cross-platform because parts of the prelude and test suite depend on Windows-only type aliases and console behavior.
+The portable test suite is exclusion-based: new tests are expected to be portable unless they are explicitly excluded for a documented reason, such as Windows-only APIs, interactive console/completion behavior, or a known headless/full-suite gap. Windows CI also runs an additional Windows-only suite for PowerShell/file-system integration coverage.
 
 Release policy:
 
@@ -119,19 +119,29 @@ For code changes, at minimum run:
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\stage\BraidRepl.ps1 str "Braid runtime OK"
 ```
 
-Run the CI-safe Braid test slice:
+Run the CI-safe portable Braid test suite:
 
 ```powershell
 .\Tests\Run-BraidTests.ps1
 ```
 
-The runner defaults to a stable Windows-friendly slice covering type tests, string conversion, vectors, hash sets, conditionals, definitions, regex, and pattern matching. It verifies that tests actually ran and fails the PowerShell process if the harness reports failures. To try the full harness locally:
+The runner defaults to `-Suite portable`, which is the same named suite used on Windows, Linux, and macOS CI. It verifies that tests actually ran, enforces a minimum test count, captures optional logs with `-LogPath`, and fails the PowerShell process if the harness reports failures or autoload errors.
+
+Useful suites:
+
+```powershell
+.\Tests\Run-BraidTests.ps1 -Suite portable
+.\Tests\Run-BraidTests.ps1 -Suite windows
+.\Tests\Run-BraidTests.ps1 -Suite interactive
+```
+
+To try the full harness locally:
 
 ```powershell
 .\Tests\Run-BraidTests.ps1 -All
 ```
 
-Some full-suite tests currently depend on interactive console/completion behavior and are not yet suitable for headless CI. For language/runtime behavior changes, extend the stable runner coverage rather than adding a separate test framework.
+Some full-suite tests currently depend on interactive console/completion behavior or known failing behavior and are not suitable for required headless CI. For language/runtime behavior changes, keep tests in the portable suite unless they need an explicit exclusion.
 
 ## Roadmap
 

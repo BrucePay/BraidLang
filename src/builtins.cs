@@ -593,6 +593,62 @@ namespace BraidLang
                 return tokenList;
             };
 
+            object LoadBraidModule(string scriptName)
+            {
+                if (scriptName.LastIndexOf(".tl") == -1)
+                {
+                    scriptName += ".tl";
+                }
+
+                string scriptPath = null;
+                try
+                {
+                    scriptPath = ResolvePath(scriptName);
+                }
+                catch (Exception)
+                {
+                    try
+                    {
+                        scriptPath = ResolvePath(System.IO.Path.Combine(BraidHome, scriptName));
+                    }
+                    catch (Exception e)
+                    {
+                        while (e.InnerException != null)
+                        {
+                            e = e.InnerException;
+                        }
+
+                        BraidRuntimeException($"Processing '(using-module {scriptName})' failed with message: {e.Message}.", e);
+                    }
+                }
+
+                string old_FileName = Braid._current_file;
+                string script = File.ReadAllText(scriptPath);
+                Braid._current_file = scriptName;
+
+                try
+                {
+                    // Parse the file
+                    s_Expr parsedScript = Parse(script);
+                    if (parsedScript == null)
+                    {
+                        return null;
+                    }
+
+                    // Evaluate in the current scope
+                    foreach (var expr in parsedScript.GetEnumerable())
+                    {
+                        Eval(expr);
+                    }
+                }
+                finally
+                {
+                    Braid._current_file = old_FileName;
+                }
+
+                return null;
+            }
+
             /////////////////////////////////////////////////////////////////////
             CallStack.Const(Symbol.FromString("using-module"),
                 new Macro("using-module", (Vector args) =>
@@ -602,59 +658,20 @@ namespace BraidLang
                         BraidRuntimeException("The 'using-module' macro takes exactly one parameter: the name of the module to load.");
                     }
 
-                    string scriptName = args[0].ToString();
-                    if (scriptName.LastIndexOf(".tl") == -1)
+                    return LoadBraidModule(args[0].ToString());
+                }));
+
+            /////////////////////////////////////////////////////////////////////
+            CallStack.Const(Symbol.FromString("using-module-if"),
+                new Macro("using-module-if", (Vector args) =>
+                {
+                    if (args.Count != 2 || args[0] == null || args[1] == null)
                     {
-                        scriptName += ".tl";
+                        BraidRuntimeException("The 'using-module-if' macro takes a condition and a module name: (using-module-if IsWindows winforms).");
                     }
 
-                    string scriptPath = null;
-                    try
-                    {
-                        scriptPath = ResolvePath(scriptName);
-                    }
-                    catch (Exception)
-                    {
-                        try
-                        {
-                            scriptPath = ResolvePath(System.IO.Path.Combine(BraidHome, scriptName));
-                        }
-                        catch (Exception e)
-                        {
-                            while (e.InnerException != null)
-                            {
-                                e = e.InnerException;
-                            }
-
-                            BraidRuntimeException($"Processing '(using-module {scriptName})' failed with message: {e.Message}.", e);
-                        }
-                    }
-
-                    string old_FileName = Braid._current_file;
-                    string script = File.ReadAllText(scriptPath);
-                    Braid._current_file = scriptName;
-
-                    try
-                    {
-                        // Parse the file
-                        s_Expr parsedScript = Parse(script);
-                        if (parsedScript == null)
-                        {
-                            return null;
-                        }
-
-                        // Evaluate in the current scope
-                        foreach (var expr in parsedScript.GetEnumerable())
-                        {
-                            Eval(expr);
-                        }
-                    }
-                    finally
-                    {
-                        Braid._current_file = old_FileName;
-                    }
-
-                    return null;
+                    object condition = args[0] is Symbol ? GetValue(args[0], true) : Eval(args[0]);
+                    return IsTrue(condition) ? LoadBraidModule(args[1].ToString()) : null;
                 }));
 
             /////////////////////////////////////////////////////////////////////

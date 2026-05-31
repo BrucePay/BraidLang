@@ -3721,7 +3721,7 @@ Examples:
 (.BraidLang.LineEditor/HistoryEditor
     (^Func[object]?
         (fn ->
-            (using-module winforms)
+            (using-module-if IsWindows winforms)
 
             (let vhc 
                 (wf/listbox "Command History"
