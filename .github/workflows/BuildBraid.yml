@@ -7,7 +7,16 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
 
     steps:
       - name: Check out repository
@@ -20,8 +29,24 @@ jobs:
 
       - name: Build
         shell: pwsh
-        run: .\build.ps1
+        run: ./build.ps1
 
       - name: Smoke test staged Braid
         shell: pwsh
-        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\stage\BraidRepl.ps1 str "Braid runtime OK"
+        run: |
+          $repl = Join-Path (Join-Path $PWD "stage") "BraidRepl.ps1"
+          $output = & pwsh -NoProfile -ExecutionPolicy Bypass -File $repl str "Braid runtime OK" | Out-String
+          $output
+          if ($LASTEXITCODE -ne 0) {
+            throw "Braid smoke test failed with exit code $LASTEXITCODE."
+          }
+          if ($output -notmatch "Braid runtime OK") {
+            throw "Braid smoke test did not produce the expected output."
+          }
+
+      - name: Upload staged runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: braid-stage-${{ matrix.os }}
+          path: stage
+          if-no-files-found: error

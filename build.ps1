@@ -58,11 +58,12 @@ function Get-MSBuildCommand
 
 $configuration = if ($Optimize) { "Release" } else { "Debug" }
 $StageDir = Join-Path $PSScriptRoot "stage"
+$srcDir = Join-Path $PSScriptRoot "src"
 
 if ($NonCore)
 {
     $msBuild = Get-MSBuildCommand
-    $project = Join-Path $PSScriptRoot "src\braidlang.csproj"
+    $project = Join-Path $srcDir "braidlang.csproj"
 
     if ($Clean)
     {
@@ -76,7 +77,7 @@ if ($NonCore)
         throw "Build.ps1 failed with exit code $LASTEXITCODE."
     }
 
-    $buildOutputDir = Join-Path $PSScriptRoot "src\bin\$configuration"
+    $buildOutputDir = Join-Path (Join-Path $srcDir "bin") $configuration
 }
 else
 {
@@ -86,9 +87,10 @@ else
         throw "dotnet was not found. Install the .NET SDK or run with -NonCore to use MSBuild."
     }
 
-    $project = Join-Path $PSScriptRoot "src\BraidCore.csproj"
+    $project = Join-Path $srcDir "BraidCore.csproj"
     [xml] $projectXml = Get-Content -LiteralPath $project
-    $targetFramework = $projectXml.Project.PropertyGroup.TargetFramework | Where-Object { $_ } | Select-Object -First 1
+    $targetFrameworkNode = $projectXml.SelectSingleNode("/*[local-name()='Project']/*[local-name()='PropertyGroup']/*[local-name()='TargetFramework']")
+    $targetFramework = if ($targetFrameworkNode) { $targetFrameworkNode.InnerText }
     if (-not $targetFramework)
     {
         throw "Could not determine TargetFramework from $project."
@@ -106,7 +108,7 @@ else
         throw "Build.ps1 failed with exit code $LASTEXITCODE."
     }
 
-    $buildOutputDir = Join-Path $PSScriptRoot "src\bin\$configuration\$targetFramework"
+    $buildOutputDir = Join-Path (Join-Path (Join-Path $srcDir "bin") $configuration) $targetFramework
 }
 
 if (-not (Test-Path -LiteralPath $StageDir))
@@ -116,13 +118,13 @@ if (-not (Test-Path -LiteralPath $StageDir))
 
 if ($NonCore)
 {
-    Copy-Item (Join-Path $buildOutputDir "braidlang.*") $StageDir -PassThru
+    Copy-Item (Join-Path $buildOutputDir "braidlang.*") $StageDir
 }
 else
 {
-    Copy-Item (Join-Path $buildOutputDir "*") $StageDir -Recurse -Force -PassThru
+    Copy-Item (Join-Path $buildOutputDir "*") $StageDir -Recurse -Force
 }
 
-Copy-Item -Verbose (Join-Path $PSScriptRoot "src\BraidRepl.ps1") $StageDir
-Copy-Item -Verbose (Join-Path $PSScriptRoot "src\*.tl") $StageDir
-Copy-Item -Verbose (Join-Path $PSScriptRoot "src\*.html") $StageDir
+Copy-Item (Join-Path $srcDir "BraidRepl.ps1") $StageDir
+Copy-Item (Join-Path $srcDir "*.tl") $StageDir
+Copy-Item (Join-Path $srcDir "*.html") $StageDir
