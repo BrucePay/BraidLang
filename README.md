@@ -93,13 +93,22 @@ The module also loads `Braid.Format.ps1xml`, which gives common scalar Braid run
 
 ## Continuous integration and release artifacts
 
-The GitHub Actions workflow builds and smoke-tests Braid on:
+The GitHub Actions workflow builds, smoke-tests, and validates the module on:
 
 - Windows
 - Linux
 - macOS
 
 Each workflow run uploads the staged runtime as an artifact named for the platform. This is the release foundation: a tagged release can promote those tested artifacts without changing the build path.
+
+The Braid test harness currently runs in CI on Windows. Linux and macOS still build, smoke-test, and validate the PowerShell module, but the `.tl` unit harness is not yet cross-platform because parts of the prelude and test suite depend on Windows-only type aliases and console behavior.
+
+Release policy:
+
+- Use semantic version tags in the form `vMAJOR.MINOR.PATCH`, for example `v0.2.0`.
+- Publish only artifacts produced by a successful workflow run for that tag.
+- Keep automatic release creation disabled until tag-triggered release notes, checksums, and any signing policy are explicit.
+- Keep the PowerShell module version in `Braid\Braid.psd1` aligned with the release tag.
 
 ## Tests and validation
 
@@ -110,7 +119,19 @@ For code changes, at minimum run:
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\stage\BraidRepl.ps1 str "Braid runtime OK"
 ```
 
-For language/runtime behavior changes, inspect and prefer the existing Braid test harness in `Tests\unittests.tl` rather than adding a separate test framework.
+Run the CI-safe Braid test slice:
+
+```powershell
+.\Tests\Run-BraidTests.ps1
+```
+
+The runner defaults to a stable Windows-friendly slice covering type tests, string conversion, vectors, hash sets, conditionals, definitions, regex, and pattern matching. It verifies that tests actually ran and fails the PowerShell process if the harness reports failures. To try the full harness locally:
+
+```powershell
+.\Tests\Run-BraidTests.ps1 -All
+```
+
+Some full-suite tests currently depend on interactive console/completion behavior and are not yet suitable for headless CI. For language/runtime behavior changes, extend the stable runner coverage rather than adding a separate test framework.
 
 ## Roadmap
 
