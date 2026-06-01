@@ -698,8 +698,10 @@ write-host "Now call the curried function by10 with an argument of 5:" (ibf by10
 # Use the 'list/split' function to split a list of numbers into two lists: one with numbers less than 4,
 # and one with numbers greater than or equal to 4. We'll use a lambda as the splitting function.
 write-host "split list with lambda:" `
-    ((ibf list/split (ibf vector 1 2 3 4 5) (nbl x (nbe (gbf "<") (gbs x) 4))).tostring()) # should be ((1 2 3) (4 5))
-
+    (ibf list/split (ibf vector 1 2 3 4 5) (nbl x (nbe (gbf "<") (gbs x) 4))).tostring() # should be ((1 2 3) (4 5))
+# run it through Write-Output and it gets flattened
+$r = (ibf list/split (ibf vector 1 2 3 4 5) (nbl x (nbe (gbf "<") (gbs x) 4))) | write-output
+$r.count # returns 5 instead of 2 because the inner lists get flattened when passed through Write-Output
 # parse braid source text
 write-host 'Parsing braid source text:' (cfbst '(+ 1 2 (* 3 10) 4)' ).ToString()
 
@@ -787,7 +789,7 @@ PS[1] (59) > time {ibf last (ibf filter $elogdata (nbpp EntryType {param ($o) $o
 write-host "`n----------------------------------------------------------------n"
 
 # Destructuring assignment example with variables x & xs
-write-host "Destructuring assignment example into variables x & xs from the list (1,2,3,4,5)"
+write-host "Destructuring assignment example into variables x & xs from the array (1,2,3,4,5)"
 ibf let (gbs x:xs) (1,2,3,4,5)
 write-host "x: " (gbvv x)
 write-host "xs:" (gbvv xs) 
@@ -797,22 +799,28 @@ write-host "`n----------------------------------------------------------------`n
 # defining a function by setting a variable "ee" to a lambda expression
 sbvv (gbs ee) (nbl n (nbe (gbf if) (nbe (gbf even?) (gbs n)) (gbs true) (gbs false))) > $null
 write-host "Function ee:" (gbf ee).ToString()
-write-host "Testing the function ee that we defined using Set-BraidVariableValue with a lambda expression.`nee should return true for even numbers and false for odd numbers."
+write-host "Testing the function 'ee' that we defined using Set-BraidVariableValue with a lambda expression.`nee should return true for even numbers and false for odd numbers."
 write-host "ee(2):" (ibf ee 2) # should be true
 write-host "ee(3):" (ibf ee 3) # should be false
 
 #-------------------------------------------------------------------------------------
 
-write-host "`n`----------------------------------------------------------------`n"
+write-host "`n----------------------------------------------------------------`n"
 
 # This example shows how to use the Braid async and await functions to make 
-# an asynchronous http request to microsoft.com and await the result.
-write-host "Async example: making an http request to microsoft.com using the http/get function from braid, and awaiting the result."
-ibf using-module http  # make sure the http module is loaded so we can use the http/get function in the example below.
+# an asynchronous http request to microsoft.com then await the result.
+write-host "Async example: make an http request to http://microsoft.com using 'http/get'"
+write-host "Load the http module to make http/get available."
+ibf using-module http
 $l = nbl $null (nbe (gbf http/get) "http://microsoft.com")   # lambda that makes an http request to microsoft.com when invoked
+# Note: you can't use ScriptBlocks as the lambda for 'async' yet but you can call
+# PowerShell functions from the Braid lambda as follows:
+#   (ibf await (ibf async (nbl $null (get-date))))
+# 
 $t = ibf async $l # invoke the lambda asynchronously, which will return a task object
 
 # await the result of the http request and print the length of the response body
+write-host "Awaiting the async result."
 write-host "http/get returned" (ibf await $t | foreach ToString | foreach length) "characters"
 
 #-------------------------------------------------------------------------------------
@@ -820,19 +828,26 @@ write-host "http/get returned" (ibf await $t | foreach ToString | foreach length
 write-host "`n`----------------------------------------------------------------`n"
 
 write-host "An example showing how to define a type/class in Braid using 'deftype'"
-$t = ibe (nbe (gbs deftype) ([braidlang.typeLiteral]::new("footype", 0, "")) (gbs x) (gbs y))
+# The TypeLiteral identifies the class to create
+$t = ibe (nbe (gbs deftype) ([BraidLang.TypeLiteral]::new("footype", 0, "")) (gbs x) (gbs y))
 write-Host "New type defined:" $t.ToString()
 write-host "Looking at the properties of the defined type:`n"
 ibf members-of $t
+write-host "Creating an instance of the new type wthen looking at its properties:"
+$instance = ibf new $t 1 2
+$instance
 
 #-------------------------------------------------------------------------------------
 
 write-host "`n`----------------------------------------------------------------`n"
 
-Write-Host "Map/reduce (sum-of-products) of (1,2,3) and (4,5,6) with the zip function:"
+# Example using the 'zip' function to do map/reduce.
+Write-Host "Map/reduce (sum-of-products) of (1,2,3) and (4,5,6) using the zip function:"
 (ibf sum (ibf zip (1,2,3) (4,5,6) (gbf *))).ToString()
+
 Write-Host "Bind a function implementing a single node in a neural network:"
 nbf neuralnode (gbs input) (nbe (nbe (gbs sum) (nbe (gbf zip) (gbs input) (ibf vector 4 5 6) (gbf *))))
+
 write-host "neuralnode function:" (gbf neuralnode).ToString()
 write-host "Testing the neuralnode function with input (1,2,3):" `
     (ibf neuralnode (1,2,3)) # should be 32 (1*4 + 2*5 + 3*6)
