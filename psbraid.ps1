@@ -595,6 +595,26 @@ write-host 'ibf count (1,2,3):' (ibf count (1,2,3))
 write-host 'ibf count (ls):' (ibf count (Get-ChildItem))
 
 #-------------------------------------------------------------------------------------
+# Code as data
+write-host "`n----------------------------------------------------------------`n"
+
+$l = nbe + 1 2 3 4  # create a braid expression.
+ibe $l              # evaluate it
+$l.ToString()       # look at it source representayion
+$l.car
+$l.cdr
+
+$l2 = $l.cdr.cons((gbs *))
+$l2.ToString()
+ibe $l2
+
+# Memoization - wrap a function in a caching layer.
+gbf fib | ToString
+time {ibf fib 25}
+sbvv fib (ibf memoize (gbf fib))
+time {ibf fib 25}
+
+#-------------------------------------------------------------------------------------
 # 
 # Braid Expressions
 
@@ -689,6 +709,7 @@ write-host "Invoking add3(7):" (ibf add3 7) # should print "Hello there" and the
 write-host "Define a Braid function with a ScriptBlock body"
 sbvv "pstest" {param ($x, $y) $x * $y}
 ibf pstest 13 14
+
 write-host "Create a curried function using Braid's 'partial' function and then call it:" 
 sbvv by10 (ibf partial (gbf pstest) 10) | ToString
 write-host "Now call the curried function by10 with an argument of 5:" (ibf by10 5) # should be 50
