@@ -10,26 +10,35 @@ param (
     $cmd = $null
 )
 
+$stagePath = Join-Path $PSScriptRoot "stage"
+$replPath = Join-Path $stagePath "BraidRepl.ps1"
+$pwsh = Get-Command "pwsh" -ErrorAction SilentlyContinue
+if (-not $pwsh)
+{
+    throw "pwsh was not found. Braid's default net8.0 runtime requires PowerShell 7.4 or newer."
+}
+
 if ($cmd)
 {
-    # Just run the command
-    ./stage/BraidRepl $cmd @args
+    if (-not (Test-Path -LiteralPath $replPath))
+    {
+        if ($NoBuild)
+        {
+            throw "Braid runtime is not staged at '$stagePath'. Run .\build.ps1 first."
+        }
+
+        & (Join-Path $PSScriptRoot "build.ps1") -Optimize:$Optimize
+    }
+
+    & $pwsh.Source -NoProfile -ExecutionPolicy Bypass -File $replPath $cmd @args
 }
 else
 {
     # Build and start braid.
     if (-not $nobuild)
     {
-        & "$PSScriptRoot/build.ps1" -optimize:$Optimize
+        & (Join-Path $PSScriptRoot "build.ps1") -Optimize:$Optimize
     }
 
-    if ($PSVersionTable.PSEdition -eq "Desktop")
-    {
-        powershell  "$PSScriptRoot/stage/BraidRepl.ps1"
-    }
-    else
-    {
-        pwsh "$PSScriptRoot/stage/BraidRepl.ps1"
-    }
+    & $pwsh.Source -NoProfile -ExecutionPolicy Bypass -File $replPath
 }
-

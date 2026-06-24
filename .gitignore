@@ -1,0 +1,24 @@
+# Build output
+stage/
+src/bin/
+src/obj/
+bin/
+obj/
+
+# Visual Studio and editor state
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Test and coverage output
+TestResults/
+*.TestResults.xml
+*.Coverage.xml
+coverage/
+
+# Local OS/application temp files
+~$*
+Thumbs.db
+.DS_Store

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33723.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "braidlang", "braidlang.csproj", "{7F38ADA8-7318-408C-A539-3B6B5D2BF84D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4A4052}") = "BraidCore", "BraidCore.csproj", "{7F38ADA8-7318-408C-A539-3B6B5D2BF84D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
