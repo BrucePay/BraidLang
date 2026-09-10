@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Configuration>
+  <ViewDefinitions>
+    <View>
+      <Name>BraidToString</Name>
+      <ViewSelectedBy>
+        <TypeName>BraidLang.Symbol</TypeName>
+        <TypeName>BraidLang.s_Expr</TypeName>
+        <TypeName>BraidLang.KeywordLiteral</TypeName>
+        <TypeName>BraidLang.TypeLiteral</TypeName>
+        <TypeName>BraidLang.MemberLiteral</TypeName>
+        <TypeName>BraidLang.BigDecimal</TypeName>
+        <TypeName>BraidLang.Callable</TypeName>
+        <TypeName>BraidLang.Function</TypeName>
+        <TypeName>BraidLang.Macro</TypeName>
+        <TypeName>BraidLang.UserFunction</TypeName>
+        <TypeName>BraidLang.PatternFunction</TypeName>
+        <TypeName>BraidLang.BraidTypeBase</TypeName>
+      </ViewSelectedBy>
+      <WideControl>
+        <WideEntries>
+          <WideEntry>
+            <WideItem>
+              <ScriptBlock>$_.ToString()</ScriptBlock>
+            </WideItem>
+          </WideEntry>
+        </WideEntries>
+      </WideControl>
+    </View>
+  </ViewDefinitions>
+</Configuration>

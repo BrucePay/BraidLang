@@ -24,13 +24,14 @@ if ($wait)
 # Load the braid helper assemblies
 #
 
+$assemblyPath = Join-Path $PSScriptRoot 'braidlang.dll'
 if (test-path variable:isCoreCLR)
 {
-    Add-Type -Assembly (Join-Path $PSScriptRoot 'braidlang.dll')
+    Add-Type -Path $assemblyPath
 }
 else
 {
-    [void][reflection.assembly]::LoadFrom((Join-Path $PSScriptRoot 'braidlang.dll'))
+    [void][reflection.assembly]::LoadFrom($assemblyPath)
 }
 
 [BraidLang.Braid]::ExitBraid = $false
@@ -51,7 +52,7 @@ function Invoke-Autoload
 {
     try
     {
-        $autoLoadFile = Join-Path $PSScriptRoot "autoLoad.tl"
+        $autoLoadFile = Join-Path $PSScriptRoot "autoload.tl"
         if (Test-Path $autoLoadFile)
         {
             $currentTimeStamp = (Get-ChildItem $autoloadFile).LastWriteTime;
@@ -612,4 +613,3 @@ function BraidRepl
 }
 
 [BraidLang.Braid]::StartBraid();
-
